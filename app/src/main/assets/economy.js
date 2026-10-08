@@ -14,7 +14,7 @@ const upgrades={
  guard:{name:'Hire a Door Guard',cost:340,desc:'Reduces losses from bandit raids by 85%.'},
  lantern:{name:'Beacon Lantern',cost:170,desc:'Adventurers find you easier; earn more reputation.'}
 };
-function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0};}
+function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0,commissionDay:0,commissionsCompleted:0};}
 function valid(s){return !!s&&s.version===1&&Number.isFinite(s.gold)&&s.gold>=0&&s.stock&&s.price&&s.upgrades&&s.mats&&Number.isFinite(s.clock)&&s.day>=1;}
 function earnRep(s,amount){s.reputation=Math.min(100,Math.max(0,s.reputation+amount));}
 function restock(s,id,qty){qty=qty||3;const item=items[id];if(!item||id==='forged')return {ok:false,reason:'This item must be crafted.'};if((s.stock[id]||0)+qty>(s.upgrades.shelf?30:14))return {ok:false,reason:'Build shelving to increase stock capacity.'};const amount=qty*item.cost;if(s.gold<amount)return {ok:false,reason:'Not enough gold to restock.'};s.gold-=amount;s.spent+=amount;s.stock[id]=(s.stock[id]||0)+qty;return{ok:true,cost:amount};}
@@ -25,6 +25,21 @@ if(id==='forged'){if(!s.upgrades.forge)return{ok:false,reason:'Build the Ember F
 return{ok:false,reason:'Unknown recipe.'};}
 function attemptSale(s,id,budget,roll){const item=items[id];if(!item||!s.stock[id])return{ok:false,reason:'out-of-stock'};if(budget<s.price[id])return{ok:false,reason:'too-expensive'};const premium=s.price[id]/item.base;const chance=Math.max(.12,Math.min(.97,.85-(premium-1)*.56+s.reputation*.001));if(roll>chance)return{ok:false,reason:'declined'};s.stock[id]-=1;s.gold+=s.price[id];s.earned+=s.price[id];s.sales++;s.visitors++;earnRep(s,s.upgrades.lantern?2:1);if(s.sales%7===0)s.depth=Math.min(20,s.depth+1);return{ok:true,earned:s.price[id],chance};}
 function buyLoot(s,type,amount,price){if(!['iron','herb'].includes(type)||!Number.isInteger(amount)||amount<=0||price<=0||s.gold<price)return{ok:false};s.gold-=price;s.spent+=price;s.mats[type]+=amount;return{ok:true};}
+function commission(s){
+ const rotation=[['torch',2],['bandage',2],['potion',2],['blade',1]];
+ const [id,qty]=rotation[(s.day-1)%rotation.length];
+ return {id,qty,reward:Math.round(items[id].base*qty*1.35+s.depth*4),claimed:s.commissionDay===s.day};
+}
+function fulfillCommission(s){
+ const order=commission(s);
+ if(order.claimed)return{ok:false,reason:'The guild has already received today’s shipment.'};
+ if((s.stock[order.id]||0)<order.qty)return{ok:false,reason:'Not enough stock to fulfill the guild order.'};
+ s.stock[order.id]-=order.qty;
+ s.gold+=order.reward;s.earned+=order.reward;
+ s.commissionDay=s.day;s.commissionsCompleted=(s.commissionsCompleted||0)+1;
+ earnRep(s,3);
+ return{ok:true,reward:order.reward,id:order.id,qty:order.qty};
+}
 function raid(s,roll){if(roll>=.28)return {happened:false};s.raidCount++;const loss=Math.min(s.gold,Math.ceil(s.gold*(s.upgrades.guard?.025:.16)));s.gold-=loss;return{happened:true,loss};}
-return{items,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep};
+return{items,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep,commission,fulfillCommission};
 });

@@ -29,7 +29,7 @@ jobs:
         run: |
           test -f app/src/main/assets/dabski_intro.mp4
           echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
-      - name: Build v0.2 Android APK
+      - name: Build v0.3 Android APK
         id: build
         shell: bash
         env:
@@ -43,8 +43,8 @@ jobs:
             echo "::warning::No persistent signing secrets configured. Building a test-signed debug APK. This APK cannot update a differently signed installation."
             gradle --no-daemon :app:assembleDebug
             echo "apk_path=app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_OUTPUT"
-            echo "apk_label=Dungeonfront-v0.2-debug-APK" >> "$GITHUB_OUTPUT"
-            echo "### v0.2 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
+            echo "apk_label=Dungeonfront-v0.3-debug-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.3 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
           else
             if [[ -z "$KEYSTORE_B64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
               echo "::error::Incomplete signing configuration: set all four DUNGEONFRONT_* repository secrets."
@@ -58,8 +58,8 @@ jobs:
             keytool -list -keystore "$DUNGEONFRONT_KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null
             gradle --no-daemon :app:assembleRelease
             echo "apk_path=app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_OUTPUT"
-            echo "apk_label=Dungeonfront-v0.2-persistently-signed-APK" >> "$GITHUB_OUTPUT"
-            echo "### v0.2 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
+            echo "apk_label=Dungeonfront-v0.3-persistently-signed-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.3 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
           fi
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           "$APKSIGNER" verify --verbose "$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
