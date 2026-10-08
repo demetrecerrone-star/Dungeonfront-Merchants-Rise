@@ -30,3 +30,19 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 #rotate{display:none}@media(orientation:portrait){#rotate{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#0c1213;color:#dfc18f;font:bold 19px Arial,sans-serif;letter-spacing:2px}#rotate span{font-size:64px}#rotate small{font:italic 13px Georgia,serif;letter-spacing:0;color:#8d999a}}
 @media(max-width:850px){.topbar{min-height:47px;padding:3px 7px}.brand{min-width:146px;gap:6px}.brand-mark{font-size:23px}.brand strong{font-size:12px;letter-spacing:1px}.brand small{font-size:7px;letter-spacing:1px}.stats{gap:8px}.stat small{font-size:7px;letter-spacing:.5px}.stat strong{font-size:13px}.sidebar{min-width:215px;flex-basis:30%}.tabs button{font-size:9px}.scene-header,.scene-footer{font-size:7px;letter-spacing:.2px}.scene-footer span:nth-child(2){display:none}}
 @media(max-height:460px){.topbar{min-height:41px}.tabs{height:31px}.panel-title{min-height:26px}.scene-header,.scene-footer{min-height:19px}.item{padding:6px}.item-name{font-size:11px}.item-meta{margin:2px 0}.item-bot{margin-top:3px}.item-bot button{padding:4px}.ticker{height:24px}}
+/* Intro v0.1.1: the opening cinematic is NOT a visible media player. */
+.intro{background:#000;overflow:hidden}
+.intro video{display:block;pointer-events:none;-webkit-appearance:none;appearance:none;outline:0}
+.intro.is-loading video{opacity:0}
+.intro.is-playing video{opacity:1}
+.intro video::-webkit-media-controls,
+.intro video::-webkit-media-controls-enclosure,
+.intro video::-webkit-media-controls-panel,
+.intro video::-webkit-media-controls-play-button,
+.intro video::-webkit-media-controls-start-playback-button,
+.intro video::-webkit-media-controls-overlay-play-button{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+.intro-loading{position:absolute;inset:0;z-index:1;background:#050607;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;pointer-events:none}
+.intro.is-playing .intro-loading{display:none}
+.intro-studio{font:bold clamp(22px,4vw,48px) Georgia,serif;letter-spacing:.3em;color:#c9ae83;text-shadow:0 0 23px #65452c}
+.intro-loading-text{font:9px Arial,sans-serif;letter-spacing:.6em;color:#8f8e84}
+.intro-skip{z-index:3}.intro-play{z-index:3}
