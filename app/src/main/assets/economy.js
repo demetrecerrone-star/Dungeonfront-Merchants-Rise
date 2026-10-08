@@ -1,0 +1,30 @@
+/* Pure deterministic economy helpers, shared by browser and node tests. */
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.DFEconomy=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const items={
+ potion:{name:'Healing Potion',icon:'✚',cost:14,base:29,desc:'Keeps another poor soul breathing.'},
+ torch:{name:'Pitch Torch',icon:'♨',cost:6,base:15,desc:'Light for the lower halls.'},
+ bandage:{name:'Field Bandages',icon:'▤',cost:5,base:12,desc:'For cuts, burns, and claw wounds.'},
+ blade:{name:'Iron Shortsword',icon:'⚔',cost:35,base:72,desc:'Reliable iron. No promises.'},
+ forged:{name:'Reforged Longblade',icon:'⚒',cost:50,base:124,desc:'Made from dungeon-scavenged iron.'}
+};
+const upgrades={
+ shelf:{name:'Reinforced Shelving',cost:220,desc:'More stock space, +1 customer at a time.'},
+ forge:{name:'Ember Forge',cost:420,desc:'Unlock longblade crafting and warm the shop.'},
+ guard:{name:'Hire a Door Guard',cost:340,desc:'Reduces losses from bandit raids by 85%.'},
+ lantern:{name:'Beacon Lantern',cost:170,desc:'Adventurers find you easier; earn more reputation.'}
+};
+function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0};}
+function valid(s){return !!s&&s.version===1&&Number.isFinite(s.gold)&&s.gold>=0&&s.stock&&s.price&&s.upgrades&&s.mats&&Number.isFinite(s.clock)&&s.day>=1;}
+function earnRep(s,amount){s.reputation=Math.min(100,Math.max(0,s.reputation+amount));}
+function restock(s,id,qty){qty=qty||3;const item=items[id];if(!item||id==='forged')return {ok:false,reason:'This item must be crafted.'};if((s.stock[id]||0)+qty>(s.upgrades.shelf?30:14))return {ok:false,reason:'Build shelving to increase stock capacity.'};const amount=qty*item.cost;if(s.gold<amount)return {ok:false,reason:'Not enough gold to restock.'};s.gold-=amount;s.spent+=amount;s.stock[id]=(s.stock[id]||0)+qty;return{ok:true,cost:amount};}
+function setPrice(s,id,direction){const item=items[id];if(!item)return false;const current=s.price[id];const next=current+direction*2;s.price[id]=Math.max(item.cost+1,Math.min(item.base*3,next));return next===s.price[id];}
+function buyUpgrade(s,id){let upgrade=upgrades[id];if(!upgrade)return{ok:false,reason:'Unknown upgrade.'};if(s.upgrades[id])return{ok:false,reason:'Already built.'};if(s.gold<upgrade.cost)return{ok:false,reason:'Not enough gold.'};s.gold-=upgrade.cost;s.spent+=upgrade.cost;s.upgrades[id]=true;return{ok:true};}
+function craft(s,id){if(id==='potion'){if(s.mats.herb<2||s.gold<8)return{ok:false,reason:'Requires 2 wild herbs and 8 gold.'};s.mats.herb-=2;s.gold-=8;s.spent+=8;s.stock.potion+=2;return{ok:true,amount:2};}
+if(id==='forged'){if(!s.upgrades.forge)return{ok:false,reason:'Build the Ember Forge first.'};if(s.mats.iron<3||s.gold<14)return{ok:false,reason:'Requires 3 scrap iron and 14 gold.'};s.mats.iron-=3;s.gold-=14;s.spent+=14;s.stock.forged+=1;return{ok:true,amount:1};}
+return{ok:false,reason:'Unknown recipe.'};}
+function attemptSale(s,id,budget,roll){const item=items[id];if(!item||!s.stock[id])return{ok:false,reason:'out-of-stock'};if(budget<s.price[id])return{ok:false,reason:'too-expensive'};const premium=s.price[id]/item.base;const chance=Math.max(.12,Math.min(.97,.85-(premium-1)*.56+s.reputation*.001));if(roll>chance)return{ok:false,reason:'declined'};s.stock[id]-=1;s.gold+=s.price[id];s.earned+=s.price[id];s.sales++;s.visitors++;earnRep(s,s.upgrades.lantern?2:1);if(s.sales%7===0)s.depth=Math.min(20,s.depth+1);return{ok:true,earned:s.price[id],chance};}
+function buyLoot(s,type,amount,price){if(!['iron','herb'].includes(type)||!Number.isInteger(amount)||amount<=0||price<=0||s.gold<price)return{ok:false};s.gold-=price;s.spent+=price;s.mats[type]+=amount;return{ok:true};}
+function raid(s,roll){if(roll>=.28)return {happened:false};s.raidCount++;const loss=Math.min(s.gold,Math.ceil(s.gold*(s.upgrades.guard?.025:.16)));s.gold-=loss;return{happened:true,loss};}
+return{items,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep};
+});

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#080c0e">
+  <title>Dungeonfront: Merchant's Rise</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="rotate"><span>↻</span><strong>ROTATE TO LANDSCAPE</strong><small>The dungeon is waiting.</small></div>
+  <div id="intro" class="intro">
+    <video id="introVideo" playsinline preload="auto" autoplay src="dabski_intro.mp4"></video>
+    <button id="introPlay" class="intro-play hidden">▶ Play Dabski intro</button>
+    <button id="skipIntro" class="intro-skip">SKIP ›</button>
+  </div>
+  <div id="title" class="title hidden">
+    <div class="title-haze"></div>
+    <div class="title-frame">
+      <div class="rune">✥ &nbsp; THE HOLLOW DESCENT &nbsp; ✥</div>
+      <h1>DUNGEONFRONT</h1>
+      <h2>MERCHANT'S RISE</h2>
+      <p>The dungeon devours heroes. You sell them hope.</p>
+      <button id="startGame" class="large-btn">OPEN THE SHOP</button>
+      <small>LANDSCAPE · OFFLINE TYCOON · EARLY PLAYABLE BUILD v0.1</small>
+    </div>
+  </div>
+  <main id="game" class="game hidden">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✥</span><div><strong>DUNGEONFRONT</strong><small>LAST LIGHT PROVISIONS</small></div></div>
+      <div class="stats">
+        <div class="stat"><small>TREASURY</small><strong><span class="coin">◆</span> <span id="goldValue">280</span></strong></div>
+        <div class="stat"><small>REPUTATION</small><strong><span class="reputation">✦</span> <span id="repValue">10</span></strong></div>
+        <div class="stat"><small>DAY</small><strong id="dayValue">1</strong></div>
+        <div class="stat"><small>DUNGEON</small><strong id="depthValue">FLOOR 1</strong></div>
+      </div>
+      <button id="pauseBtn" class="icon-button" title="Pause game">Ⅱ</button>
+    </header>
+    <section class="mid">
+      <div class="scene-wrap">
+        <div class="scene-header"><span><i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET</span><span id="liveStatus">NIGHT WATCH</span></div>
+        <canvas id="scene" width="800" height="440" aria-label="Animated dungeon entrance and merchant shop"></canvas>
+        <div class="scene-footer"><span>⚒ <span id="visitorsValue">0</span> ADVENTURERS SERVED</span><span>◈ TAP AN ADVENTURER TO INSPECT</span><span id="safetyNote">⚔ THREAT: UNEASY</span></div>
+        <div id="npcCard" class="npc-card hidden" role="dialog" aria-label="Adventurer details">
+          <button id="closeNpc" class="x-btn">×</button><strong id="npcName"></strong><small id="npcMeta"></small><p id="npcText"></p>
+        </div>
+      </div>
+      <aside class="sidebar">
+        <nav class="tabs" aria-label="Shop management">
+          <button data-tab="stock" class="active">STOCK</button>
+          <button data-tab="craft">CRAFT</button>
+          <button data-tab="upgrade">BUILD</button>
+          <button data-tab="ledger">LEDGER</button>
+        </nav>
+        <div class="panel-title" id="panelTitle">MERCHANT INVENTORY <small>◈ LIVE</small></div>
+        <div id="panelContent" class="panel-scroll"></div>
+      </aside>
+    </section>
+    <footer class="ticker"><span class="ticker-label">FIELD REPORT</span><span id="tickerText">The torches are lit. The dungeon is hungry.</span><button id="saveBtn">SAVE ◇</button></footer>
+    <div id="pauseOverlay" class="pause-overlay hidden"><div><h2>THE SHOP IS CLOSED</h2><p>The dungeon waits for no one.</p><button id="resumeBtn" class="large-btn">RESUME TRADE</button><button id="returnTitle" class="secondary-btn">TITLE SCREEN</button></div></div>
+  </main>
+  <script src="economy.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
