@@ -9,8 +9,9 @@
 </head>
 <body>
   <div id="rotate"><span>↻</span><strong>ROTATE TO LANDSCAPE</strong><small>The dungeon is waiting.</small></div>
-  <div id="intro" class="intro">
-    <video id="introVideo" playsinline preload="auto" autoplay src="dabski_intro.mp4"></video>
+  <div id="intro" class="intro is-loading">
+    <video id="introVideo" playsinline webkit-playsinline preload="auto" disablepictureinpicture disableremoteplayback controlslist="nodownload noplaybackrate nofullscreen noremoteplayback" src="dabski_intro.mp4"></video>
+    <div id="introLoading" class="intro-loading" aria-hidden="true"><span class="intro-studio">DABSKI</span><span class="intro-loading-text">PRESENTS</span></div>
     <button id="introPlay" class="intro-play hidden">▶ Play Dabski intro</button>
     <button id="skipIntro" class="intro-skip">SKIP ›</button>
   </div>
