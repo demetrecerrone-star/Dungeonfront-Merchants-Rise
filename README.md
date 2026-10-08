@@ -1,41 +1,47 @@
-# Dungeonfront: Merchant's Rise — Android v0.1
+# Dungeonfront: Merchant's Rise — Android v0.2
 
-A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Keep adventurers supplied, set prices, buy salvage, craft better goods and expand Last Light Provisions.
+A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
 
-## Current playable systems
-
+## Playable prototype
 - Adventurers arrive, buy equipment and consumables, and bring back dungeon materials.
-- Manage stock, gold, changing prices, four shop upgrades and crafting recipes.
-- Day progression, bandit raids, dungeon floors, basic reputation and transaction ledger.
-- Procedurally drawn pixel-art shop and dungeon gate; animated visitors.
-- Fully offline, with local saves.
-- Locked landscape orientation. Visible Android navigation bar with display-cutout/system-bar inset padding and touch-safe controls.
-- Original **Dabski intro video** (1920 × 1080, 6.016 seconds), automatically fetched and verified during the APK build. It is the exact uploaded OpenArt MP4 (SHA-256 below), not a recreation.
+- Manage stock, gold, changing prices, shop upgrades and crafting recipes.
+- Dungeon floors, reputation, raiding events, and transaction ledger.
+- Procedurally drawn pixel-art shop and animated visitors; fully offline with local saves.
+- Landscape orientation and Android system navigation safe areas.
+- Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
+- Version **0.2** (Android versionCode **3**).
 
-## Build and install
+## Build APK
 
 1. Open [Actions](https://github.com/demetrecerrone-star/Dungeonfront-Merchants-Rise/actions/workflows/build-android.yml).
-2. Select the most recent **Build Dungeonfront APK** run on `main`. A new push will trigger a build, or click **Run workflow**.
-3. Wait for a **green checkmark**; then open the run and download its artifact **Dungeonfront-v0.1-debug-APK**.
-4. Extract that artifact ZIP and install `app-debug.apk` on Android. Updates will retain the app's local saved progress as long as you install with the same signing identity.
+2. Select the latest successful **Build Dungeonfront APK** run on main.
+3. Download its artifact and extract the APK.
 
-The workflow uses Android Gradle Plugin 8.7.3 and Gradle 8.10.2 on JDK 17.
+A debug APK is produced automatically if signing secrets haven't been set; **debug signing keys are temporary and may require uninstalling older builds, which can erase local saves**.
 
-The original video is retrieved from the creator's exact OpenArt generation, with byte-for-byte checksum validation:
+### Reusable signing (recommended for v0.2 onward)
+
+Create an Android keystore privately and back it up securely. Under **Repository Settings → Secrets and variables → Actions**, set all four repository secrets:
+
+- `DUNGEONFRONT_KEYSTORE_BASE64`: base64-encoded contents of the keystore file.
+- `DUNGEONFRONT_STORE_PASSWORD`: keystore password.
+- `DUNGEONFRONT_KEY_ALIAS`: key alias.
+- `DUNGEONFRONT_KEY_PASSWORD`: key password.
+
+Never commit a keystore, key password, or secrets text file to this public repository. After adding all four secrets, run the workflow again and install the **persistently signed release APK**. Keep the signing key backed up: losing it prevents future updates from using the same signing identity.
+
+If a previous APK used another signing key, uninstalling it before the first persistently signed build may be necessary once. Future releases signed with the same keystore can install over one another while retaining app data.
+
+## Project architecture
+- `MainActivity.java`: Android WebView wrapper, system insets and offline loading.
+- `app/src/main/assets/index.html` / `styles.css`: responsive landscape interface and skippable intro.
+- `app/src/main/assets/game.js`: canvas scene, customer movement, auto-save and game events.
+- `app/src/main/assets/economy.js`: inventory, pricing, recipes, upgrades, expedition salvage.
+- `.github/workflows/build-android.yml`: APK build with reusable release signing when configured.
+
+SHA-256 of original cinematic:
 `075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d`
 
-The workflow also attempts to commit the original MP4 to the repository so builds can eventually be fully self-contained; the APK always includes it after the verification step succeeds.
+## Future features
 
-## Architecture
-
-- `MainActivity.java`: Native Android WebView wrapper, safe system insets and offline loading.
-- `app/src/main/assets/index.html` / `styles.css`: Landscape UI, Dabski cinematic, shop panels.
-- `game.js`: Interactive canvas scene, transactions, customers, autosaves and game events.
-- `economy.js`: Inventory, upgrades, pricing, recipes and dungeon salvage.
-- `.github/workflows/build-android.yml`: Reproducible debug APK build.
-
-## Future roadmap
-
-**Random recruitable adventurer events** (a paladin or other special visitor appears and asks to join) are planned **after** the first build; keep this light and event-based rather than a complicated management simulator. See [issue #1](https://github.com/demetrecerrone-star/Dungeonfront-Merchants-Rise/issues/1).
-
-This is an early prototype for testing, not yet a production release. The pixel-art sprites and NPC routines are procedural and simplified, and the economy will need balancing.
+[Issue #1](https://github.com/demetrecerrone-star/Dungeonfront-Merchants-Rise/issues/1): occasional visitors, such as paladins, offering to join your dungeon expedition roster via random encounters — planned after core shop polish, not part of v0.2.

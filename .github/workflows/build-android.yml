@@ -11,7 +11,7 @@ on:
       - '.github/workflows/build-android.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   apk:
@@ -22,36 +22,49 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Check runner Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          test -d "$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" || true
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
-      - name: Fetch original Dabski intro and verify SHA-256
-        env:
-          INTRO_URL: https://cdn.openart.ai/openart-ai/production/2026-10/create-video/sfvqlFRqJn6BHsU2rFXD/sample_0_1791413597841_edf2d947.mp4
+      - name: Verify original uploaded Dabski cinematic
         run: |
-          curl --fail --location --retry 3 --retry-delay 2 "$INTRO_URL" --output app/src/main/assets/dabski_intro.mp4
+          test -f app/src/main/assets/dabski_intro.mp4
           echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
-      - name: Commit original intro to repository if missing
-        if: github.ref == 'refs/heads/main'
+      - name: Build v0.2 Android APK
+        id: build
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.DUNGEONFRONT_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.DUNGEONFRONT_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DUNGEONFRONT_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DUNGEONFRONT_KEY_PASSWORD }}
         run: |
-          if ! git ls-files --error-unmatch app/src/main/assets/dabski_intro.mp4 >/dev/null 2>&1; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/assets/dabski_intro.mp4
-            git commit -m "Add exact original Dabski intro video"
-            git fetch origin main
-            git rebase origin/main
-            git push origin HEAD:main || echo "Could not persist video to GitHub; APK build will still bundle it."
+          set -euo pipefail
+          if [[ -z "$KEYSTORE_B64" && -z "$STORE_PASSWORD" && -z "$KEY_ALIAS" && -z "$KEY_PASSWORD" ]]; then
+            echo "::warning::No persistent signing secrets configured. Building a test-signed debug APK. This APK cannot update a differently signed installation."
+            gradle --no-daemon :app:assembleDebug
+            echo "apk_path=app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_OUTPUT"
+            echo "apk_label=Dungeonfront-v0.2-debug-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.2 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
+          else
+            if [[ -z "$KEYSTORE_B64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+              echo "::error::Incomplete signing configuration: set all four DUNGEONFRONT_* repository secrets."
+              exit 1
+            fi
+            printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/dungeonfront-release.jks"
+            export DUNGEONFRONT_KEYSTORE_PATH="$RUNNER_TEMP/dungeonfront-release.jks"
+            export DUNGEONFRONT_STORE_PASSWORD="$STORE_PASSWORD"
+            export DUNGEONFRONT_KEY_ALIAS="$KEY_ALIAS"
+            export DUNGEONFRONT_KEY_PASSWORD="$KEY_PASSWORD"
+            keytool -list -keystore "$DUNGEONFRONT_KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null
+            gradle --no-daemon :app:assembleRelease
+            echo "apk_path=app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_OUTPUT"
+            echo "apk_label=Dungeonfront-v0.2-persistently-signed-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.2 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose "$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
       - uses: actions/upload-artifact@v4
         with:
-          name: Dungeonfront-v0.1-debug-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: ${{ steps.build.outputs.apk_label }}
+          path: ${{ steps.build.outputs.apk_path }}
           if-no-files-found: error

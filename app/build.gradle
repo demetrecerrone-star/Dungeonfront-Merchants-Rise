@@ -1,4 +1,11 @@
 plugins { id 'com.android.application' }
+
+def signPath = System.getenv('DUNGEONFRONT_KEYSTORE_PATH')
+def signStorePass = System.getenv('DUNGEONFRONT_STORE_PASSWORD')
+def signAlias = System.getenv('DUNGEONFRONT_KEY_ALIAS')
+def signKeyPass = System.getenv('DUNGEONFRONT_KEY_PASSWORD')
+def usePersistentSigning = [signPath, signStorePass, signAlias, signKeyPass].every { it != null && !it.trim().isEmpty() }
+
 android {
  namespace 'com.dabski.dungeonfront'
  compileSdk 35
@@ -6,10 +13,26 @@ android {
   applicationId 'com.dabski.dungeonfront'
   minSdk 26
   targetSdk 35
-  versionCode 2
-  versionName '0.1.1'
+  versionCode 3
+  versionName '0.2'
  }
- buildTypes { release { minifyEnabled false }; debug { debuggable true } }
+ signingConfigs {
+  if (usePersistentSigning) {
+   persistent {
+    storeFile file(signPath)
+    storePassword signStorePass
+    keyAlias signAlias
+    keyPassword signKeyPass
+   }
+  }
+ }
+ buildTypes {
+  release {
+   minifyEnabled false
+   if (usePersistentSigning) signingConfig signingConfigs.persistent
+  }
+  debug { debuggable true }
+ }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  packaging { resources { excludes += ['META-INF/DEPENDENCIES','META-INF/NOTICE','META-INF/LICENSE'] } }
 }
