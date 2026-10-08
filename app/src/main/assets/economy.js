@@ -14,7 +14,7 @@ const upgrades={
  guard:{name:'Hire a Door Guard',cost:340,desc:'Reduces losses from bandit raids by 85%.'},
  lantern:{name:'Beacon Lantern',cost:170,desc:'Adventurers find you easier; earn more reputation.'}
 };
-function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0,commissionDay:0,commissionsCompleted:0};}
+function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0,commissionDay:0,commissionsCompleted:0,lastVisitorDay:0,pendingEncounter:null,visitorsResolved:0};}
 function valid(s){return !!s&&s.version===1&&Number.isFinite(s.gold)&&s.gold>=0&&s.stock&&s.price&&s.upgrades&&s.mats&&Number.isFinite(s.clock)&&s.day>=1;}
 function earnRep(s,amount){s.reputation=Math.min(100,Math.max(0,s.reputation+amount));}
 function restock(s,id,qty){qty=qty||3;const item=items[id];if(!item||id==='forged')return {ok:false,reason:'This item must be crafted.'};if((s.stock[id]||0)+qty>(s.upgrades.shelf?30:14))return {ok:false,reason:'Build shelving to increase stock capacity.'};const amount=qty*item.cost;if(s.gold<amount)return {ok:false,reason:'Not enough gold to restock.'};s.gold-=amount;s.spent+=amount;s.stock[id]=(s.stock[id]||0)+qty;return{ok:true,cost:amount};}
@@ -40,6 +40,53 @@ function fulfillCommission(s){
  earnRep(s,3);
  return{ok:true,reward:order.reward,id:order.id,qty:order.qty};
 }
+
+const visitorEncounters={
+ herbalist:{title:'The Traveling Herbalist',who:'Merrin • Roadside Apothecary',icon:'❀',
+  story:'A weathered herbalist arrives with a basket of rare wild herbs. “The dungeon has made them hard to find. Care to trade?”',
+  choices:[
+   {id:'purchase',label:'BUY HERBS',desc:'Pay 18G for 3 herbs',gold:-18,herb:3,rep:1,result:'Merrin sells you three bundles of fresh herbs.'},
+   {id:'barter',label:'BARTER',desc:'1 potion for 2 herbs and +3 rep',item:'potion',qty:1,herb:2,rep:3,result:'Merrin praises your fair barter.'},
+   {id:'decline',label:'NOT TODAY',desc:'Politely decline',result:'Merrin wishes you good fortune.'}
+  ]},
+ wounded:{title:'A Wounded Ranger',who:'Kael • Forest Ranger',icon:'✚',
+  story:'A bloodied ranger leans against the counter. “My companions are trapped below. Can you spare anything?”',
+  choices:[
+   {id:'heal',label:'GIVE POTION',desc:'1 potion for +6 rep',item:'potion',qty:1,rep:6,result:'Kael thanks you and hurries back to his party.'},
+   {id:'bandage',label:'SELL BANDAGES',desc:'1 bandage for 25G and +2 rep',item:'bandage',qty:1,gold:25,rep:2,result:'Kael buys field bandages and leaves relieved.'},
+   {id:'refuse',label:'SEND AWAY',desc:'Save your supplies',result:'The ranger continues toward the dungeon.'}
+  ]},
+ caravan:{title:'The Scrap Caravan',who:'Old Tovin • Salvage Trader',icon:'⚒',
+  story:'An iron-laden cart creaks to a stop. “I have dungeon scrap. Or maybe you have something for my crew?”',
+  choices:[
+   {id:'iron',label:'BUY SCRAP',desc:'Pay 24G for 3 iron',gold:-24,iron:3,result:'Tovin unloads three bundles of usable iron.'},
+   {id:'torches',label:'SELL TORCHES',desc:'2 torches for 35G and +2 rep',item:'torch',qty:2,gold:35,rep:2,result:'The caravan stocks up on your torches.'},
+   {id:'pass',label:'PASS',desc:'Keep your current stock',result:'The caravan rolls on toward the western road.'}
+  ]},
+ pilgrim:{title:'A Pilgrim at Sundown',who:'Sister Veya • Wanderer',icon:'✦',
+  story:'A quiet pilgrim asks for aid before entering the Hollow Descent. “The light is fading, merchant.”',
+  choices:[
+   {id:'light',label:'GIFT A TORCH',desc:'1 torch for +5 rep',item:'torch',qty:1,rep:5,result:'Sister Veya promises to spread word of your kindness.'},
+   {id:'help',label:'GIVE COIN',desc:'Pay 12G for +4 rep',gold:-12,rep:4,result:'The pilgrim accepts your donation with gratitude.'},
+   {id:'farewell',label:'WISH LUCK',desc:'Wish her safe passage',result:'She blesses the shop before moving on.'}
+  ]}
+};
+function resolveVisitor(s,eventId,choiceId){
+ if(s.lastVisitorDay===s.day)return{ok:false,reason:'This visitor has already been served today.'};
+ if(s.pendingEncounter!==eventId)return{ok:false,reason:'This visitor is no longer at the counter.'};
+ const event=visitorEncounters[eventId],choice=event?.choices.find(x=>x.id===choiceId);
+ if(!choice)return{ok:false,reason:'Unknown visitor choice.'};
+ if((choice.gold||0)<0&&s.gold < -choice.gold)return{ok:false,reason:'Not enough gold.'};
+ if(choice.item&&(s.stock[choice.item]||0)<choice.qty)return{ok:false,reason:'Not enough '+items[choice.item].name+' in stock.'};
+ if(choice.item)s.stock[choice.item]-=choice.qty;
+ if(choice.gold){s.gold+=choice.gold;if(choice.gold>0)s.earned+=choice.gold;else s.spent-=choice.gold;}
+ if(choice.iron)s.mats.iron+=choice.iron;
+ if(choice.herb)s.mats.herb+=choice.herb;
+ if(choice.rep)earnRep(s,choice.rep);
+ s.lastVisitorDay=s.day;s.pendingEncounter=null;s.visitorsResolved=(s.visitorsResolved||0)+1;
+ return {ok:true,message:choice.result,goldDelta:choice.gold||0,repDelta:choice.rep||0};
+}
+
 function raid(s,roll){if(roll>=.28)return {happened:false};s.raidCount++;const loss=Math.min(s.gold,Math.ceil(s.gold*(s.upgrades.guard?.025:.16)));s.gold-=loss;return{happened:true,loss};}
-return{items,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep,commission,fulfillCommission};
+return{items,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep,commission,fulfillCommission,visitorEncounters,resolveVisitor};
 });

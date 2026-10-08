@@ -23,15 +23,15 @@
       <h2>MERCHANT'S RISE</h2>
       <p>The dungeon devours heroes. You sell them hope.</p>
       <button id="startGame" class="large-btn">OPEN THE SHOP</button>
-      <small>LANDSCAPE · OFFLINE TYCOON · EARLY PLAYABLE BUILD v0.3</small>
+      <small>LANDSCAPE · OFFLINE TYCOON · EARLY PLAYABLE BUILD v0.4</small>
     </div>
   </div>
   <main id="game" class="game hidden">
     <header class="topbar">
       <div class="brand"><span class="brand-mark">✥</span><div><strong>DUNGEONFRONT</strong><small>LAST LIGHT PROVISIONS</small></div></div>
       <div class="stats">
-        <div class="stat"><small>TREASURY</small><strong><span class="coin">◆</span> <span id="goldValue">280</span></strong></div>
-        <div class="stat"><small>REPUTATION</small><strong><span class="reputation">✦</span> <span id="repValue">10</span></strong></div>
+        <div class="stat" id="goldStat"><small>TREASURY</small><strong><span class="coin">◆</span> <span id="goldValue">280</span></strong></div>
+        <div class="stat" id="repStat"><small>REPUTATION</small><strong><span class="reputation">✦</span> <span id="repValue">10</span></strong></div>
         <div class="stat"><small>DAY</small><strong id="dayValue">1</strong></div>
         <div class="stat"><small>DUNGEON</small><strong id="depthValue">FLOOR 1</strong></div>
       </div>
@@ -39,25 +39,28 @@
     </header>
     <section class="mid">
       <div class="scene-wrap">
-        <div class="scene-header"><span><i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET</span><span id="liveStatus">NIGHT WATCH</span></div>
+        <div class="scene-header"><span><i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET</span><div class="scene-live"><span id="stockSignal" class="status-chip">SUPPLIES READY</span><span id="liveStatus">NIGHT WATCH</span></div></div>
         <canvas id="scene" width="800" height="440" aria-label="Animated dungeon entrance and merchant shop"></canvas>
+        <div class="day-track" aria-hidden="true"><div id="dayProgressFill"></div></div>
         <div class="scene-footer"><span>⚒ <span id="visitorsValue">0</span> ADVENTURERS SERVED</span><span>◈ TAP AN ADVENTURER TO INSPECT</span><span id="safetyNote">⚔ THREAT: UNEASY</span></div>
         <div id="npcCard" class="npc-card hidden" role="dialog" aria-label="Adventurer details">
           <button id="closeNpc" class="x-btn">×</button><strong id="npcName"></strong><small id="npcMeta"></small><p id="npcText"></p>
         </div>
+        <div id="feedbackToast" class="feedback-toast hidden" role="status" aria-live="polite"></div>
       </div>
       <aside class="sidebar">
         <nav class="tabs" aria-label="Shop management">
-          <button data-tab="stock" class="active">STOCK</button>
-          <button data-tab="craft">CRAFT</button>
-          <button data-tab="upgrade">BUILD</button>
-          <button data-tab="ledger">LEDGER</button>
+          <button data-tab="stock" class="active"><span class="tab-symbol">◈</span> STOCK</button>
+          <button data-tab="craft"><span class="tab-symbol">⚒</span> CRAFT</button>
+          <button data-tab="upgrade"><span class="tab-symbol">⌂</span> BUILD</button>
+          <button data-tab="ledger"><span class="tab-symbol">≡</span> LEDGER</button>
         </nav>
         <div class="panel-title" id="panelTitle">MERCHANT INVENTORY <small>◈ LIVE</small></div>
         <div id="panelContent" class="panel-scroll"></div>
       </aside>
     </section>
     <footer class="ticker"><span class="ticker-label">FIELD REPORT</span><span id="tickerText">The torches are lit. The dungeon is hungry.</span><button id="saveBtn">SAVE ◇</button></footer>
+    <div id="visitorOverlay" class="visitor-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="visitorTitle"><div class="visitor-card"><div class="visitor-heading"><span id="visitorIcon" class="visitor-icon">✦</span><div><small>SPECIAL VISITOR • ROADSIDE ENCOUNTER</small><h2 id="visitorTitle">A traveler approaches</h2><span id="visitorWho"></span></div></div><p id="visitorStory"></p><div id="visitorChoices" class="visitor-choices"></div><div id="visitorHint" class="visitor-hint" role="status"></div></div></div>
     <div id="pauseOverlay" class="pause-overlay hidden"><div><h2>THE SHOP IS CLOSED</h2><p>The dungeon waits for no one.</p><button id="resumeBtn" class="large-btn">RESUME TRADE</button><button id="returnTitle" class="secondary-btn">TITLE SCREEN</button></div></div>
   </main>
   <script src="economy.js"></script>

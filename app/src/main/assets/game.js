@@ -4,12 +4,73 @@ const E=window.DFEconomy,$=id=>document.getElementById(id),key='dungeonfront_mer
 let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.valid(old))s=Object.assign(E.initialState(),old)}catch(e){}
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
+let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
 const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowan','Mira','Dain','Iris','Sable','Thorne'],classes=['Knight','Rogue','Mage','Ranger','Cleric','Mercenary'],colors=['#b9a4a0','#8795a8','#b093bd','#9ab49d','#d1af73','#a48d87'],needs=['potion','potion','torch','bandage','blade','torch','bandage','forged'];
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
 function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerText').textContent=msg;paintPanel()}
-function save(){persist();$('tickerText').textContent='◇ Progress saved to this device.'}
-function hud(){$('goldValue').textContent=Math.floor(s.gold).toLocaleString();$('repValue').textContent=s.reputation;$('dayValue').textContent=s.day;$('depthValue').textContent='FLOOR '+s.depth;$('visitorsValue').textContent=s.visitors;$('liveStatus').textContent=paused?'SHOP CLOSED':'OPEN • ACTIVE';$('safetyNote').textContent=s.upgrades.guard?'⚔ THREAT: GUARDED':'⚔ THREAT: UNEASY'}
+function feedback(msg){
+ const el=$('feedbackToast');
+ el.textContent=msg;el.classList.remove('hidden');clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>el.classList.add('hidden'),3300);
+}
+function flashStat(id,rising){
+ const el=$(id);
+ if(!el)return;
+ el.classList.remove('rise','fall');
+ void el.offsetWidth;
+ el.classList.add(rising?'rise':'fall');
+ setTimeout(()=>el.classList.remove('rise','fall'),650);
+}
+function save(){persist();$('tickerText').textContent='◇ Progress saved to this device.';feedback('◇ Progress saved safely.')}
+function visitorChoicesMarkup(enc){
+ return enc.choices.map(choice=>{
+  const noGold=(choice.gold||0)<0&&s.gold<-(choice.gold||0);
+  const noItems=choice.item&&(s.stock[choice.item]||0)<choice.qty;
+  return '<button type="button" class="visitor-choice" data-visitor-choice="'+esc(choice.id)+'" '+(noGold||noItems?'disabled':'')+'><strong>'+esc(choice.label)+'</strong><small>'+esc(choice.desc)+'</small></button>';
+ }).join('');
+}
+function presentVisitor(){
+ const id=s.pendingEncounter,enc=E.visitorEncounters[id];if(!enc||!active)return;
+ visitorOpen=true;$('npcCard').classList.add('hidden');
+ $('visitorIcon').textContent=enc.icon;$('visitorTitle').textContent=enc.title;
+ $('visitorWho').textContent=enc.who;$('visitorStory').textContent=enc.story;
+ $('visitorChoices').innerHTML=visitorChoicesMarkup(enc);
+ $('visitorHint').textContent='';$('visitorOverlay').classList.remove('hidden');
+ persist();
+}
+function chooseVisitor(choiceId){
+ const id=s.pendingEncounter;
+ const tx=E.resolveVisitor(s,id,choiceId);
+ if(!tx.ok){$('visitorHint').textContent=tx.reason;return;}
+ visitorOpen=false;$('visitorOverlay').classList.add('hidden');
+ const enc=E.visitorEncounters[id];
+ say(enc.title+': '+tx.message);
+ feedback('✦ '+tx.message);persist();paintPanel();
+}
+$('visitorChoices').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-visitor-choice]');
+ if(b&&!b.disabled)chooseVisitor(b.dataset.visitorChoice);
+});
+function hud(){
+ if(shownGold!==null&&s.gold!==shownGold)flashStat('goldStat',s.gold>shownGold);
+ if(shownRep!==null&&s.reputation!==shownRep)flashStat('repStat',s.reputation>shownRep);
+ shownGold=s.gold;shownRep=s.reputation;
+ $('goldValue').textContent=Math.floor(s.gold).toLocaleString();
+ $('repValue').textContent=s.reputation;
+ $('dayValue').textContent=s.day;
+ $('depthValue').textContent='FLOOR '+s.depth;
+ $('visitorsValue').textContent=s.visitors;
+ $('liveStatus').textContent=paused?'SHOP CLOSED':visitorOpen?'VISITOR AT DOOR':s.clock<24?'DAWN TRADE':s.clock<69?'MARKET OPEN':'DUSK WATCH';
+ $('safetyNote').textContent=s.upgrades.guard?'⚔ THREAT: GUARDED':'⚔ THREAT: UNEASY';
+ const ids=Object.keys(E.items).filter(id=>id!=='forged'||s.upgrades.forge);
+ const empty=ids.filter(id=>(s.stock[id]||0)===0).length;
+ const low=ids.filter(id=>(s.stock[id]||0)<=2).length;
+ const chip=$('stockSignal');chip.classList.toggle('danger',empty>0);
+ chip.classList.toggle('warn',empty===0&&low>0);
+ chip.textContent=empty?empty+' OUT OF STOCK':low?low+' LOW SUPPLIES':'SUPPLIES READY';
+ $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
+}
 function paintPanel(){if(!active)return;hud();const labels={stock:'MERCHANT INVENTORY',craft:'WORKBENCH & MATERIALS',upgrade:'EXPAND YOUR SHOP',ledger:'THE BLACK LEDGER'};$('panelTitle').innerHTML=labels[tab]+' <small>◈ '+(tab==='stock'?'LIVE':'MANAGE')+'</small>';
 let html='';
 if(tab==='stock'){const order=E.commission(s);html+='<article class="commission"><div class="commission-top"><span>✉ GUILD SUPPLY ORDER</span><b>DAY '+s.day+'</b></div><div class="commission-name">'+order.qty+' × '+esc(E.items[order.id].name)+'</div><div class="commission-bottom"><span>REWARD '+order.reward+'G · +3 REP</span><button class="action-btn" data-action="commission" '+(order.claimed||(s.stock[order.id]||0)<order.qty?'disabled':'')+'>'+(order.claimed?'DELIVERED ✓':'DELIVER')+'</button></div></article>';for(const [id,it] of Object.entries(E.items)){const qty=s.stock[id]||0,limit=s.upgrades.shelf?30:14,disabled=s.gold<it.cost*3||qty+3>limit;html+='<article class="item '+(qty===0?'out-stock':qty<=2?'low-stock':'')+'"><div class="item-top"><span class="item-name"><span class="item-icon">'+it.icon+'</span>'+esc(it.name)+'</span><span class="item-qty">'+qty+'/'+limit+'</span></div><div class="item-meta">'+esc(it.desc)+'</div><div class="item-bot"><div class="price-controls"><button data-action="price" data-id="'+id+'" data-dir="-1">−</button><b>'+s.price[id]+'G</b><button data-action="price" data-id="'+id+'" data-dir="1">+</button></div>'+(id==='forged'?'<small>CRAFT ONLY</small>':'<button data-action="restock" data-id="'+id+'" '+(disabled?'disabled':'')+'>+3 · '+it.cost*3+'G</button>')+'</div></article>'}html+='<div class="panel-tip">Set fair prices, watch stock levels, and supply dungeon-bound adventurers.</div>'}
@@ -18,9 +79,19 @@ if(tab==='upgrade'){for(const [id,u] of Object.entries(E.upgrades))html+='<artic
 if(tab==='ledger'){html='<div class="ledger-grid"><div class="ledger-box"><small>GROSS SALES</small><strong>'+s.earned+'G</strong></div><div class="ledger-box"><small>EXPENSES</small><strong>'+s.spent+'G</strong></div><div class="ledger-box"><small>ITEMS SOLD</small><strong>'+s.sales+'</strong></div><div class="ledger-box"><small>BANDIT RAIDS</small><strong>'+s.raidCount+'</strong></div><div class="ledger-box"><small>GUILD ORDERS</small><strong>'+(s.commissionsCompleted||0)+'</strong></div></div>'+s.events.map(e=>'<div class="log-entry">'+esc(e)+'</div>').join('')}
 const panel=$('panelContent'),scroll=panel.scrollTop;panel.innerHTML=html;panel.scrollTop=scroll}
 function spawn(){if(guests.length>=(s.upgrades.shelf?5:4))return;const i=Math.floor(r(0,classes.length));guests.push({id:++guestId,name:names[Math.floor(r(0,names.length))],cls:classes[i],color:colors[i],level:1+Math.floor(r(0,7+s.depth*3)),need:needs[Math.floor(r(0,needs.length))],budget:Math.floor(r(30,160)+s.depth*16),returning:Math.random()<.3,x:-25,y:346+Math.floor(r(-3,17)),stage:0,hold:0,line:''})}
-function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',count=1+Math.floor(r(0,3)),cost=count*(mat==='iron'?8:5);const tx=E.buyLoot(s,mat,count,cost);c.line=tx.ok?'Loot sold':'No deal';say(tx.ok?c.name+' returned from the dungeon. Bought '+count+' '+mat+' for '+cost+'G.':c.name+' offered salvage, but the treasury was empty.')}else{let tx=E.attemptSale(s,c.need,c.budget,Math.random());c.line=tx.ok?'Thank you!':tx.reason==='out-of-stock'?'Out of stock!':'No sale';say(tx.ok?c.name+' the '+c.cls+' bought '+E.items[c.need].name+' for '+tx.earned+'G.':c.name+' the '+c.cls+' left without a purchase.')}persist()}
-function tick(dt){if(!active||paused)return;s.clock+=dt;next-=dt;if(next<=0){spawn();next=r(s.upgrades.lantern?2.7:3.8,s.upgrades.lantern?5.2:7.1)}for(const c of guests){if(c.stage===0){c.x+=dt*70;if(c.x>=520){c.x=520;c.stage=1;c.hold=1.2;transact(c)}}else if(c.stage===1){c.hold-=dt;if(c.hold<=0)c.stage=2}else c.x-=dt*94}guests=guests.filter(c=>c.x>-70||c.stage===0);
-if(s.clock>=95){s.clock-=95;s.day++;const raid=E.raid(s,Math.random());say(raid.happened?'NIGHT RAID: Bandits stole '+raid.loss+'G.':'Dawn breaks over the dungeon. Day '+s.day+' begins.');persist()}clock+=dt;if(clock>=3){clock=0;persist();paintPanel()}}
+function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',count=1+Math.floor(r(0,3)),cost=count*(mat==='iron'?8:5);const tx=E.buyLoot(s,mat,count,cost);c.line=tx.ok?'Loot sold':'No deal';if(tx.ok)feedback('⚒ Salvage acquired: '+count+' '+mat);say(tx.ok?c.name+' returned from the dungeon. Bought '+count+' '+mat+' for '+cost+'G.':c.name+' offered salvage, but the treasury was empty.')}else{let tx=E.attemptSale(s,c.need,c.budget,Math.random());c.line=tx.ok?'Thank you!':tx.reason==='out-of-stock'?'Out of stock!':'No sale';if(tx.ok)feedback('◆ +'+tx.earned+'G • '+c.name+' made a purchase');say(tx.ok?c.name+' the '+c.cls+' bought '+E.items[c.need].name+' for '+tx.earned+'G.':c.name+' the '+c.cls+' left without a purchase.')}persist()}
+function tick(dt){
+ if(!active||paused||visitorOpen)return;
+ s.clock+=dt;visitorCountdown-=dt;
+ $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
+ if(s.pendingEncounter){presentVisitor();return}
+ if(visitorCountdown<=0&&s.lastVisitorDay!==s.day){
+  const ids=Object.keys(E.visitorEncounters);
+  s.pendingEncounter=ids[Math.floor(Math.random()*ids.length)];
+  presentVisitor();return;
+ }
+ next-=dt;if(next<=0){spawn();next=r(s.upgrades.lantern?2.7:3.8,s.upgrades.lantern?5.2:7.1)}for(const c of guests){if(c.stage===0){c.x+=dt*70;if(c.x>=520){c.x=520;c.stage=1;c.hold=1.2;transact(c)}}else if(c.stage===1){c.hold-=dt;if(c.hold<=0)c.stage=2}else c.x-=dt*94}guests=guests.filter(c=>c.x>-70||c.stage===0);
+if(s.clock>=95){s.clock-=95;s.day++;visitorCountdown=r(14,29);const raid=E.raid(s,Math.random());say(raid.happened?'NIGHT RAID: Bandits stole '+raid.loss+'G.':'Dawn breaks over the dungeon. Day '+s.day+' begins.');persist()}clock+=dt;if(clock>=3){clock=0;persist();paintPanel()}}
 function box(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),Math.ceil(w),Math.ceil(h))}
 function stroke(x,y,w,h,color){g.strokeStyle=color;g.strokeRect(x,y,w,h)}
 function drawActor(x,y,color,t,role,cls,stage){
@@ -73,11 +144,14 @@ if(s.upgrades.lantern)torch(660,162,t);
 torch(317,142,t);torch(648,142,t);
 for(const c of guests){drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);g.textAlign='center';box(c.x-31,c.y-59,62,14,'#1e2424');g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,c.y-49);if(c.stage===1&&c.line){box(c.x-50,c.y-89,100,19,'#e4d3b3');g.fillStyle='#332822';g.fillText(c.line,c.x,c.y-75)}}
 for(let i=0;i<20;i++){let x=(i*67+t*(i%2?17:-13)+8000)%800,y=(i*37+t*16)%440;box(x,y,2,8,'#8fa8ae30')}
+// Dusk gently changes the color of the marketplace over the day.
+const dusk=Math.max(0,Math.min(1,(s.clock-50)/45));
+if(dusk){g.fillStyle='rgba(6,13,29,'+(dusk*.23)+')';g.fillRect(0,0,800,440)}
 const shade=g.createLinearGradient(0,0,0,440);shade.addColorStop(0,'#00000088');shade.addColorStop(.4,'#00000000');shade.addColorStop(1,'#05070999');g.fillStyle=shade;g.fillRect(0,0,800,440);g.strokeStyle='#090c0d';g.lineWidth=9;g.strokeRect(0,0,800,440);
 }
 function frame(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;if(active){tick(dt);draw(now/1000)}requestAnimationFrame(frame)}requestAnimationFrame(frame);
-function start(){$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();say('The bell rings. Adventurers are approaching the shop.')}
-function title(){active=false;paused=false;$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
+function start(){$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
+function title(){active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
 function leaveIntro(){const v=$('introVideo');try{v.pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
 const introVideo=$('introVideo');
 // WebView may momentarily render default media chrome while preparing the video.
@@ -97,8 +171,12 @@ introVideo.onended=leaveIntro;
 introVideo.onerror=leaveIntro;
 $('introPlay').onclick=()=>{introVideo.play().catch(()=>{$('introPlay').classList.remove('hidden')})};
 $('startGame').onclick=start;$('pauseBtn').onclick=()=>{paused=true;$('pauseOverlay').classList.remove('hidden');persist();hud()};$('resumeBtn').onclick=()=>{paused=false;$('pauseOverlay').classList.add('hidden');hud()};$('returnTitle').onclick=title;$('saveBtn').onclick=save;$('closeNpc').onclick=()=>$('npcCard').classList.add('hidden');
-$('panelContent').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;let tx=null,id=b.dataset.id,action=b.dataset.action;if(action==='restock')tx=E.restock(s,id);if(action==='price'){E.setPrice(s,id,Number(b.dataset.dir));tx={ok:true}}if(action==='upgrade')tx=E.buyUpgrade(s,id);if(action==='craft')tx=E.craft(s,id);if(action==='commission')tx=E.fulfillCommission(s);if(tx?.ok){let msg=action==='restock'?'Restocked '+E.items[id].name+'.':action==='price'?'Price changed for '+E.items[id].name+'.':action==='upgrade'?'Built '+E.upgrades[id].name+'.':action==='commission'?'Guild shipment delivered! Earned '+tx.reward+'G and 3 reputation.':'Crafted '+E.items[id].name+'.';say(msg);}else if(tx)say(tx.reason||'Not enough resources.');persist();paintPanel()});
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));paintPanel()});
+$('panelContent').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;let tx=null,id=b.dataset.id,action=b.dataset.action;if(action==='restock')tx=E.restock(s,id);if(action==='price'){E.setPrice(s,id,Number(b.dataset.dir));tx={ok:true}}if(action==='upgrade')tx=E.buyUpgrade(s,id);if(action==='craft')tx=E.craft(s,id);if(action==='commission')tx=E.fulfillCommission(s);if(tx?.ok){let msg=action==='restock'?'Restocked '+E.items[id].name+'.':action==='price'?'Price changed for '+E.items[id].name+'.':action==='upgrade'?'Built '+E.upgrades[id].name+'.':action==='commission'?'Guild shipment delivered! Earned '+tx.reward+'G and 3 reputation.':'Crafted '+E.items[id].name+'.';say(msg);if(action!=='price')feedback('✦ '+msg);}else if(tx){say(tx.reason||'Not enough resources.');feedback('! '+(tx.reason||'Not enough resources.'));}persist();paintPanel()});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+ tab=b.dataset.tab;
+ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));
+ $('panelContent').scrollTop=0;paintPanel();
+});
 canvas.addEventListener('pointerdown',e=>{let rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left)*800/rect.width,y=(e.clientY-rect.top)*440/rect.height;let c=guests.find(c=>Math.abs(c.x-x)<35&&Math.abs(c.y-25-y)<50);if(c){selected=c;$('npcName').textContent=c.name+' the '+c.cls;$('npcMeta').textContent='LEVEL '+c.level+' • '+c.budget+'G PURSE • FLOOR '+s.depth;$('npcText').textContent=c.returning?'Returning with dungeon salvage.':'Looking for '+E.items[c.need].name.toLowerCase()+' before entering the dungeon.';$('npcCard').classList.remove('hidden')}else{$('npcCard').classList.add('hidden');selected=null}});
 if(!new URLSearchParams(location.search).has('skipIntro')&&!new URLSearchParams(location.search).has('debugGame')){
   // Programmatic playback keeps media controls hidden; a custom play button is
@@ -106,7 +184,12 @@ if(!new URLSearchParams(location.search).has('skipIntro')&&!new URLSearchParams(
   introVideo.play().catch(()=>{$('introPlay').classList.remove('hidden')});
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();last=performance.now()}});window.addEventListener('pagehide',persist);
-window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
+window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(visitorOpen){
+ const enc=E.visitorEncounters[s.pendingEncounter];
+ if(enc)chooseVisitor(enc.choices[enc.choices.length-1].id);
+ return true;
+ }
+ if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
 if(new URLSearchParams(location.search).has('skipIntro'))leaveIntro();
 if(new URLSearchParams(location.search).has('debugGame'))start();
 })();
