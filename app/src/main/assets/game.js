@@ -51,13 +51,33 @@ const shade=g.createLinearGradient(0,0,0,440);shade.addColorStop(0,'#00000088');
 function frame(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;if(active){tick(dt);draw(now/1000)}requestAnimationFrame(frame)}requestAnimationFrame(frame);
 function start(){$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();say('The bell rings. Adventurers are approaching the shop.')}
 function title(){active=false;paused=false;$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
-function leaveIntro(){try{$('introVideo').pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
-$('skipIntro').onclick=leaveIntro;$('introVideo').onended=leaveIntro;$('introVideo').onerror=leaveIntro;$('introPlay').onclick=()=>{$('introVideo').play().catch(leaveIntro)};
+function leaveIntro(){const v=$('introVideo');try{v.pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
+const introVideo=$('introVideo');
+// WebView may momentarily render default media chrome while preparing the video.
+// Never expose the element until playback has really started.
+introVideo.controls=false;
+introVideo.removeAttribute('controls');
+introVideo.disablePictureInPicture=true;
+introVideo.disableRemotePlayback=true;
+introVideo.addEventListener('playing',()=>{
+  introVideo.controls=false;
+  $('intro').classList.remove('is-loading');
+  $('intro').classList.add('is-playing');
+  $('introPlay').classList.add('hidden');
+});
+$('skipIntro').onclick=leaveIntro;
+introVideo.onended=leaveIntro;
+introVideo.onerror=leaveIntro;
+$('introPlay').onclick=()=>{introVideo.play().catch(()=>{$('introPlay').classList.remove('hidden')})};
 $('startGame').onclick=start;$('pauseBtn').onclick=()=>{paused=true;$('pauseOverlay').classList.remove('hidden');persist();hud()};$('resumeBtn').onclick=()=>{paused=false;$('pauseOverlay').classList.add('hidden');hud()};$('returnTitle').onclick=title;$('saveBtn').onclick=save;$('closeNpc').onclick=()=>$('npcCard').classList.add('hidden');
 $('panelContent').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;let tx=null,id=b.dataset.id,action=b.dataset.action;if(action==='restock')tx=E.restock(s,id);if(action==='price'){E.setPrice(s,id,Number(b.dataset.dir));tx={ok:true}}if(action==='upgrade')tx=E.buyUpgrade(s,id);if(action==='craft')tx=E.craft(s,id);if(tx?.ok)say(action==='restock'?'Restocked '+E.items[id].name+'.':action==='price'?'Price changed for '+E.items[id].name+'.':action==='upgrade'?'Built '+E.upgrades[id].name+'.':'Crafted '+E.items[id].name+'.');else if(tx)say(tx.reason||'Not enough resources.');persist();paintPanel()});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));paintPanel()});
 canvas.addEventListener('pointerdown',e=>{let rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left)*800/rect.width,y=(e.clientY-rect.top)*440/rect.height;let c=guests.find(c=>Math.abs(c.x-x)<35&&Math.abs(c.y-25-y)<50);if(c){selected=c;$('npcName').textContent=c.name+' the '+c.cls;$('npcMeta').textContent='LEVEL '+c.level+' • '+c.budget+'G PURSE • FLOOR '+s.depth;$('npcText').textContent=c.returning?'Returning with dungeon salvage.':'Looking for '+E.items[c.need].name.toLowerCase()+' before entering the dungeon.';$('npcCard').classList.remove('hidden')}else{$('npcCard').classList.add('hidden');selected=null}});
-try{$('introVideo').play().catch(()=>{$('introPlay').classList.remove('hidden')})}catch(e){leaveIntro()}
+if(!new URLSearchParams(location.search).has('skipIntro')&&!new URLSearchParams(location.search).has('debugGame')){
+  // Programmatic playback keeps media controls hidden; a custom play button is
+  // only shown if the Android WebView refuses autoplay with audio.
+  introVideo.play().catch(()=>{$('introPlay').classList.remove('hidden')});
+}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();last=performance.now()}});window.addEventListener('pagehide',persist);
 window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
 if(new URLSearchParams(location.search).has('skipIntro'))leaveIntro();
