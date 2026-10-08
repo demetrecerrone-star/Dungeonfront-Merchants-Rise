@@ -68,3 +68,14 @@ jobs:
           name: ${{ steps.build.outputs.apk_label }}
           path: ${{ steps.build.outputs.apk_path }}
           if-no-files-found: error
+
+      - name: Package standalone Android APK signing tool for private, local signing
+        run: |
+          SIGN_JAR="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner.jar | sort -V | tail -n 1)"
+          test -n "$SIGN_JAR"
+          cp "$SIGN_JAR" "$RUNNER_TEMP/apksigner.jar"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dungeonfront-internal-sign-tool
+          path: ${{ runner.temp }}/apksigner.jar
+          if-no-files-found: error
