@@ -1,3 +1,4 @@
+# Rebuild after configuring private signing secrets; no secrets are stored in source.
 name: Build Dungeonfront APK
 on:
   workflow_dispatch:
