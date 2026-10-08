@@ -9,11 +9,13 @@ on:
       - 'settings.gradle'
       - 'gradle.properties'
       - '.github/workflows/build-android.yml'
+
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -24,7 +26,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
-      - name: Build APK
+      - name: Fetch original Dabski intro and verify SHA-256
+        env:
+          INTRO_URL: https://cdn.openart.ai/openart-ai/production/2026-10/create-video/sfvqlFRqJn6BHsU2rFXD/sample_0_1791413597841_edf2d947.mp4
+        run: |
+          curl --fail --location --retry 3 --retry-delay 2 "$INTRO_URL" --output app/src/main/assets/dabski_intro.mp4
+          echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
+      - name: Commit original intro to repository if missing
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if ! git ls-files --error-unmatch app/src/main/assets/dabski_intro.mp4 >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app/src/main/assets/dabski_intro.mp4
+            git commit -m "Add exact original Dabski intro video"
+            git push origin HEAD:main || echo "Could not persist video to GitHub; APK build will still bundle it."
+          fi
+      - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
