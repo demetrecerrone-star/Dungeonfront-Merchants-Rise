@@ -21,4 +21,12 @@ contains("clearTimeout(toastTimer);$('feedbackToast').classList.add('hidden');",
  'old purchase popup is cleared when entering dungeon');
 contains("if(!s.pendingEncounter&&visitorCountdown<=0&&s.lastVisitorDay!==s.day)",
  'visitor queue does not duplicate events during dungeon view');
-console.log('All six dungeon UI interruption guards passed.');
+contains("g.fillText('EXIT PORTAL',x,214);",
+ 'entrance-side exit portal is shown on every floor');
+contains("if(floor<D.bossFloor){",
+ 'next-floor passage is shown only before the raid floor');
+assert.ok(!source.includes("'RAID EXIT'"),'far end of raid floor has no extraction portal');
+console.log('PASS final raid floor has no far-end exit portal');
+contains("if(view!=='contract'||!run||(run.status!=='completed'&&run.status!=='failed'))",
+ 'claim report cannot appear while a contract party is still extracting');
+console.log('All ten dungeon UI and extraction guards passed.');
