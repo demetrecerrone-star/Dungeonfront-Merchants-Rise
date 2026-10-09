@@ -13,7 +13,7 @@ on:
       - '.github/workflows/build-android.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -79,6 +79,16 @@ jobs:
           name: ${{ steps.build.outputs.apk_label }}
           path: ${{ steps.build.outputs.apk_path }}
           if-no-files-found: error
+
+      - name: Publish signed v0.7.0 direct APK download
+        if: github.ref == 'refs/heads/main' && steps.build.outputs.apk_label == 'Dungeonfront-v0.7.0-persistently-signed-APK'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cp "${{ steps.build.outputs.apk_path }}" "Dungeonfront-v0.7.0.apk"
+          gh release view v0.7.0 >/dev/null 2>&1 || gh release create v0.7.0 --title "Dungeonfront: Merchant's Rise v0.7.0" --notes "Contract Board, independent hired-party expeditions, auto-follow, completion rewards and loot-selling visitors. Signed release installs over v0.6.2 without clearing saves."
+          gh release upload v0.7.0 Dungeonfront-v0.7.0.apk --clobber
 
       - name: Package standalone Android APK signing tool for private, local signing
         run: |
