@@ -89,7 +89,8 @@ function characterFrame(name,action,index){
  const flutter=w?fmt(6*Math.cos(t)):(attack?fmt(-5*Math.sin(Math.PI*p)):0);
  const bob=w?fmt(-Math.abs(Math.sin(t))*3):fmt(.7*Math.sin(t));
  const forward=attack?fmt(8*Math.sin(p*Math.PI)):(hit?fmt(-9*Math.sin(p*Math.PI)):0);
- const fall=dying?fmt(-79*p):0;
+ const fall=dying?fmt(-12*p):0;
+ const collapse=dying?fmt(1-.68*p):1;
  let out=tag('ellipse',{cx:0,cy:0,rx:24,ry:4,fill:'#030a11',opacity:.28});
  // A different cape / cloth silhouette for each class.
  if(name==='Mage'||name==='Cleric'){
@@ -153,7 +154,9 @@ function characterFrame(name,action,index){
  if(hit)out+=shape('M-40 -138 Q-28 -155 -19 -151','none','#fff6d4',3,{opacity:fmt(Math.sin(p*Math.PI))});
  if(dying)out+=ellipse(0,-39,31,9,c.dark,{opacity:.4});
  if(casting&&p>.3&&p<.85&&c.type!=='bow')out+=ellipse(5,-85,30,51,'url(#magic)',{opacity:.4});
- const transform='translate(64 190) translate('+forward+' '+bob+') rotate('+fall+' 0 -10)';
+ // Slump down on the spot: keep every death frame inside its 128px cell.
+ // A large sideways rotation previously clipped heads/capes and weapons.
+ const transform='translate(64 190) translate('+forward+' '+bob+') rotate('+fall+' 0 -10) scale(1 '+collapse+')';
  return tag('g',{transform,opacity:dying?fmt(Math.max(.55,1-.35*p)):1},out);
 }
 function svg(name,action){
