@@ -106,5 +106,46 @@ test('game loads v2 before scene and retains legacy image fallback and save key'
  assert.ok(game.includes("dungeonfront_merchants_rise_save_v1"));
  assert.equal(game.includes('DFModernSprites.setEnabled(true)'),false,'main gameplay never forces new art on');
 });
+test('approved Knight prototype provides six offline animation strips with matching atlas geometry',()=>{
+ const Art=require('../app/src/main/assets/modern-knight-art.js');
+ assert.deepEqual(Art.counts,{idle:8,walk:10,attack:12,hurt:5,death:12,special:12});
+ const {spawnSync}=require('node:child_process');
+ for(const [action,frames] of Object.entries(Art.counts)){
+  const uri=Art.sheet(action);
+  assert.ok(uri.startsWith('data:image/svg+xml;charset=utf-8,'));
+  assert.equal(Art.sheet(action),uri,'same image uri is cached');
+  const svg=decodeURIComponent(uri.slice(uri.indexOf(',')+1));
+  assert.ok(svg.includes('width="'+128*frames+'" height="192"'));
+  assert.equal((svg.match(/<g transform="translate\\(\\d+ 0\\)">/g)||[]).length,frames);
+  const xml=spawnSync('python3',['-c','import sys,xml.etree.ElementTree as ET; ET.fromstring(sys.stdin.read())'],{input:svg,encoding:'utf8'});
+  assert.equal(xml.status,0,'valid SVG source for '+action+': '+xml.stderr);
+ }
+ assert.equal(Art.sheet('not_an_action'),null);
+});
+test('only Knight can opt into new art and shop action mapping has no gameplay side-effects',()=>{
+ S.setEnabled(true);
+ assert.equal(S.draw(ctx(),{cls:'Mage',hp:20,status:'idle'},1),false);
+ assert.equal(S.preloadClass('Mage'),0);
+ assert.equal(S.selectAction({cls:'Knight',hp:1,status:'waiting'}),'idle');
+ assert.equal(S.selectAction({cls:'Knight',hp:1,status:'walking'}),'walk');
+ assert.equal(S.selectAction({cls:'Knight',hp:1,status:'moving'}),'walk');
+ assert.equal(S.selectAction({cls:'Knight',hp:1,status:'returning'}),'walk');
+ assert.equal(S.approvedClasses.has('Knight'),true);
+ assert.equal(S.approvedClasses.has('Ranger'),false);
+ S.setEnabled(false);
+});
+test('shop, dungeon, and contract dungeon use the same v2 renderer without modifying save data',()=>{
+ const game=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
+ assert.ok(game.includes("window.DFModernSprites.setEnabled(new URLSearchParams(location.search).get('knightPreview')==='1')"));
+ assert.ok(game.includes("modernShop=window.DFModernSprites.draw(g,{"));
+ assert.ok(game.includes("status:c.stage===1?'waiting':'walking'"));
+ assert.ok(game.includes("window.DFModernSprites.draw(g,a,t)"));
+ assert.ok(game.includes("if(view==='dungeon'||view==='contract'){drawDungeon(t);return}"));
+ assert.ok(game.includes('if(!modernShop)drawActor('));
+ assert.ok(game.includes('if(!modern){'));
+ const html=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/index.html'),'utf8');
+ assert.ok(html.indexOf('modern-knight-art.js')<html.indexOf('modern-sprites.js'));
+ assert.ok(html.indexOf('modern-sprites.js')<html.indexOf('game.js'));
+});
 delete global.Image;
 console.log('All '+checks+' modern actor renderer / save safety tests passed.');
