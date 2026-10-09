@@ -40,6 +40,7 @@ jobs:
           node tests/sprites.test.js
           node tests/visual-combat.test.js
           node tests/events-art.test.js
+          node tests/modern-sprites.test.js
       - name: Verify gameplay JavaScript and visual sprite-generator syntax
         run: |
           node --check app/src/main/assets/game.js
