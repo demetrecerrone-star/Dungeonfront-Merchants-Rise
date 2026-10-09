@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'work/contract-refinements-v0.7.1'
+      - 'work/v0.8-roster-combat-treasure'
     paths:
       - 'app/src/main/assets/**'
       - 'tests/**'
@@ -27,3 +28,4 @@ jobs:
           node tests/raid.test.js
           node tests/encounters.test.js
           node tests/contracts.test.js
+          node tests/v08.test.js
