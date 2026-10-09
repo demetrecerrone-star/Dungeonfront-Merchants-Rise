@@ -31,7 +31,7 @@ function applicants(day){
   const n=(day*3+i*5)%candidates.length;
   const [name,cls,level]=candidates[n];
   return {id:'a'+day+'-'+i,name,cls,level:level+Math.floor(Math.max(0,day-1)/4),
-   fee:20+level*5,xp:0,gear:'Contract Kit',trait:traits[n%traits.length]};
+   fee:20+level*5,xp:0,gear:'Contract Kit',equipment:{},fatigue:0,injury:0,trait:traits[n%traits.length]};
  });
 }
 function ensure(s){
@@ -48,6 +48,9 @@ function ensure(s){
   if(!Number.isFinite(a.xp))a.xp=0;
   if(!a.gear)a.gear='Contract Kit';
   if(!a.trait)a.trait=traits[i%traits.length];
+  if(!a.equipment||typeof a.equipment!=='object')a.equipment={};
+  if(!Number.isFinite(a.fatigue))a.fatigue=0;
+  if(!Number.isFinite(a.injury))a.injury=0;
  }
  for(const run of c.runs){
   if(!Array.isArray(run.fallen))run.fallen=[];
@@ -65,7 +68,18 @@ function ensure(s){
    for(const a of actors)if(a.hp>0)a.status='returning';
   }
  }
- c.schema=3;
+ c.schema=4;
+ // A day's rest reduces fatigue and heals one injury. Assigned adventurers
+ // cannot recover until their expedition actually ends.
+ if(!Number.isFinite(c.lastRestDay))c.lastRestDay=s.day;
+ if(s.day>c.lastRestDay){
+  const passed=Math.min(30,s.day-c.lastRestDay),busy=busyIds(c);
+  for(const a of c.staff)if(!busy.has(a.id)){
+   a.fatigue=Math.max(0,a.fatigue-24*passed);
+   a.injury=Math.max(0,a.injury-passed);
+  }
+  c.lastRestDay=s.day;
+ }
  if(c.boardDay!==s.day){
   c.boardDay=s.day;
   c.offers=listings(s.day,s.depth);
@@ -86,19 +100,46 @@ function hire(s,id){
  if(c.staff.length>=maxHired)return{ok:false,reason:'Your roster is full (12 adventurers).'};
  if(s.gold<a.fee)return{ok:false,reason:'Not enough gold for the hiring fee.'};
  s.gold-=a.fee;s.spent+=a.fee;
- c.staff.push(Object.assign({gear:'Contract Kit',xp:0,trait:traits[0]},a));
+ c.staff.push(Object.assign({gear:'Contract Kit',equipment:{},xp:0,injury:0,fatigue:0,trait:traits[0]},a));
  c.applicants=c.applicants.filter(x=>x.id!==id);
  return{ok:true,adventurer:a};
 }
+function readiness(s,id){
+ const c=ensure(s),a=c.staff.find(x=>x.id===id);
+ if(!a)return{ok:false,reason:'Adventurer not found.'};
+ if(busyIds(c).has(id))return{ok:false,reason:'Already assigned to a contract.'};
+ if(a.injury>0)return{ok:false,reason:a.name+' is injured. Treat wounds or let the adventurer rest.'};
+ if(a.fatigue>=70)return{ok:false,reason:a.name+' is exhausted. Give them an elixir or wait for recovery.'};
+ return{ok:true,adventurer:a};
+}
 function equip(s,id,itemId){
- const c=ensure(s),member=c.staff.find(a=>a.id===id);
- if(!member)return{ok:false,reason:'Adventurer not found.'};
- if(busyIds(c).has(id))return{ok:false,reason:'Cannot change equipment during an expedition.'};
- const names={blade:'Iron Shortsword',forged:'Reforged Longblade',potion:'Healing Potion',bandage:'Field Bandages'};
- if(!names[itemId])return{ok:false,reason:'Invalid equipment.'};
+ const result=readiness(s,id);
+ if(!result.ok)return result;
+ const member=result.adventurer;
+ const names={blade:'Iron Shortsword',forged:'Reforged Longblade',potion:'Healing Potion',bandage:'Field Bandages',
+  armor:'Chainmail Armor',shield:'Steel Shield',bow:'Hunter Bow',staff:'Arcane Staff',elixir:'Restorative Elixir'};
+ const slot={blade:'weapon',forged:'weapon',bow:'weapon',staff:'weapon',armor:'armor',shield:'offhand',potion:'supply',bandage:'supply',elixir:'supply'}[itemId];
+ if(!slot)return{ok:false,reason:'Invalid equipment.'};
  if((s.stock[itemId]||0)<1)return{ok:false,reason:'That item is out of stock.'};
- s.stock[itemId]--;member.gear=names[itemId];
- return{ok:true,adventurer:member,item:itemId};
+ s.stock[itemId]--;
+ if(!member.equipment)member.equipment={};
+ // Issued equipment is consumed from stock and cannot be returned for free.
+ member.equipment[slot]=itemId;
+ if(slot==='weapon'||slot==='supply')member.gear=names[itemId];
+ return{ok:true,adventurer:member,item:itemId,slot};
+}
+function treat(s,id,itemId){
+ const c=ensure(s),a=c.staff.find(x=>x.id===id);
+ if(!a)return{ok:false,reason:'Adventurer not found.'};
+ if(busyIds(c).has(id))return{ok:false,reason:'Cannot treat an adventurer inside the dungeon.'};
+ const items={bandage:{fatigue:5,injury:2},potion:{fatigue:20,injury:1},elixir:{fatigue:55,injury:2}};
+ if(!items[itemId])return{ok:false,reason:'This item cannot treat injuries.'};
+ if(!s.stock[itemId])return{ok:false,reason:'No healing stock available.'};
+ if(a.fatigue<=0&&a.injury<=0)return{ok:false,reason:'This adventurer is already healthy.'};
+ s.stock[itemId]--;
+ a.fatigue=Math.max(0,(a.fatigue||0)-items[itemId].fatigue);
+ a.injury=Math.max(0,(a.injury||0)-items[itemId].injury);
+ return{ok:true,adventurer:a,item:itemId};
 }
 function start(s,offerId,memberIds){
  const c=ensure(s),offer=c.offers.find(x=>x.id===offerId);
@@ -110,6 +151,8 @@ function start(s,offerId,memberIds){
   return{ok:false,reason:'Finish an active expedition first (maximum three).'};
  const busy=busyIds(c),members=memberIds.map(id=>c.staff.find(a=>a.id===id));
  if(members.some((a,i)=>!a||busy.has(memberIds[i])))return{ok:false,reason:'Select only available hired adventurers.'};
+ const injured=members.find(a=>a.injury>0||a.fatigue>=70);
+ if(injured)return{ok:false,reason:injured.name+' needs recovery before accepting a contract.'};
  const id='run'+c.nextRun++;
  const instance={mats:{iron:0,herb:0},loot:{},reputation:0,contractExpedition:true};
  const dungeon=D.ensure(instance);
@@ -120,8 +163,12 @@ function start(s,offerId,memberIds){
   a.visitor=false;
   a.hireId=member.id;
   a.trait=member.trait||'Steadfast';
+  a.equipment=Object.assign({},member.equipment||{});
+  a.healCharges=member.cls==='Cleric'?3:1;
+  a.injury=member.injury||0;
   a.xp=Math.max(0,Number(member.xp)||0);
   if(a.trait==='Stalwart'){a.maxHp+=20;a.hp+=20;}
+  if(a.equipment.armor==='armor'){a.maxHp+=12;a.hp+=12;}
   a.x=72+(dungeon.adventurers.length-1)*20;
  }
  let escortId=null;
@@ -154,7 +201,7 @@ function replaceFallen(c){
  const names=['Pip','Wren','Iona','Tarin','Quill','Nell','Bex','Orrin'];
  const classes=['Ranger','Knight','Cleric','Mage','Rogue','Mercenary'];
  c.applicants.push({id:'rookie-'+n,name:names[(n-1)%names.length]+' '+n,
-  cls:classes[(n-1)%classes.length],level:1,xp:0,fee:25,gear:'Contract Kit',trait:traits[(n-1)%traits.length]});
+  cls:classes[(n-1)%classes.length],level:1,xp:0,fee:25,gear:'Contract Kit',equipment:{},fatigue:0,injury:0,trait:traits[(n-1)%traits.length]});
 }
 function beginReturn(run,outcome){
  if(run.status==='returning')return;
@@ -186,7 +233,15 @@ function advance(s,dt){
     replaceFallen(c);
     reports.push('FALLEN IN ACTION: '+a.name+'. A level-one recruit is available for hire.');
    }else{
-    if(member){member.level=a.level;member.xp=a.xp;member.wins=a.wins||0;}
+    if(member){
+     member.level=a.level;member.xp=a.xp;member.wins=a.wins||0;
+     if(a.status==='extracted'&&!a.recoveryRecorded){
+      // Permanent post-expedition consequences are assessed once, upon exiting.
+      member.fatigue=Math.min(100,(member.fatigue||0)+12+Math.round(a.floor*3)+(a.wins||0)*5);
+      member.injury=Math.max(member.injury||0,a.injury||0,a.hp<a.maxHp*.45?1:0);
+      a.recoveryRecorded=true;
+     }
+    }
     survivors.push(a);
    }
   }
@@ -243,5 +298,5 @@ function claim(s,id){
  run.status='claimed';run.claimed=true;
  return{ok:true,success,reward,mats:Object.assign({},mats),loot:Object.assign({},loot),rep:success?run.offer.rep:0};
 }
-return{maxParty,maxActive,maxHired,ensure,hire,equip,start,advance,progress,claim,busyIds,unclaimedCount,beginReturn};
+return{maxParty,maxActive,maxHired,ensure,hire,equip,treat,readiness,start,advance,progress,claim,busyIds,unclaimedCount,beginReturn};
 });
