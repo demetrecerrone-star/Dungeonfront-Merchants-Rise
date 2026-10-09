@@ -1,6 +1,6 @@
 # Dungeonfront: Merchant's Rise — Pixel-Art Production Blueprint
 
-**Status:** Batch A implemented (18 real PNG animation sheets, sprite-system renderer, and regression tests). Remaining art phases and Android playtesting are still pending; **no APK has been released**.
+**Status:** Batches A, C and D implemented: 18 hero, 46 monster/boss, and 8 combat-effect PNG sheets (72 total) with fallback-aware rendering. Dungeon event sprites, some hero signature poses, and Android device playtesting are still pending; **no APK has been released**.
 **Target branch:** `work/v0.8-roster-combat-treasure`
 **Target client:** Android WebView, offline, landscape; dungeon canvas **800 × 440**.
 **Style:** original gritty medieval fantasy pixel art, high-contrast silhouettes, subdued materials, warm torches, readable at phone size.
@@ -210,17 +210,17 @@ The loader should accept missing action/class entries, skip absent image files, 
 
 ### Batch C — monsters and boss
 
-- [ ] Add the 8 common enemy sets; render by `m.kind` exactly.
-- [ ] Add dedicated guardian and Abyssal Sovereign sprites.
+- [x] Add original 8 common enemy animation sets; render by `m.kind` exactly.
+- [x] Add dedicated Hollow Guardian and Abyssal Sovereign sprites, including a unique boss special action.
 - [ ] Verify boss HP bar, hit target and no clipping against top raid banner.
-- [ ] Confirm boss death animation stops and raid portal rule remains intact.
+- [x] Animate boss death briefly and retain entrance-side extraction (automated regression covered).
 
 ### Batch D — combat visual effects
 
-- [ ] Add event-driven slash, arrow, spell, heal, block, crit and death visuals.
-- [ ] Cap live transient effects (e.g. 40 concurrent effects) and expire them fast.
-- [ ] Keep numerical combat in `dungeon.js` authoritative; visuals do not modify damage.
-- [ ] Avoid canvas shake or screen-covering flash by default on mobile.
+- [x] Add simulation-driven slash, arrow, spell, heal, block/contact, crit and death visual effects with existing procedural fallback.
+- [x] Use bounded per-entity effect clocks (no separate unbounded particle list) and expire effects promptly.
+- [x] Keep numerical combat in `dungeon.js` authoritative; sprites do not modify damage.
+- [x] Keep effects localized to actors/targets without screen shake or full-screen flash.
 
 ### Batch E — events and final UI pass
 
@@ -247,3 +247,11 @@ The loader should accept missing action/class entries, skip absent image files, 
 ## Immediate next concrete deliverable
 
 **Batch A complete:** 18 primary class PNG animation sheets and fallback-aware renderer are committed. [Preview the animations](SPRITE_PREVIEW.md). Next: visual inspection and one-device playtesting to tune proportions before monster/effect production.
+
+## Visual upgrade implementation notes (Batches C/D)
+
+- **46 monster/boss sheets** and **8 effect sheets** are reproducibly generated with Python's standard library: `python3 tools/generate_monster_art.py`. No image service dependency.
+- GitHub Actions [generates and commits the sprite assets](../.github/workflows/generate-monster-assets.yml) only on the development branch, not an Android build.
+- [Preview the new monsters, raid boss and combat effects](MONSTER_SPRITE_PREVIEW.md).
+- `node tests/sprites.test.js` checks all **72** actual PNG sheets for dimensions, transparency, and distinct animation frames; `node tests/visual-combat.test.js` checks boss specials, hits, monster death, heals and raid extraction.
+- Next unfinished art batch: **B/E** (class UI icons, event object sheets and visual UI cleanup), then physical Android playtesting and optional final APK on request.
