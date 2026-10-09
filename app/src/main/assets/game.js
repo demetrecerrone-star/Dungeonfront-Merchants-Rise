@@ -90,7 +90,7 @@ function conditionBadge(a,occupied){
  return '<span class="guild-status guild-'+state+'"><img src="sprites/ui/condition/'+state+'.png" alt="" aria-hidden="true">'+label+'</span>';
 }
 function rankBadge(rank){
- const tier=/^[EDS CBR]$/.test(rank)?rank:'E';
+ const tier=['E','D','C','B','A','S'].includes(rank)?rank:'E';
  return '<span class="contract-rank rank-'+esc(tier)+'">RANK '+esc(tier)+'</span>';
 }
 function runBadge(status){
@@ -107,7 +107,7 @@ function returnProgress(run){
 }
 function renderContractBoard(){
  const c=C.ensure(s),busy=C.busyIds(c);
- for(const id of Array.from(chosenHires))if(!c.staff.some(a=>a.id===id)||busy.has(id))chosenHires.delete(id);
+ for(const id of Array.from(chosenHires))if(!c.staff.some(a=>a.id===id&&a.injury<=0&&a.fatigue<70)||busy.has(id))chosenHires.delete(id);
  const roster=c.staff.map(a=>{
   const occupied=busy.has(a.id),selected=chosenHires.has(a.id);
   const ready=!occupied&&a.injury<=0&&a.fatigue<70;
