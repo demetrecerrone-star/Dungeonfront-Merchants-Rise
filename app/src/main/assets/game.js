@@ -15,6 +15,20 @@ const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowa
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
 function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerText').textContent=msg;panelDirty=true}
+function updateKnightToggle(){
+ const b=$('knightArtToggle');if(!b)return;
+ const on=!!(window.DFModernSprites&&window.DFModernSprites.isEnabled());
+ b.textContent=on?'⚔ KNIGHT V2: ON':'⚔ KNIGHT V2: OFF';
+ b.setAttribute('aria-pressed',String(on));
+ b.classList.toggle('active',on);
+}
+$('knightArtToggle').onclick=()=>{
+ if(!window.DFModernSprites)return;
+ window.DFModernSprites.setEnabled(!window.DFModernSprites.isEnabled());
+ if(window.DFModernSprites.isEnabled())window.DFModernSprites.preloadClass('Knight',['idle','walk','attack']);
+ updateKnightToggle();
+};
+updateKnightToggle();
 function feedback(msg){
  // Shop transactions continue while watching the dungeon, but only the shop
  // may interrupt play with commerce notifications.
