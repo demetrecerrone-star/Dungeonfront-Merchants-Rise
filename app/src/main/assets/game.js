@@ -210,6 +210,7 @@ function watchContract(id){
  $('dungeonControls').classList.remove('hidden');
  $('dungeonBack').textContent='‹ CONTRACTS';
  $('dungeonFollow').classList.add('hidden');$('dungeonFloorMenuButton').classList.add('hidden');
+ $('scene').closest('.scene-wrap').classList.remove('shop-mode');
  $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
  $('sceneHeading').innerHTML='<i class="pulse"></i> GUILD CONTRACT • '+esc(run.offer.title.toUpperCase());
  $('sceneHint').textContent='◈ AUTO-FOLLOW ON · ONLY YOUR CONTRACT PARTY IS VISIBLE';
@@ -544,6 +545,7 @@ function openDungeon(){
  closeFloorMenu();updateFloorPicker();
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • EXPEDITION WATCH';
  $('sceneHint').textContent='◈ ONE FLOOR PER VIEW · TAP A HERO TO FOLLOW';
+ $('scene').closest('.scene-wrap').classList.remove('shop-mode');
  $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
  // Clear any toast started in the shop before entering the dungeon.
  clearTimeout(toastTimer);$('feedbackToast').classList.add('hidden');
@@ -556,6 +558,7 @@ function closeDungeon(showDeferred=false){
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET';
  $('sceneHint').textContent='◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER';
  $('scene').closest('.scene-wrap').classList.remove('dungeon-mode');
+ $('scene').closest('.scene-wrap').classList.add('shop-mode');
  $('npcCard').classList.add('hidden');
  // The waiting customer is seen at the shop only after choosing to return.
  if(showDeferred&&active&&!paused&&s.pendingEncounter)presentVisitor();
