@@ -63,6 +63,41 @@ const visitorEncounters={
    {id:'torches',label:'SELL TORCHES',desc:'2 torches for 35G and +2 rep',item:'torch',qty:2,gold:35,rep:2,result:'The caravan stocks up on your torches.'},
    {id:'pass',label:'PASS',desc:'Keep your current stock',result:'The caravan rolls on toward the western road.'}
   ]},
+ delver:{title:'Loot from the Lower Halls',who:'Rook • Returning Delver',icon:'⚒',
+  story:'An exhausted delver spreads iron fragments across the counter. “I survived. The scrap should be worth something, merchant.”',
+  choices:[
+   {id:'buy',label:'BUY SCRAP',desc:'18G for 3 iron',gold:-18,iron:3,result:'Rook sells you three bundles of dungeon scrap.'},
+   {id:'haggle',label:'HAGGLE',desc:'11G for 2 iron',gold:-11,iron:2,result:'Rook reluctantly accepts your counteroffer.'},
+   {id:'pass',label:'DECLINE',desc:'Keep your gold',result:'Rook takes the iron elsewhere.'}
+  ]},
+ forager:{title:'A Pouch of Wild Herbs',who:'Fenna • Dungeon Forager',icon:'❀',
+  story:'A ranger opens a leather satchel. “These healing herbs grow beside the old crypt. Interested?”',
+  choices:[
+   {id:'buy',label:'BUY HERBS',desc:'15G for 3 herbs',gold:-15,herb:3,result:'Fenna leaves three fresh herb bundles.'},
+   {id:'haggle',label:'SMALL BUNDLE',desc:'7G for 1 herb',gold:-7,herb:1,result:'Fenna sells you a smaller bundle.'},
+   {id:'pass',label:'NOT TODAY',desc:'Decline the offer',result:'Fenna heads back to the trail.'}
+  ]},
+ swordhunter:{title:'An Iron Blade for Sale',who:'Sable • Relic Hunter',icon:'⚔',
+  story:'A treasure hunter offers a usable sword recovered from the dungeon. “I would rather have coin than carry it.”',
+  choices:[
+   {id:'buy',label:'BUY THE BLADE',desc:'25G for 1 shortsword',gold:-25,stockItem:'blade',stockQty:1,result:'Sable sells you a refurbished iron shortsword.'},
+   {id:'scrap',label:'BUY SCRAP',desc:'14G for 2 iron',gold:-14,iron:2,result:'Sable sells you the spare iron fragments.'},
+   {id:'pass',label:'PASS',desc:'Decline',result:'Sable wraps the blade and departs.'}
+  ]},
+ apothecary:{title:'Surplus Potions',who:'Linna • Dungeon Apothecary',icon:'✚',
+  story:'A healer offers unopened potions rescued from an abandoned camp. “I can sell them below market price.”',
+  choices:[
+   {id:'buy',label:'BUY POTIONS',desc:'22G for 2 healing potions',gold:-22,stockItem:'potion',stockQty:2,result:'Linna leaves two sealed healing potions.'},
+   {id:'herbs',label:'BUY HERBS',desc:'10G for 2 herbs',gold:-10,herb:2,result:'Linna parts with two healing herb bundles.'},
+   {id:'pass',label:'DECLINE',desc:'Save gold',result:'Linna continues to the next settlement.'}
+  ]},
+ scout:{title:'Scout Returns with Spoils',who:'Korin • Independent Scout',icon:'✦',
+  story:'An independent scout empties a pack of mixed dungeon supplies. “I took the risk. Care to buy the salvage?”',
+  choices:[
+   {id:'iron',label:'BUY IRON',desc:'16G for 3 iron',gold:-16,iron:3,result:'Korin sells the heavy scrap from the lower passage.'},
+   {id:'herbs',label:'BUY HERBS',desc:'12G for 2 herbs',gold:-12,herb:2,result:'Korin sells useful herbs gathered on the climb.'},
+   {id:'leave',label:'PASS',desc:'Decline',result:'Korin keeps the hard-won supplies.'}
+  ]},
  pilgrim:{title:'A Pilgrim at Sundown',who:'Sister Veya • Wanderer',icon:'✦',
   story:'A quiet pilgrim asks for aid before entering the Hollow Descent. “The light is fading, merchant.”',
   choices:[
@@ -78,7 +113,9 @@ function resolveVisitor(s,eventId,choiceId){
  if(!choice)return{ok:false,reason:'Unknown visitor choice.'};
  if((choice.gold||0)<0&&s.gold < -choice.gold)return{ok:false,reason:'Not enough gold.'};
  if(choice.item&&(s.stock[choice.item]||0)<choice.qty)return{ok:false,reason:'Not enough '+items[choice.item].name+' in stock.'};
+ if(choice.stockItem&&(s.stock[choice.stockItem]||0)+choice.stockQty>(s.upgrades.shelf?30:14))return{ok:false,reason:'Not enough room on the shop shelves.'};
  if(choice.item)s.stock[choice.item]-=choice.qty;
+ if(choice.stockItem)s.stock[choice.stockItem]=(s.stock[choice.stockItem]||0)+choice.stockQty;
  if(choice.gold){s.gold+=choice.gold;if(choice.gold>0)s.earned+=choice.gold;else s.spent-=choice.gold;}
  if(choice.iron)s.mats.iron+=choice.iron;
  if(choice.herb)s.mats.herb+=choice.herb;
