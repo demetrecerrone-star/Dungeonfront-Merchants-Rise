@@ -59,6 +59,13 @@ function ensure(s){
  if(!Number.isFinite(d.relicsFound))d.relicsFound=0;
  if(!s.loot||typeof s.loot!=='object')s.loot={};
  if(!Array.isArray(d.raidReturns))d.raidReturns=[];
+ if(!Array.isArray(d.events)){
+  const eventTypes=['chest','trap','shrine','hidden','merchant'];
+  const locations=[275,785,1190,1535,1815];
+  d.events=[];
+  for(let floor=1;floor<=floorCount;floor++)for(let i=0;i<eventTypes.length;i++)
+   d.events.push({id:'e'+floor+'-'+i,floor,x:locations[i],type:eventTypes[i]});
+ }
  if(!Number.isFinite(d.enters))d.enters=0;
  if(!Number.isFinite(d.nextParty))d.nextParty=1;
  d.nextId=Math.max(d.nextId,1+Math.max(0,...d.adventurers.map(a=>Number(a.id)||0)));
@@ -139,6 +146,9 @@ function ensure(s){
   if(!('partyId' in a))a.partyId=null;
   if(!Number.isFinite(a.clearedFloor))a.clearedFloor=0;
   if(!Number.isFinite(a.bossClearedFloor))a.bossClearedFloor=0;
+  if(!Array.isArray(a.seenEvents))a.seenEvents=[];
+  if(!Number.isFinite(a.healCharges))a.healCharges=2;
+  if(!Number.isFinite(a.injury))a.injury=0;
  }
  for(const m of d.monsters){
   if(!Number.isFinite(m.homeX))m.homeX=m.x;
@@ -157,6 +167,7 @@ function enter(s,customer,gear){
  const a=actor(String(customer.name||'Traveler').slice(0,22),String(customer.cls||'Mercenary'),
   Math.min(40,Math.max(1,Math.floor(customer.level||1))),1,72,d.nextId++);
  a.gear=String(gear||'Supplies').slice(0,30);
+ if(customer.equipment)a.equipment=Object.assign({},customer.equipment);
  a.visitor=true;
  const equipment=a.gear.toLowerCase();
  if(equipment.includes('blade')||equipment.includes('sword')){a.maxHp+=12;a.hp+=12}
@@ -208,6 +219,43 @@ function award(s,d,a,m,random,reports){
   reports.push('RAID VICTORY: The Abyssal Sovereign falls! +5 reputation and rare salvage.');
  }
 }
+function discover(s,d,a,event,random,reports){
+ if(!a.seenEvents)a.seenEvents=[];
+ if(a.seenEvents.includes(event.id))return;
+ a.seenEvents.push(event.id);
+ const n=event.floor;
+ switch(event.type){
+ case 'chest':{
+  const rare=Number(random())<(n>=6?.35:.11);
+  const kind=rare?'essence':'relic';
+  s.loot[kind]=(s.loot[kind]||0)+1;d.relicsFound++;
+  reports.push(a.name+' found a '+(rare?'rare':'hidden')+' '+kind+' in a treasure chest.');break;
+ }
+ case 'trap':{
+  const damage=3+n*2;
+  a.hp=Math.max(0,a.hp-damage);
+  if(a.hp>0&&a.hp<a.maxHp*.4)a.injury=Math.max(a.injury||0,1);
+  if(a.hp<=0)a.status='retreating';
+  reports.push(a.name+' triggered a crypt trap (-'+damage+' HP).');break;
+ }
+ case 'shrine':{
+  const heal=Math.ceil(a.maxHp*.27);
+  a.hp=Math.min(a.maxHp,a.hp+heal);
+  reports.push(a.name+' rested at an ancient healing shrine.');break;
+ }
+ case 'hidden':{
+  const rare=Number(random())<(n>=5?.28:.1);
+  const kind=rare?'gem':'relic';
+  s.loot[kind]=(s.loot[kind]||0)+1;d.relicsFound++;
+  reports.push(a.name+' uncovered a secret chamber with '+kind+' treasure.');break;
+ }
+ case 'merchant':{
+  a.hp=Math.min(a.maxHp,a.hp+Math.ceil(a.maxHp*.13));
+  a.healCharges=Math.min(3,(a.healCharges||0)+1);
+  reports.push(a.name+' traded supplies with a wandering dungeon merchant.');break;
+ }
+ }
+}
 function advance(s,seconds,rng){
  const d=ensure(s),dt=Math.min(.1,Math.max(0,Number(seconds)||0)),random=typeof rng==='function'?rng:Math.random,reports=[];
  if(!dt)return reports;
@@ -249,24 +297,64 @@ function advance(s,seconds,rng){
    if(a.x<=65){a.status='recovering';a.recover=8;a.hp=Math.max(1,Math.floor(a.maxHp*.3))}
    continue;
   }
-  const target=d.monsters.find(m=>m.floor===a.floor&&m.hp>0&&Math.abs(m.x-a.x)<43);
+  // Party coordination: protect the courier, heal wounded allies, and stay together.
+  const party=a.partyId?d.adventurers.filter(x=>x.partyId===a.partyId&&x.floor===a.floor&&x.hp>0&&x.status!=='returning'&&x.status!=='extracted'):[a];
+  if(a.cls==='Cleric'&&a.healCharges>0&&a.cooldown<=0){
+   const wounded=party.filter(x=>x.hp<x.maxHp*.7).sort((x,y)=>x.hp/x.maxHp-y.hp/y.maxHp)[0];
+   if(wounded){
+    const heal=11+Math.ceil(a.level/2);
+    wounded.hp=Math.min(wounded.maxHp,wounded.hp+heal);
+    a.healCharges--;a.cooldown=1.4;a.status='healing';a.special='heal';
+    reports.push(a.name+' healed '+wounded.name+' for '+heal+' HP.');
+    continue;
+   }
+  }
+  if(!a.escort){
+   for(const event of d.events){
+    if(event.floor===a.floor&&Math.abs(event.x-a.x)<=18&&!a.seenEvents.includes(event.id)){
+     discover(s,d,a,event,random,reports);
+     if(a.hp<=0)break;
+    }
+   }
+   if(a.hp<=0)continue;
+  }
+  // Couriers remain behind their guards instead of attacking creatures.
+  if(a.escort&&party.some(x=>!x.escort)){
+   const guard=party.filter(x=>!x.escort).sort((x,y)=>x.x-y.x)[0];
+   if(guard&&a.x>guard.x-15){a.x=Math.max(65,guard.x-15);a.status='escorting';continue;}
+  }
+  const range=a.escort?0:a.cls==='Mage'?145:a.cls==='Ranger'?115:43;
+  const target=d.monsters.find(m=>m.floor===a.floor&&m.hp>0&&Math.abs(m.x-a.x)<range);
   if(target){
    a.status='fighting';
    if(a.cooldown<=0){
     const gear=String(a.gear||'').toLowerCase();
-    const attack=7+Math.floor(a.level/3)+(a.cls==='Mage'?4:0)+(gear.includes('blade')||gear.includes('sword')?3:0)+(a.trait==='Fierce'?3:0)+(a.trait==='Keen'?2:0);
+    const weapon=String(a.equipment?.weapon||'').toLowerCase();
+    const crit=(a.cls==='Rogue'&&Number(random())<.26)||(a.cls==='Ranger'&&Number(random())<.16);
+    const base=7+Math.floor(a.level/3)+(a.cls==='Mage'?5:0)+(gear.includes('blade')||gear.includes('sword')?3:0)+(a.trait==='Fierce'?3:0)+(a.trait==='Keen'?2:0);
+    const boost=(weapon==='staff'&&a.cls==='Mage'?6:0)+(weapon==='bow'&&a.cls==='Ranger'?5:0)+(weapon==='forged'?7:0)+(weapon==='blade'?3:0);
+    const attack=(base+boost)*(crit?2:1);
+    if(crit)a.special='critical';else if(a.cls==='Mage')a.special='spell';else if(a.cls==='Ranger')a.special='arrow';
     target.hp=Math.max(0,target.hp-attack);
-    a.cooldown=.65;a.swing=.23;target.flash=.18;
+    a.cooldown=a.cls==='Rogue'?.4:a.cls==='Mage'?.9:a.cls==='Ranger'?.72:.65;a.swing=.23;target.flash=.18;
     if(target.hp===0){target.respawn=target.boss?90:3+Math.max(0,Math.min(2,Number(random())*2));award(s,d,a,target,random,reports);a.status='exploring'}
    }
    if(target.hp>0&&target.cooldown<=0){
-    a.hp=Math.max(0,a.hp-Math.max(1,monsterKinds[target.kind].damage-(a.trait==='Steadfast'?2:0)));
+    const tank=party.find(x=>x.cls==='Knight'&&x.hp>0&&Math.abs(x.x-target.x)<98);
+    const defender=tank||a;
+    const armour=defender.equipment?.armor==='armor'?3:0;
+    const shield=defender.equipment?.offhand==='shield'?2:0;
+    const hit=Math.max(1,monsterKinds[target.kind].damage-(defender.trait==='Steadfast'?2:0)-armour-shield);
+    defender.hp=Math.max(0,defender.hp-hit);
+    if(defender!==a)defender.special='block';
     target.cooldown=target.boss?.8:1.2;
-    if(a.hp===0){a.status='retreating';reports.push(a.name+' was wounded on floor '+a.floor+' and is retreating.')}
+    if(defender.hp===0){defender.status='retreating';reports.push(defender.name+' was wounded defending the party on floor '+defender.floor+'.')}
    }
   }else{
-   a.status='exploring';
-   a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)+(a.trait==='Swift'?10:0)));
+   a.status=a.escort?'escorting':'exploring';
+   // Contract heroes avoid racing so far ahead that healers and couriers disappear.
+   const lagging=s.contractExpedition&&party.some(x=>x!==a&&x.floor===a.floor&&x.hp>0&&x.x<a.x-145&&x.status!=='returning');
+   if(!lagging)a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)+(a.trait==='Swift'?10:0)));
    if(a.x>=worldWidth-45){
     const cleared=a.clearedFloor===a.floor&&(a.floor!==bossFloor||a.bossClearedFloor===bossFloor);
     if(!cleared){
