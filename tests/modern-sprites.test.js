@@ -139,7 +139,7 @@ test('shop, dungeon, and contract dungeon use the same v2 renderer without modif
  assert.ok(game.includes("window.DFModernSprites.setEnabled(new URLSearchParams(location.search).get('knightPreview')==='1')"));
  assert.ok(game.includes("modernShop=window.DFModernSprites.draw(g,{"));
  assert.ok(game.includes("status:c.stage===1?'waiting':'walking'"));
- assert.ok(game.includes("window.DFModernSprites.draw(g,a,t)"));
+ assert.ok(game.includes("window.DFModernSprites.draw(g,drawActorState,t)"));
  assert.ok(game.includes("if(view==='dungeon'||view==='contract'){drawDungeon(t);return}"));
  assert.ok(game.includes('if(!modernShop)drawActor('));
  assert.ok(game.includes('if(!modern){'));
