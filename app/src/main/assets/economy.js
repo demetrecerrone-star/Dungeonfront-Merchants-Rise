@@ -8,13 +8,32 @@ const items={
  blade:{name:'Iron Shortsword',icon:'⚔',cost:35,base:72,desc:'Reliable iron. No promises.'},
  forged:{name:'Reforged Longblade',icon:'⚒',cost:50,base:124,desc:'Made from dungeon-scavenged iron.'}
 };
+const lootKinds={
+ relic:{name:'Ancient Relic',rarity:'Uncommon',sell:25,icon:'✦'},
+ essence:{name:'Arcane Essence',rarity:'Rare',sell:55,icon:'✧'},
+ gem:{name:'Abyss Gem',rarity:'Epic',sell:145,icon:'◆'}
+};
+function ensureLoot(s){
+ if(!s.loot||typeof s.loot!=='object')s.loot={};
+ for(const id of Object.keys(lootKinds))if(!Number.isFinite(s.loot[id]))s.loot[id]=0;
+ return s.loot;
+}
+function sellFind(s,id,qty=1){
+ ensureLoot(s);qty=Number(qty);
+ if(!lootKinds[id]||!Number.isInteger(qty)||qty<1)return{ok:false,reason:'Unknown treasure.'};
+ if((s.loot[id]||0)<qty)return{ok:false,reason:'Not enough relics in the vault.'};
+ const bonus=1+Math.min(.18,Math.max(0,s.reputation||0)*.0018);
+ const income=Math.round(lootKinds[id].sell*qty*bonus);
+ s.loot[id]-=qty;s.gold+=income;s.earned+=income;
+ return{ok:true,earned:income,item:id};
+}
 const upgrades={
  shelf:{name:'Reinforced Shelving',cost:220,desc:'More stock space, +1 customer at a time.'},
  forge:{name:'Ember Forge',cost:420,desc:'Unlock longblade crafting and warm the shop.'},
  guard:{name:'Hire a Door Guard',cost:340,desc:'Reduces losses from bandit raids by 85%.'},
  lantern:{name:'Beacon Lantern',cost:170,desc:'Adventurers find you easier; earn more reputation.'}
 };
-function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0,commissionDay:0,commissionsCompleted:0,lastVisitorDay:0,pendingEncounter:null,visitorsResolved:0};}
+function initialState(){return {version:1,gold:280,reputation:10,day:1,clock:0,visitors:0,sales:0,earned:0,spent:0,depth:1,stock:{potion:5,torch:7,bandage:6,blade:2,forged:0},price:{potion:29,torch:15,bandage:12,blade:72,forged:124},mats:{iron:1,herb:2},upgrades:{shelf:false,forge:false,guard:false,lantern:false},events:['The shop opens beneath a hungry dungeon.'],raidCount:0,commissionDay:0,commissionsCompleted:0,lastVisitorDay:0,pendingEncounter:null,visitorsResolved:0,loot:{relic:0,gem:0,essence:0}};}
 function valid(s){return !!s&&s.version===1&&Number.isFinite(s.gold)&&s.gold>=0&&s.stock&&s.price&&s.upgrades&&s.mats&&Number.isFinite(s.clock)&&s.day>=1;}
 function earnRep(s,amount){s.reputation=Math.min(100,Math.max(0,s.reputation+amount));}
 function restock(s,id,qty){qty=qty||3;const item=items[id];if(!item||id==='forged')return {ok:false,reason:'This item must be crafted.'};if((s.stock[id]||0)+qty>(s.upgrades.shelf?30:14))return {ok:false,reason:'Build shelving to increase stock capacity.'};const amount=qty*item.cost;if(s.gold<amount)return {ok:false,reason:'Not enough gold to restock.'};s.gold-=amount;s.spent+=amount;s.stock[id]=(s.stock[id]||0)+qty;return{ok:true,cost:amount};}
@@ -42,6 +61,27 @@ function fulfillCommission(s){
 }
 
 const visitorEncounters={
+ relicseller:{title:'An Ancient Relic Offered',who:'Talos • Veteran Ruin Seeker',icon:'✦',
+  story:'A delver lays an engraved artifact on the counter. “Pay the fair price, or make a counteroffer.”',
+  choices:[
+   {id:'buy',label:'BUY RELIC',desc:'17G for 1 uncommon relic',gold:-17,lootKind:'relic',lootQty:1,result:'Talos sells you a relic fit for resale.'},
+   {id:'bargain',label:'COUNTEROFFER',desc:'12G for 1 relic, -1 rep',gold:-12,lootKind:'relic',lootQty:1,rep:-1,result:'Talos grudgingly accepts the lower price.'},
+   {id:'pass',label:'PASS',desc:'Decline',result:'Talos departs with the artifact.'}
+  ]},
+ arcanist:{title:'A Jar of Arcane Essence',who:'Myra • Wandering Alchemist',icon:'✧',
+  story:'An alchemist shows you captured essence. “It is rare, but I need spending money.”',
+  choices:[
+   {id:'buy',label:'BUY ESSENCE',desc:'39G for a rare essence',gold:-39,lootKind:'essence',lootQty:1,result:'Myra leaves a sealed jar of glowing essence.'},
+   {id:'haggle',label:'LOWER OFFER',desc:'30G for essence, -1 rep',gold:-30,lootKind:'essence',lootQty:1,rep:-1,result:'Myra accepts your price, reluctantly.'},
+   {id:'leave',label:'PASS',desc:'Decline',result:'Myra packs the jar away.'}
+  ]},
+ gemtrader:{title:'A Gleaming Abyss Gem',who:'Riven • Shadow Merchant',icon:'◆',
+  story:'A masked trader offers an unusual gem taken from the depths. “Some risks pay very well.”',
+  choices:[
+   {id:'buy',label:'BUY RARE GEM',desc:'105G for an epic abyss gem',gold:-105,lootKind:'gem',lootQty:1,result:'Riven hands over the gem.'},
+   {id:'counter',label:'COUNTEROFFER',desc:'82G for gem, -2 rep',gold:-82,lootKind:'gem',lootQty:1,rep:-2,result:'Riven accepts the sharp bargaining.'},
+   {id:'decline',label:'DECLINE',desc:'Keep your treasury',result:'Riven vanishes into the mist.'}
+  ]},
  herbalist:{title:'The Traveling Herbalist',who:'Merrin • Roadside Apothecary',icon:'❀',
   story:'A weathered herbalist arrives with a basket of rare wild herbs. “The dungeon has made them hard to find. Care to trade?”',
   choices:[
@@ -115,6 +155,7 @@ function resolveVisitor(s,eventId,choiceId){
  if(choice.item&&(s.stock[choice.item]||0)<choice.qty)return{ok:false,reason:'Not enough '+items[choice.item].name+' in stock.'};
  if(choice.stockItem&&(s.stock[choice.stockItem]||0)+choice.stockQty>(s.upgrades.shelf?30:14))return{ok:false,reason:'Not enough room on the shop shelves.'};
  if(choice.item)s.stock[choice.item]-=choice.qty;
+ if(choice.lootKind){ensureLoot(s);s.loot[choice.lootKind]=(s.loot[choice.lootKind]||0)+(choice.lootQty||1);}
  if(choice.stockItem)s.stock[choice.stockItem]=(s.stock[choice.stockItem]||0)+choice.stockQty;
  if(choice.gold){s.gold+=choice.gold;if(choice.gold>0)s.earned+=choice.gold;else s.spent-=choice.gold;}
  if(choice.iron)s.mats.iron+=choice.iron;
@@ -125,5 +166,5 @@ function resolveVisitor(s,eventId,choiceId){
 }
 
 function raid(s,roll){if(roll>=.28)return {happened:false};s.raidCount++;const loss=Math.min(s.gold,Math.ceil(s.gold*(s.upgrades.guard?.025:.16)));s.gold-=loss;return{happened:true,loss};}
-return{items,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep,commission,fulfillCommission,visitorEncounters,resolveVisitor};
+return{items,lootKinds,ensureLoot,sellFind,upgrades,initialState,valid,restock,setPrice,buyUpgrade,craft,attemptSale,buyLoot,raid,earnRep,commission,fulfillCommission,visitorEncounters,resolveVisitor};
 });
