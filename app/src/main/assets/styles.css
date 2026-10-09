@@ -212,3 +212,8 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 .contract-report button{background:#695133;color:#fff1c8;border:1px solid #d4b378;padding:6px 9px;margin-top:5px;font:700 10px Arial,sans-serif}
 @media(max-width:700px){.contract-body{grid-template-columns:1fr 1fr}.contract-column:last-child{grid-column:span 2}.contract-letter{width:29px;height:34px}.contract-letter span{font-size:23px}.contract-board{padding:7px}.contract-board-top h2{font-size:19px}}
 @media(max-height:440px){.contract-board-top h2{font-size:18px}.contract-board-top p{font-size:9px}.contract-entry{padding:5px}.contract-column h3{padding:6px}.contract-report{top:44px;padding:6px}}
+
+/* v0.7.1: small wax-red completion seal, unobtrusive in landscape mode. */
+.contract-letter .contract-alert{position:absolute;top:-5px;right:-6px;width:12px;height:12px;border-radius:50%;background:#d73739;border:2px solid #f8dab6;box-shadow:0 0 0 1px #341b20,0 0 8px #ec3a4188;z-index:2;pointer-events:none}
+.contract-letter .contract-alert.hidden{display:none}
+.contract-board .contract-death{color:#f1a7a2}
