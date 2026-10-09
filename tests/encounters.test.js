@@ -78,7 +78,7 @@ test('party member panel supports viewing all members including other floors',()
  const html=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/index.html'),'utf8');
  const css=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/styles.css'),'utf8');
  assert.ok(html.includes('id="partyRoster"'));
- assert.ok(source.includes('D.partyMembers(s,o.partyId)'));
+ assert.ok(source.includes('D.partyMembers(ds,o.partyId)'));
  assert.ok(source.includes('button[data-member-id]'));
  assert.ok(source.includes('member.floor'));
  assert.ok(source.includes('if(a)showAdventurer(a)'));
