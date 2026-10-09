@@ -25,6 +25,8 @@ test('normal monsters return quickly after defeat',()=>{
  D.advance(s,.05,()=>.5);
  assert.equal(target.hp,0);
  assert.ok(target.respawn>=3&&target.respawn<=5);
+ hero.status='recovering';hero.recover=1000;
+ for(const a of d.adventurers)if(a!==hero){a.status='recovering';a.recover=1000}
  for(let i=0;i<125;i++)D.advance(s,.05,()=>.5);
  assert.ok(target.hp>0,'monster respawns in under seven seconds');
 });
