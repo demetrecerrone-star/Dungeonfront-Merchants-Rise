@@ -15,6 +15,8 @@ on:
       - 'tests/illustrated-sprites.test.js'
       - 'tests/modern-sprites.test.js'
       - 'tests/test_anime_frame_pack.py'
+      - 'tools/import_illustrated_ranger_pose.py'
+      - 'tests/test_illustrated_ranger_import.py'
       - 'app/src/main/assets/modern-knight-art.js'
       - 'tests/anime-style-polish.test.js'
       - '.github/workflows/build-anime-style-review.yml'
@@ -49,10 +51,11 @@ jobs:
           grep -q 'versionCode 20' app/build.gradle
       - name: Install offline RGBA rasterizer and preview renderer
         run: |
-          python3 -m pip install --quiet cairosvg pillow
+          python3 -m pip install --quiet cairosvg pillow numpy opencv-python-headless
       - name: Validate original hand-painted source frame packing and alpha safety
         run: |
           python3 -m unittest discover -s tests -p test_anime_frame_pack.py -v
+          python3 -m unittest discover -s tests -p test_illustrated_ranger_import.py -v
       - name: Generate 36 styled transparent PNG atlases and actual-size review
         run: |
           python3 tools/build_anime_style_preview.py
