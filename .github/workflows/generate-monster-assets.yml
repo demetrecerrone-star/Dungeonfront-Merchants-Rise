@@ -1,0 +1,36 @@
+name: Generate pixel-art monster atlases (no APK)
+on:
+  push:
+    branches:
+      - 'work/v0.8-roster-combat-treasure'
+    paths:
+      - 'tools/generate_monster_art.py'
+      - '.github/workflows/generate-monster-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate monster, boss and effect atlases
+        run: |
+          python3 tools/generate_monster_art.py
+          python3 -m py_compile tools/generate_monster_art.py
+      - name: Commit generated PNG sprites and manifest to development branch
+        run: |
+          git config user.name "Dungeonfront CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add app/src/main/assets/sprites/monsters app/src/main/assets/sprites/effects app/src/main/assets/sprites/manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate 46 original monster animations and 8 effect PNG atlases"
+            git push origin HEAD:work/v0.8-roster-combat-treasure
+          else
+            echo "All generated files already match."
+          fi
