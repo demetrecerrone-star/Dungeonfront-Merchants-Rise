@@ -7,6 +7,7 @@ on:
     paths:
       - 'tools/generate_remaining_actor_art.js'
       - 'tools/build_remaining_actor_atlases.py'
+      - 'tools/stage_remaining_actor_atlases.py'
       - 'tests/remaining-actors-v2.test.js'
       - '.github/workflows/build-v2-art-review.yml'
 
@@ -34,6 +35,11 @@ jobs:
         run: python -m pip install --quiet cairosvg pillow
       - name: Bake original Ranger / Mage / Cleric / Rogue / Mercenary prototype frames
         run: python tools/build_remaining_actor_atlases.py
+      - name: Verify staging remains opt-in and does not touch the APK
+        run: |
+          python tools/stage_remaining_actor_atlases.py
+          test ! -e app/src/main/assets/sprites/actors_v2/ranger/idle.png
+          test ! -e app/src/main/assets/sprites/actors_v2/rogue/attack.png
       - name: Validate package is review-only
         run: |
           test -s art-previews/remaining-classes-v2/class-animation-preview.png
