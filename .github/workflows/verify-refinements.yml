@@ -19,6 +19,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify generator scripts and browser JS syntax
+        run: |
+          python3 -m py_compile tools/generate_monster_art.py tools/generate_event_art.py
+          node --check app/src/main/assets/sprite-system.js
+          node --check app/src/main/assets/game.js
+          node --check app/src/main/assets/dungeon.js
       - name: Run JavaScript regression suites — no Android APK build
         run: |
           node tests/economy.test.js
