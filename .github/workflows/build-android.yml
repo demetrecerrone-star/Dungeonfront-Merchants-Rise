@@ -51,7 +51,7 @@ jobs:
         run: |
           grep -q "applicationId 'com.dabski.dungeonfront'" app/build.gradle
           grep -q 'versionCode 14' app/build.gradle
-          grep -q "versionName '0.8.0'" app/build.gradle
+          grep -q "versionName '0.8.1'" app/build.gradle
       - name: Verify original uploaded Dabski cinematic
         run: |
           test -f app/src/main/assets/dabski_intro.mp4
