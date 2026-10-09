@@ -71,7 +71,8 @@ test('raid boss must be defeated before completing floor eight',()=>{
  assert.equal(hero.floor,8);
  hero.x=D.worldWidth-45;hero.bossClearedFloor=8;
  D.advance(s,.05,()=>.5);
- assert.equal(hero.status,'recovering');
+ assert.equal(hero.status,'returning','victor must travel back to the start portal');
+ assert.ok(hero.x<D.worldWidth-45);
 });
 test('party member panel supports viewing all members including other floors',()=>{
  const source=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');

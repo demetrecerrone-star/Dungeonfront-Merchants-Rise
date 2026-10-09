@@ -1,6 +1,31 @@
-# Dungeonfront: Merchant's Rise — Android v0.7.0
+# Dungeonfront: Merchant's Rise — Android v0.8.0
 
 A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
+
+## v0.8 release — animated dungeon discoveries, guild roster, and class combat
+
+**Android smoke-test milestone:** [Emulator QA workflow](.github/workflows/android-visual-qa.yml) and [phone-specific test checklist](docs/ANDROID_QA.md). The emulator uses a Galaxy S23 FE-sized landscape display; screenshots/logs are uploaded as an artifact. It does not publish a game APK or substitute for hands-on Samsung testing.
+
+
+**Pixel-art production plan:** [Asset directory layout, frame counts, file naming and implementation checklist](docs/SPRITE_PRODUCTION_PLAN.md).
+
+**Visual Batch A is in the repo:** 18 original class animation PNG sheets (idle/walk/attack, six classes), fallback-aware sprite renderer, and PNG validation tests. [Preview all 18 animation sheets](docs/SPRITE_PREVIEW.md). These art assets are included in the v0.8.0 release source.
+
+**Visual Batches C/D are now implemented:** nine distinct monster designs with 46 animated PNG sheets (including the Abyssal Sovereign's signature attack and death) and eight combat effect sheets. The dungeon uses these actual sprites and retains procedural fallback. [Preview monsters and effects](docs/MONSTER_SPRITE_PREVIEW.md). A [GitHub Actions run](https://github.com/demetrecerrone-star/Dungeonfront-Merchants-Rise/actions/runs/37921981641) contains the downloadable `Dungeonfront-Monster-Boss-Effects-Sprites` ZIP. Both sprite and combat regression suites passed.
+
+
+**Visual Batch E is implemented:** five animated dungeon discovery types, six class emblems, four injury/readiness icons, and three rarity markers. Roster and contract cards now display condition, rank and extraction progress. [Preview the events and guild icons](docs/DUNGEON_EVENT_PREVIEW.md). The development branch contains **95 PNG sprites/icons** in total, and are bundled into v0.8.0.
+
+This work was developed on branch `work/v0.8-roster-combat-treasure`; the GitHub release workflow signs and publishes v0.8.0 after tests pass.
+
+- **Adventurer Roster:** Open the ⚔ icon by the parchment Contract Board emblem or the ROSTER button on the board. Inspect persistent levels, experience, traits, weapon/armor/shield/supply slots, fatigue and wounds. Stage up to five hires for contracts and issue gear from shop stock.
+- **Class-based combat:** Knights intercept attacks close to weaker teammates, clerics heal injured party members with limited charges, rangers and mages strike from range, rogues attack faster and can critically hit, while groups slow down for stragglers and couriers.
+- **Expanded merchant catalog:** Chainmail, steel shields, hunter bows, arcane staves and restorative elixirs, with class-specific customer demand. Existing local saves gain missing stock/price entries without losing currency or prior inventory.
+- **Dungeon discoveries:** Every floor features treasure chests, traps, healing shrines, hidden chambers and wandering traders. Heroes trigger discoveries during exploration; treasure is credited to the correct dungeon instance and discoveries cannot be repeatedly farmed by the same hero.
+- **Fatigue/injuries:** Successful extraction imposes fatigue and can leave persistent wounds. Injured/exhausted hires cannot start new contracts until treated with medical stock or rested through in-game days; death on a hired mission remains permanent.
+- **Existing extraction rules remain:** Exit portals at the *start* of every floor, onward passages at the ends of floors 1–7 and no forward passage on the raid floor; contract rewards and the completion popup stay locked until survivors return.
+
+Development tests: `node tests/v08.test.js` and all previous JavaScript regression suites run in CI without producing an APK.
 
 ## Playable prototype
 - Adventurers arrive, buy equipment and consumables, and bring back dungeon materials.
@@ -18,7 +43,7 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 - Mixed solo adventurers and persistent named parties explore eight floors with multiple roaming enemies. Floor eight features the Abyssal Sovereign raid boss with 480 HP, raid-victory rewards and a respawn timer. Hero victories grant XP, level-ups and crafting materials. Older dungeon saves migrate forward without clearing merchant progress.
 - Landscape orientation and Android system navigation safe areas.
 - Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
-- Version **0.7.0** (Android versionCode **12**).
+- Version **0.8.0** (Android versionCode **13**).
 
 ## Build APK
 

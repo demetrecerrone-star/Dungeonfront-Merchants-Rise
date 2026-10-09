@@ -39,4 +39,66 @@ test('expedition roster stays bounded and survives round-trip save',()=>{
  assert.equal(D.ensure(restored).adventurers.length,40);
  assert.ok(restored.dungeon.nextId>=49);
 });
+
+test('defeating the actual raid boss leads to a one-way portal extraction',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const boss=d.monsters.find(m=>m.boss);
+ const raider=D.enter(s,{name:'Boss Slayer',cls:'Knight',level:40},'Iron Shortsword');
+ raider.floor=D.bossFloor;raider.x=boss.x;raider.cooldown=0;
+ boss.hp=1;boss.cooldown=5;
+ D.advance(s,.05,()=>.3);
+ assert.equal(d.bossDefeats,1,'raid victory registered');
+ assert.equal(raider.bossClearedFloor,D.bossFloor,'winning hero earned exit');
+ for(let i=0;i<270&&d.adventurers.some(a=>a.id===raider.id);i++)D.advance(s,.05,()=>.3);
+ assert.equal(d.adventurers.some(a=>a.id===raider.id),false,'boss slayer exited the raid');
+ assert.ok(d.raidReturns.some(a=>a.name==='Boss Slayer'),'extraction is recorded');
+ assert.equal(d.bossDefeats,1,'boss did not get farmed again during extraction');
+});
+test('raid victors pass through the exit once instead of resetting to fight the boss again',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const hero=D.enter(s,{name:'Raider',cls:'Knight',level:18},'Iron Shortsword');
+ hero.floor=D.bossFloor;hero.x=65.02;hero.clearedFloor=D.bossFloor;
+ hero.bossClearedFloor=D.bossFloor;
+ const boss=d.monsters.find(m=>m.boss);
+ boss.hp=boss.maxHp;boss.cooldown=5;
+ const priorKills=d.bossDefeats;
+ const reports=D.advance(s,.1,()=>.3);
+ assert.ok(d.raidReturns.some(x=>x.name==='Raider'),'portal extraction is recorded even if the log is crowded');
+ assert.equal(d.adventurers.some(a=>a.id===hero.id),false,'victor leaves dungeon roster');
+ assert.equal(d.raidReturns.some(a=>a.name==='Raider'),true,'return is recorded');
+ assert.equal(d.bossDefeats,priorKills,'exit cannot force a second kill');
+ for(let i=0;i<100;i++)D.advance(s,.1,()=>.3);
+ assert.equal(d.adventurers.some(a=>a.id===hero.id),false,'victor cannot re-enter by automatic recovery');
+});
+test('all raiders on floor eight may use the shared portal after the boss falls',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const hero=D.enter(s,{name:'Late Survivor',cls:'Ranger',level:10},'Pitch Torch');
+ hero.floor=D.bossFloor;hero.x=65.02;hero.clearedFloor=0;hero.bossClearedFloor=0;
+ const boss=d.monsters.find(m=>m.boss);
+ boss.hp=0;boss.respawn=50;d.bossDefeats=1;
+ D.advance(s,.1,()=>.4);
+ assert.equal(d.adventurers.some(a=>a.id===hero.id),false,'shared boss victory opens portal');
+ assert.equal(d.raidReturns.some(a=>a.name==='Late Survivor'),true);
+});
+test('raid exit remains sealed before defeating the boss',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const hero=D.enter(s,{name:'Unproven Delver',cls:'Rogue',level:10},'Pitch Torch');
+ hero.floor=D.bossFloor;hero.x=D.worldWidth-48;hero.clearedFloor=0;hero.bossClearedFloor=0;
+ const boss=d.monsters.find(m=>m.boss);
+ boss.hp=boss.maxHp;d.bossDefeats=0;
+ D.advance(s,.1,()=>.4);
+ assert.equal(d.adventurers.some(a=>a.id===hero.id),true,'unproven hero cannot leave');
+ assert.equal(d.raidReturns.some(a=>a.name==='Unproven Delver'),false);
+});
+test('any floor extraction walks LEFT to x=65 before leaving',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const hero=D.enter(s,{name:'Gatherer',cls:'Ranger',level:7},'Starter Kit');
+ hero.floor=4;hero.x=500;hero.status='returning';
+ D.advance(s,.1,()=>.5);
+ assert.ok(hero.x<500,'return route moves toward entrance');
+ assert.equal(hero.floor,4,'extraction does not descend floors');
+ hero.x=65.02;D.advance(s,.1,()=>.5);
+ assert.equal(d.adventurers.some(a=>a.id===hero.id),false);
+ assert.ok(d.raidReturns.some(x=>x.name==='Gatherer'&&x.floor===4));
+});
 console.log('All '+checks+' dungeon expedition tests passed.');

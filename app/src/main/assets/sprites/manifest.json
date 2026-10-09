@@ -1,0 +1,850 @@
+{
+  "version": 1,
+  "frame": {
+    "width": 32,
+    "height": 48
+  },
+  "classes": [
+    "Knight",
+    "Ranger",
+    "Mage",
+    "Cleric",
+    "Rogue",
+    "Mercenary"
+  ],
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "fps": 5,
+      "loop": true
+    },
+    "walk": {
+      "frames": 6,
+      "fps": 9,
+      "loop": true
+    },
+    "attack": {
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "origin": "bottom-center",
+  "imageSmoothing": false,
+  "actors": {
+    "Knight": {
+      "idle": {
+        "src": "sprites/actors/knight/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/knight/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/knight/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Ranger": {
+      "idle": {
+        "src": "sprites/actors/ranger/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/ranger/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/ranger/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Mage": {
+      "idle": {
+        "src": "sprites/actors/mage/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/mage/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/mage/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Cleric": {
+      "idle": {
+        "src": "sprites/actors/cleric/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/cleric/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/cleric/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Rogue": {
+      "idle": {
+        "src": "sprites/actors/rogue/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/rogue/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/rogue/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Mercenary": {
+      "idle": {
+        "src": "sprites/actors/mercenary/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/mercenary/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/mercenary/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  },
+  "monsters": {
+    "slime": {
+      "idle": {
+        "src": "sprites/monsters/slime/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/slime/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/slime/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/slime/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/slime/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "goblin": {
+      "idle": {
+        "src": "sprites/monsters/goblin/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/goblin/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/goblin/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/goblin/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/goblin/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "skeleton": {
+      "idle": {
+        "src": "sprites/monsters/skeleton/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/skeleton/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/skeleton/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/skeleton/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/skeleton/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "imp": {
+      "idle": {
+        "src": "sprites/monsters/imp/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/imp/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/imp/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/imp/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/imp/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "spider": {
+      "idle": {
+        "src": "sprites/monsters/spider/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/spider/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/spider/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/spider/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/spider/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "wraith": {
+      "idle": {
+        "src": "sprites/monsters/wraith/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/wraith/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/wraith/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/wraith/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/wraith/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "hound": {
+      "idle": {
+        "src": "sprites/monsters/hound/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/hound/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/hound/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/hound/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/hound/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "guardian": {
+      "idle": {
+        "src": "sprites/monsters/guardian/idle.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/guardian/walk.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/guardian/attack.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/guardian/hurt.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/guardian/death.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "abyssal_sovereign": {
+      "idle": {
+        "src": "sprites/monsters/abyssal_sovereign/idle.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/abyssal_sovereign/walk.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/abyssal_sovereign/attack.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/abyssal_sovereign/hurt.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/abyssal_sovereign/death.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "special": {
+        "src": "sprites/monsters/abyssal_sovereign/special.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  },
+  "effects": {
+    "slash": {
+      "src": "sprites/effects/slash.png",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "fps": 12,
+      "loop": false
+    },
+    "heavy_slash": {
+      "src": "sprites/effects/heavy_slash.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 5,
+      "fps": 12,
+      "loop": false
+    },
+    "arrow": {
+      "src": "sprites/effects/arrow.png",
+      "frameW": 32,
+      "frameH": 16,
+      "frames": 4,
+      "fps": 12,
+      "loop": false
+    },
+    "magic_bolt": {
+      "src": "sprites/effects/magic_bolt.png",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    "healing_pulse": {
+      "src": "sprites/effects/healing_pulse.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    "hit_flash": {
+      "src": "sprites/effects/hit_flash.png",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 3,
+      "fps": 12,
+      "loop": false
+    },
+    "critical": {
+      "src": "sprites/effects/critical.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 5,
+      "fps": 12,
+      "loop": false
+    },
+    "death_burst": {
+      "src": "sprites/effects/death_burst.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "events": {
+    "chest": {
+      "idle": {
+        "src": "sprites/events/chest/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/chest/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "trap": {
+      "idle": {
+        "src": "sprites/events/trap/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/trap/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "shrine": {
+      "idle": {
+        "src": "sprites/events/shrine/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/shrine/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "hidden": {
+      "idle": {
+        "src": "sprites/events/hidden/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/hidden/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "merchant": {
+      "idle": {
+        "src": "sprites/events/merchant/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/merchant/activate.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  },
+  "ui": {
+    "classes": {
+      "knight": {
+        "src": "sprites/ui/classes/knight.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "ranger": {
+        "src": "sprites/ui/classes/ranger.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "mage": {
+        "src": "sprites/ui/classes/mage.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "cleric": {
+        "src": "sprites/ui/classes/cleric.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "rogue": {
+        "src": "sprites/ui/classes/rogue.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "mercenary": {
+        "src": "sprites/ui/classes/mercenary.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      }
+    },
+    "condition": {
+      "ready": {
+        "src": "sprites/ui/condition/ready.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "busy": {
+        "src": "sprites/ui/condition/busy.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "injured": {
+        "src": "sprites/ui/condition/injured.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "exhausted": {
+        "src": "sprites/ui/condition/exhausted.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      }
+    },
+    "rarity": {
+      "uncommon": {
+        "src": "sprites/ui/rarity/uncommon.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "rare": {
+        "src": "sprites/ui/rarity/rare.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "epic": {
+        "src": "sprites/ui/rarity/epic.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      }
+    }
+  }
+}

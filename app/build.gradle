@@ -13,8 +13,9 @@ android {
   applicationId 'com.dabski.dungeonfront'
   minSdk 26
   targetSdk 35
-  versionCode 12
-  versionName '0.7.0'
+  testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+  versionCode 13
+  versionName '0.8.0'
  }
  signingConfigs {
   if (usePersistentSigning) {
@@ -35,4 +36,11 @@ android {
  }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  packaging { resources { excludes += ['META-INF/DEPENDENCIES','META-INF/NOTICE','META-INF/LICENSE'] } }
+}
+
+
+dependencies {
+ androidTestImplementation 'androidx.test:core:1.6.1'
+ androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+ androidTestImplementation 'androidx.test:runner:1.6.2'
 }

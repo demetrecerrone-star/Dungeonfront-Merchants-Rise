@@ -1,0 +1,32 @@
+name: Test contract refinement (no APK)
+on:
+  push:
+    branches:
+      - 'work/**'
+    paths:
+      - 'app/src/main/assets/**'
+      - 'tests/**'
+      - '.github/workflows/test-contract-refinements.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check browser game syntax
+        run: |
+          node --check app/src/main/assets/contracts.js
+          node --check app/src/main/assets/game.js
+          node --check app/src/main/assets/dungeon.js
+          node --check app/src/main/assets/economy.js
+      - name: Run regression and contract balance tests (no Android build)
+        run: |
+          set -e
+          for test_file in tests/*.test.js; do
+            node "$test_file"
+          done

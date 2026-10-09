@@ -212,3 +212,91 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 .contract-report button{background:#695133;color:#fff1c8;border:1px solid #d4b378;padding:6px 9px;margin-top:5px;font:700 10px Arial,sans-serif}
 @media(max-width:700px){.contract-body{grid-template-columns:1fr 1fr}.contract-column:last-child{grid-column:span 2}.contract-letter{width:29px;height:34px}.contract-letter span{font-size:23px}.contract-board{padding:7px}.contract-board-top h2{font-size:19px}}
 @media(max-height:440px){.contract-board-top h2{font-size:18px}.contract-board-top p{font-size:9px}.contract-entry{padding:5px}.contract-column h3{padding:6px}.contract-report{top:44px;padding:6px}}
+
+/* v0.7.1: small wax-red completion seal, unobtrusive in landscape mode. */
+.contract-letter .contract-alert{position:absolute;top:-5px;right:-6px;width:12px;height:12px;border-radius:50%;background:#d73739;border:2px solid #f8dab6;box-shadow:0 0 0 1px #341b20,0 0 8px #ec3a4188;z-index:2;pointer-events:none}
+.contract-letter .contract-alert.hidden{display:none}
+.contract-board .contract-death{color:#f1a7a2}
+
+/* v0.8 — concise guild roster with treatment and loadout controls. */
+.roster-shortcut{flex-shrink:0;width:31px;height:34px;background:linear-gradient(125deg,#47594f,#242f2d);color:#f5d8a1;border:1px solid #a18c62;border-radius:3px;font:700 20px Georgia,serif}
+.roster-shortcut:active{background:#796348}
+.roster-screen{position:absolute;inset:0;z-index:17;padding:10px 14px;background:radial-gradient(ellipse at 50% 15%,#303c36,#0a1517 85%);border:3px solid #816743;box-shadow:inset 0 0 0 4px #101b1d;display:flex;flex-direction:column;gap:7px}
+.roster-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #806b48;padding-bottom:6px}
+.roster-heading small{font:9px Arial,sans-serif;color:#c2a47e}
+.roster-heading h2{margin:2px 0;font:700 24px Georgia;color:#f2d59c;letter-spacing:1px}
+.roster-heading p{margin:0;font:11px Arial,sans-serif;color:#adbbb5}
+.roster-heading button,.roster-body button{border:1px solid #9d8056;background:#43362a;color:#f4dbad;border-radius:3px;padding:6px;font:bold 10px Arial,sans-serif;cursor:pointer}
+.roster-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(190px,42%) 1fr;gap:9px;overflow:hidden}
+.roster-list,.roster-detail{background:#101b1cec;border:1px solid #62543a;padding:8px;overflow:auto;min-height:0}
+.roster-list>h3,.roster-detail>h3{margin:-8px -8px 7px;padding:9px;background:#2c332f;color:#e7c588;font:700 12px Georgia}
+.roster-entry{width:100%;margin:0 0 5px;padding:9px 8px!important;text-align:left!important;background:#25312f!important;border:1px solid #536451!important;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.roster-entry.focused{border-color:#d8b271!important;background:#394237!important}
+.roster-entry strong{display:block;font:700 12px Georgia}
+.roster-entry small{display:block;color:#a5beb3;font:10px Arial,sans-serif;margin-top:3px}
+.roster-condition{font:bold 9px Arial,sans-serif;color:#a9d2a4;white-space:nowrap}
+.roster-condition.injured,.roster-condition.tired{color:#e8a277}
+.roster-condition.working{color:#85b1c9}
+.roster-selected{color:#e9be6a;font:700 17px Arial}
+.roster-detail-header{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.roster-detail-header small{color:#aaa697;font:9px Arial,sans-serif}
+.roster-detail-header h3{margin:5px 0;font:700 20px Georgia;color:#e9ca90}
+.roster-detail-header p{font:11px Arial,sans-serif;color:#c6d4c6;margin:2px 0}
+.roster-meters{display:grid;grid-template-columns:1fr 1fr;gap:9px;background:#1b2828;border:1px solid #4c594d;padding:8px;margin:10px 0}
+.roster-meters small{font:10px Arial,sans-serif;color:#d8bfa0}
+.roster-bar{margin-top:5px;height:7px;background:#493d35;border:1px solid #6d5b47}
+.roster-bar span{height:100%;display:block;background:#cc8a67}
+.roster-kit{color:#c7c8b6;font:11px/1.45 Arial,sans-serif}
+.roster-actions{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.roster-actions>button{align-self:flex-start}
+.roster-input-row{display:flex;align-items:center;gap:7px}
+.roster-input-row select{flex:1;min-width:0;min-height:30px;font:11px Arial,sans-serif;background:#1f2e2e;color:#f2dbb7;border:1px solid #806b4a;padding:5px}
+.roster-input-row button{min-width:85px}
+.roster-body button.selected{background:#48624d!important;color:#f9e9bb!important;border-color:#a1c39b!important}
+.roster-body button:disabled{opacity:.4!important;cursor:default}
+@media(max-width:850px){.roster-screen{padding:6px}.roster-heading h2{font-size:18px}.roster-heading p{font-size:9px}.roster-entry{padding:6px!important}.roster-entry small{font-size:9px}.roster-body{grid-template-columns:minmax(160px,41%) 1fr}}
+@media(max-height:420px){.roster-screen{gap:3px}.roster-heading h2{font-size:16px}.roster-meters{margin:4px 0}.roster-kit{margin:5px 0}.roster-actions{gap:4px;margin-top:5px}.roster-detail-header h3{font-size:16px}}
+
+/* Dungeonfront v0.8 visual pass: readable rank, class and recovery indicators. */
+.guild-identity{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.guild-identity strong{min-width:0;flex:1}
+.class-icon,.guild-status img,.rarity-icon{image-rendering:pixelated;image-rendering:crisp-edges;flex-shrink:0;vertical-align:middle;object-fit:contain}
+.class-icon{width:18px;height:18px}
+.guild-status img{width:12px;height:12px}
+.rarity-icon{width:15px;height:15px;margin-right:5px}
+.guild-status{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border:1px solid #74836f;border-radius:3px;background:#233c32;color:#bbe0b3;font:bold 9px Arial,sans-serif;white-space:nowrap;letter-spacing:.25px;line-height:1}
+.guild-injured,.guild-exhausted{border-color:#a77b5f;background:#4a312c;color:#f2bda3}
+.guild-busy,.run-active{border-color:#628aa1;background:#253949;color:#a9cddf}
+.run-returning{border-color:#ba9a65;background:#4b3c27;color:#f7d6a2}
+.run-completed{border-color:#7aab8b;background:#234e38;color:#d2efb8}
+.run-failed{border-color:#b57577;background:#482b33;color:#f5b4b7}
+.run-claimed{border-color:#616660;background:#2a3030;color:#aeb4ad}
+.contract-offer{border-left:3px solid #aa8c5c}
+.contract-type{color:#b8c8b2;font:bold 9px Arial,sans-serif;letter-spacing:.5px}
+.contract-run{border-left:3px solid #647c82}
+.contract-run.run-returning{border-left-color:#c7aa64}
+.contract-run.run-completed{border-left-color:#85be94}
+.contract-run.run-failed{border-left-color:#c3797c}
+.contract-run.run-claimed{opacity:.78}
+.contract-rank.rank-E{background:#4c6750;border-color:#83ac85;color:#d8f0d0}
+.contract-rank.rank-D{background:#466778;border-color:#88aeb9;color:#d3e6f1}
+.contract-rank.rank-C{background:#655678;border-color:#a594cb;color:#ebddfc}
+.contract-rank.rank-B{background:#855738;border-color:#bd8850;color:#ffe1a6}
+.contract-rank.rank-A{background:#836144;border-color:#dbb56f;color:#fff1bf}
+.contract-rank.rank-S{background:#763848;border-color:#ce7c98;color:#fff1ce;box-shadow:0 0 7px #db729933}
+.contract-return-track{height:8px;width:100%;margin:7px 0 5px;border:1px solid #b9a06e;background:#1a2625;border-radius:3px;overflow:hidden}
+.contract-return-track>span{display:block;height:100%;background:linear-gradient(90deg,#6c9f85,#b8dbb1);transition:width .25s}
+.contract-entry .guild-identity{margin-bottom:6px}
+.contract-entry-actions button:focus-visible,.roster-entry:focus-visible{outline:2px solid #e2c88f;outline-offset:2px}
+.roster-identity{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.roster-identity>span{min-width:0;flex:1}
+.roster-identity small{white-space:normal}
+.roster-entry .guild-status{font-size:8px;padding:3px 4px}
+.roster-mini-fatigue{display:block;width:100%;max-width:120px;height:4px;background:#332d2b;margin-top:5px;border:1px solid #594a3a}
+.roster-mini-fatigue>span{display:block;height:100%;background:#d6a47a}
+.roster-bar.roster-danger>span{background:#d56e61}
+.roster-detail-header .guild-identity{gap:8px}
+.roster-detail-header .guild-identity h3{margin:2px 0}
+.item-top .rarity-icon{width:17px;height:17px;margin-right:6px}
+@media(max-width:850px){.contract-entry .guild-status{font-size:8px}.class-icon{width:16px;height:16px}.roster-entry .guild-status{font-size:7px}.contract-type{font-size:8px}}
+@media(max-height:420px){.contract-return-track{height:6px;margin:4px 0}.guild-status{padding:2px 4px}.contract-entry .guild-identity{margin-bottom:3px}}

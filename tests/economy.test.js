@@ -46,7 +46,7 @@ test('all scripted options maintain nonnegative gold and stock',()=>{
 });
 test('most roadside event types offer adventurer loot for sale',()=>{
  const events=Object.values(E.visitorEncounters);
- const sellers=events.filter(e=>e.choices.some(x=>(x.gold||0)<0&&((x.iron||0)+(x.herb||0)+(x.stockQty||0)>0)));
+ const sellers=events.filter(e=>e.choices.some(x=>(x.gold||0)<0&&((x.iron||0)+(x.herb||0)+(x.stockQty||0)+(x.lootQty||0)>0)));
  assert.ok(sellers.length/events.length>=.7,'more than 70% of events are loot sellers');
 });
 test('bought equipment enters stock without breaching shelf capacity',()=>{
@@ -61,5 +61,23 @@ test('bought equipment enters stock without breaching shelf capacity',()=>{
 test('daily commissions still pay only once per day',()=>{
  const s=E.initialState();const a=E.fulfillCommission(s);
  assert.equal(a.ok,true);assert.equal(E.fulfillCommission(s).ok,false);
+});
+test('uncommon, rare and epic loot has distinct resale values',()=>{
+ const s=E.initialState();E.ensureLoot(s);
+ assert.ok(E.lootKinds.relic.sell<E.lootKinds.essence.sell);
+ assert.ok(E.lootKinds.essence.sell<E.lootKinds.gem.sell);
+ s.loot.relic=2;const g=s.gold;
+ const tx=E.sellFind(s,'relic',1);
+ assert.equal(tx.ok,true);assert.equal(s.loot.relic,1);assert.ok(s.gold>g);
+ assert.equal(E.sellFind(s,'relic',2).ok,false);
+});
+test('relic vendor allows a paid offer or a discounted reputation-cost counteroffer',()=>{
+ const s=E.initialState();s.pendingEncounter='relicseller';
+ const cash=s.gold,rep=s.reputation;
+ assert.equal(E.resolveVisitor(s,'relicseller','bargain').ok,true);
+ assert.equal(s.gold,cash-12);assert.equal(s.reputation,rep-1);
+ assert.equal(s.loot.relic,1);
+ const profit=E.sellFind(s,'relic',1);
+ assert.ok(profit.ok&&profit.earned>=E.lootKinds.relic.sell);
 });
 console.log('All '+checks+' game economy tests passed.');
