@@ -29,3 +29,11 @@ jobs:
           node tests/encounters.test.js
           node tests/contracts.test.js
           node tests/v08.test.js
+          node tests/sprites.test.js
+      - name: Bundle 18 PNG sheets for art review (no APK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dungeonfront-18-Class-Sprite-Sheets
+          path: app/src/main/assets/sprites/actors/**/*.png
+          if-no-files-found: error
+          retention-days: 30
