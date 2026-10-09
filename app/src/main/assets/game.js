@@ -409,7 +409,7 @@ function drawDungeon(t){
    dungeonBox(x-24,236,48,108,'#111c23');
    dungeonBox(x-34,228,68,12,palette[2]);
    g.fillStyle='#ddc899';g.font='bold 10px Arial';g.textAlign='center';
-   g.fillText(worldX<100?'ENTRANCE':(raid?'RAID EXIT':'STAIRS ↓'),x,223);
+   g.fillText(worldX<100?'ENTRANCE':(raid?(ds.dungeon.monsters.find(m=>m.boss&&m.floor===floor)?.hp<=0?'EXIT OPEN':'RAID EXIT'):'STAIRS ↓'),x,223);
   }
  }
  // Filter on the selected floor before painting and collecting touch targets.
@@ -428,7 +428,7 @@ function drawDungeon(t){
   dungeonHit.push({x,y:m.boss?305:325,type:'monster',ref:m});
  }
  for(const a of ds.dungeon.adventurers){
-  if(a.floor!==floor||a.status==='recovering')continue;
+  if(a.floor!==floor||a.status==='recovering'||a.status==='extracted')continue;
   const x=a.x-cameraX;
   if(x<-80||x>880)continue;
   const clsIndex=classes.indexOf(a.cls);
@@ -446,7 +446,7 @@ function drawDungeon(t){
   if(followId===a.id)stroke(x-29,276,58,82,'#e7cf91');
   dungeonHit.push({x,y:315,type:'adventurer',ref:a});
  }
- const heroes=ds.dungeon.adventurers.filter(a=>a.floor===floor&&a.status!=='recovering');
+ const heroes=ds.dungeon.adventurers.filter(a=>a.floor===floor&&a.status!=='recovering'&&a.status!=='extracted');
  const partyCount=new Set(heroes.filter(a=>a.partyId).map(a=>a.partyId)).size;
  const solos=heroes.filter(a=>!a.partyId).length;
  dungeonBox(0,0,800,42,'#091016ea');dungeonBox(0,41,800,2,palette[2]);
@@ -458,11 +458,13 @@ function drawDungeon(t){
   const boss=ds.dungeon.monsters.find(m=>m.boss&&m.floor===floor);
   dungeonBox(210,48,380,34,'#381922cc');
   g.textAlign='center';g.fillStyle='#f4b4c0';g.font='bold 14px Arial';
-  g.fillText(boss&&boss.hp>0?'☠ RAID FLOOR • ABYSSAL SOVEREIGN ☠':'✦ RAID BOSS DEFEATED • RESPAWNING ✦',400,69);
+  g.fillText(boss&&boss.hp>0?'☠ RAID FLOOR • ABYSSAL SOVEREIGN ☠':'✦ RAID BOSS DEFEATED • EXIT PORTAL OPEN ✦',400,69);
  }
- g.textAlign='left';g.font='bold 10px Arial';g.fillStyle='#b4c9c2';
- g.fillText(run?'AUTO-FOLLOW · '+run.offer.title.toUpperCase():'HORIZONTAL SWIPE TO EXPLORE • UP/DOWN FOR ANOTHER FLOOR',12,429);
- g.textAlign='right';g.fillText(Math.floor(cameraX)+' / '+(D.worldWidth-800),790,429);
+ // Keep contract context only; old floor and arrow-key instructions are gone.
+ if(run){
+  g.textAlign='left';g.font='bold 10px Arial';g.fillStyle='#b4c9c2';
+  g.fillText('AUTO-FOLLOW · '+run.offer.title.toUpperCase(),12,429);
+ }
  paintContractReport();
 }
 function showAdventurer(o){
