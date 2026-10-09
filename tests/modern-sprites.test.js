@@ -101,7 +101,7 @@ test('game loads v2 before scene and retains legacy image fallback and save key'
  assert.ok(html.indexOf('sprite-system.js')<html.indexOf('modern-sprites.js'));
  assert.ok(html.indexOf('modern-sprites.js')<html.indexOf('game.js'));
  assert.ok(game.includes('window.DFModernSprites.draw(g,drawActorState,t)'));
- assert.ok(game.includes('if(!modern){'));
+ assert.ok(game.includes('if(!illustrated&&!modern){'));
  assert.ok(game.includes('window.DFSprites.draw(g,a,t)'));
  assert.ok(game.includes("dungeonfront_merchants_rise_save_v1"));
  assert.equal(game.includes('DFModernSprites.setEnabled(true)'),false,'main gameplay never forces new art on');
@@ -141,12 +141,12 @@ test('all six approved preview classes render independently and shop action mapp
 test('shop, dungeon, and contract dungeon use the same v2 renderer without modifying save data',()=>{
  const game=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
  assert.ok(game.includes("new URLSearchParams(location.search).get('actorPreview')==='1'"));
- assert.ok(game.includes("modernShop=window.DFModernSprites.draw(g,{"));
+ assert.ok(game.includes('window.DFIllustratedSprites.draw(g,actor,t)'));
  assert.ok(game.includes("status:c.stage===1?'waiting':'walking'"));
  assert.ok(game.includes("window.DFModernSprites.draw(g,drawActorState,t)"));
  assert.ok(game.includes("if(view==='dungeon'||view==='contract'){drawDungeon(t);return}"));
  assert.ok(game.includes('if(!modernShop)drawActor('));
- assert.ok(game.includes('if(!modern){'));
+ assert.ok(game.includes('if(!illustrated&&!modern){'));
  const html=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/index.html'),'utf8');
  assert.ok(html.indexOf('modern-knight-art.js')<html.indexOf('modern-sprites.js'));
  assert.ok(html.indexOf('modern-sprites.js')<html.indexOf('game.js'));
