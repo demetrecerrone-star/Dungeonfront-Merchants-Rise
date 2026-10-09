@@ -1,12 +1,13 @@
 (function(){
 'use strict';
-const E=window.DFEconomy,D=window.DFDungeon,$=id=>document.getElementById(id),key='dungeonfront_merchants_rise_save_v1';
+const E=window.DFEconomy,D=window.DFDungeon,C=window.DFContracts,$=id=>document.getElementById(id),key='dungeonfront_merchants_rise_save_v1';
 let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.valid(old))s=Object.assign(E.initialState(),old)}catch(e){}
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
 let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
 let view='shop',cameraX=0,floorOffset=1,drag=null,dungeonHit=[],followId=null,focusId=null;
+let contractRunId=null,contractBoardOpen=false,chosenHires=new Set();
 const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowan','Mira','Dain','Iris','Sable','Thorne'],classes=['Knight','Rogue','Mage','Ranger','Cleric','Mercenary'],colors=['#b9a4a0','#8795a8','#b093bd','#9ab49d','#d1af73','#a48d87'],needs=['potion','potion','torch','bandage','blade','torch','bandage','forged'];
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
@@ -59,6 +60,99 @@ $('visitorChoices').addEventListener('click',e=>{
  const b=e.target.closest('button[data-visitor-choice]');
  if(b&&!b.disabled)chooseVisitor(b.dataset.visitorChoice);
 });
+
+function currentContractRun(){
+ return C.ensure(s).runs.find(run=>run.id===contractRunId)||null;
+}
+function contractStatusLine(run){
+ const p=C.progress(run);
+ return run.offer.kind==='reach'?'FLOOR '+p.value+' / '+p.target:run.offer.kind==='boss'?'RAID BOSS '+p.value+' / 1':'MONSTERS '+p.value+' / '+p.target;
+}
+function renderContractBoard(){
+ const c=C.ensure(s),busy=C.busyIds(c);
+ const roster=c.staff.map(a=>{
+  const occupied=busy.has(a.id),selected=chosenHires.has(a.id);
+  return '<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · '+(occupied?'ON EXPEDITION':'AVAILABLE')+'</p><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(occupied?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':selected?'✓ SELECTED':'SELECT')+'</button></div></article>';
+ }).join('');
+ const offers=c.offers.map(o=>'<article class="contract-entry"><small class="contract-rank">RANK '+esc(o.rank)+'</small><strong>'+esc(o.title)+'</strong><p>'+esc(o.desc)+'</p><small>REWARD '+o.reward+'G · +'+o.rep+' REP</small><div class="contract-entry-actions"><button data-contract-action="start" data-id="'+esc(o.id)+'" '+(!chosenHires.size?'disabled':'')+'>SEND SELECTED PARTY</button></div></article>').join('');
+ const applicants=c.applicants.map(a=>'<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · HIRING FEE '+a.fee+'G</p><div class="contract-entry-actions"><button data-contract-action="hire" data-id="'+esc(a.id)+'" '+(s.gold<a.fee||c.staff.length>=C.maxHired?'disabled':'')+'>HIRE '+a.fee+'G</button></div></article>').join('');
+ const runs=c.runs.slice(0,12).map(run=>{
+  const done=run.status==='completed'||run.status==='failed',claimed=run.status==='claimed';
+  return '<article class="contract-entry"><small class="contract-rank">'+esc(run.offer.rank)+'</small><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' hired · '+esc(run.status.toUpperCase())+' · '+esc(contractStatusLine(run))+'</p><div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
+ }).join('');
+ $('contractBody').innerHTML='<section class="contract-column"><h3>✉ AVAILABLE CONTRACTS</h3><p class="contract-sub">Select 1–5 available hires, then send them on a job.</p>'+(offers||'<p>No new postings today. Check tomorrow.</p>')+'</section>'+
+ '<section class="contract-column"><h3>⚔ ADVENTURERS FOR HIRE</h3>'+(applicants||'<p>New applicants arrive tomorrow.</p>')+'<div class="contract-separator"></div><h3>YOUR ROSTER · '+c.staff.length+'/'+C.maxHired+'</h3>'+(roster||'<p>Hire an adventurer to start taking contracts.</p>')+'</section>'+
+ '<section class="contract-column"><h3>◈ ACTIVE & FINISHED RUNS</h3>'+(runs||'<p>No expeditions yet.</p>')+'</section>';
+}
+function openContractBoard(){
+ if(!active)return;
+ contractBoardOpen=true;
+ $('npcCard').classList.add('hidden');
+ $('contractBoard').classList.remove('hidden');
+ $('contractNotice').textContent='';
+ renderContractBoard();
+}
+function closeContractBoard(shop=false){
+ contractBoardOpen=false;$('contractBoard').classList.add('hidden');
+ if(shop&&view!=='shop')closeDungeon(true);
+}
+function watchContract(id){
+ const run=C.ensure(s).runs.find(x=>x.id===id);
+ if(!run||run.status==='claimed')return;
+ contractRunId=id;view='contract';cameraX=0;floorOffset=1;followId=run.instance.dungeon.adventurers[0]?.id||null;
+ $('contractBoard').classList.add('hidden');contractBoardOpen=false;
+ $('dungeonControls').classList.remove('hidden');
+ $('dungeonBack').textContent='‹ CONTRACTS';
+ $('dungeonFollow').classList.add('hidden');$('dungeonFloorMenuButton').classList.add('hidden');
+ $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
+ $('sceneHeading').innerHTML='<i class="pulse"></i> GUILD CONTRACT • '+esc(run.offer.title.toUpperCase());
+ $('sceneHint').textContent='◈ AUTO-FOLLOW ON · ONLY YOUR CONTRACT PARTY IS VISIBLE';
+ $('npcCard').classList.add('hidden');closeFloorMenu();
+ $('feedbackToast').classList.add('hidden');
+ persist();
+}
+function contractNotice(message){$('contractNotice').textContent=message;}
+$('contractsButton').addEventListener('click',openContractBoard);
+$('contractClose').addEventListener('click',()=>closeContractBoard(true));
+$('contractShop').addEventListener('click',()=>closeContractBoard(true));
+$('contractBody').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-contract-action]');if(!b||b.disabled)return;
+ const id=b.dataset.id,action=b.dataset.contractAction;
+ if(action==='select'){
+  if(chosenHires.has(id))chosenHires.delete(id);
+  else if(chosenHires.size<C.maxParty)chosenHires.add(id);
+  else {contractNotice('A party may have at most five adventurers.');return;}
+  renderContractBoard();return;
+ }
+ if(action==='watch'){watchContract(id);return;}
+ let result;
+ if(action==='hire'){
+  result=C.hire(s,id);
+  if(result.ok)chosenHires.add(id);
+ }else if(action==='start'){
+  result=C.start(s,id,Array.from(chosenHires));
+  if(result.ok)chosenHires.clear();
+ }else if(action==='claim')result=C.claim(s,id);
+ if(result){
+  const message=result.ok?action==='hire'?'Adventurer hired and ready.':action==='start'?'Expedition launched! Tap WATCH RUN to follow.':result.success?'Contract settled: +'+result.reward+'G and recovered salvage.':'Expedition settled without payment.':result.reason;
+  contractNotice(message);
+  if(result.ok){say(message);persist();hud();paintPanel();}
+  renderContractBoard();
+ }
+});
+$('contractClaim').addEventListener('click',()=>{
+ const run=currentContractRun();if(!run)return;
+ const tx=C.claim(s,run.id);
+ if(tx.ok){say(tx.success?'Contract paid: +'+tx.reward+'G, salvage recovered.':'Failed contract settled.');persist();}
+ openContractBoard();renderContractBoard();
+});
+function paintContractReport(){
+ const run=currentContractRun(),panel=$('contractReport');
+ if(view!=='contract'||!run||run.status==='active'||run.status==='claimed'){panel.classList.add('hidden');return;}
+ panel.classList.remove('hidden');
+ $('contractReportText').textContent=run.offer.title+' — '+(run.status==='completed'?'COMPLETE! '+run.offer.reward+'G reward, +'+run.offer.rep+' reputation and salvage.':'FAILED. No reward.');
+ $('contractClaim').textContent=run.status==='completed'?'CLAIM PAYMENT':'CLOSE REPORT';
+}
 function hud(){
  if(shownGold!==null&&s.gold!==shownGold)flashStat('goldStat',s.gold>shownGold);
  if(shownRep!==null&&s.reputation!==shownRep)flashStat('repStat',s.reputation>shownRep);
@@ -66,7 +160,7 @@ function hud(){
  $('goldValue').textContent=Math.floor(s.gold).toLocaleString();
  $('repValue').textContent=s.reputation;
  $('dayValue').textContent=s.day;
- $('depthValue').textContent='FLOOR '+(view==='dungeon'?floorOffset:s.depth);
+ $('depthValue').textContent='FLOOR '+((view==='dungeon'||view==='contract')?floorOffset:s.depth);
  $('visitorsValue').textContent=s.visitors;
  $('liveStatus').textContent=paused?'SHOP CLOSED':visitorOpen?'VISITOR AT DOOR':s.clock<24?'DAWN TRADE':s.clock<69?'MARKET OPEN':'DUSK WATCH';
  $('safetyNote').textContent=s.upgrades.guard?'⚔ THREAT: GUARDED':'⚔ THREAT: UNEASY';
@@ -99,6 +193,7 @@ function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',co
 function tick(dt){
  if(!active||paused||visitorOpen)return;
  const dungeonReports=D.advance(s,dt);for(const report of dungeonReports)say('DUNGEON REPORT: '+report);
+ const contractReports=C.advance(s,dt);for(const report of contractReports)say(report);
  s.clock+=dt;visitorCountdown-=dt;
  $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
  // Queue one visitor in the background; never pause or cover the dungeon.
@@ -136,7 +231,7 @@ function drawActor(x,y,color,t,role,cls,stage){
 }
 function stonework(x,y,w,h){box(x,y,w,h,'#343b3b');for(let yy=y;yy<y+h;yy+=26){for(let xx=x+((yy/26|0)%2)*18;xx<x+w;xx+=49){box(xx,yy,45,21,'#3f4240');box(xx,yy,45,3,'#56534b');box(xx+42,yy+3,3,18,'#222829')}}}
 function torch(x,y,t){box(x-2,y,4,27,'#7b5434');let flicker=Math.sin(t*9+x)*3;box(x-5,y-13+flicker,10,16,'#a34b25');box(x-3,y-9+flicker,6,13,'#e7a45a');box(x-1,y-7+flicker,3,9,'#ffe4a0')}
-function draw(t){if(view==='dungeon'){drawDungeon(t);return}g.imageSmoothingEnabled=false;box(0,0,800,440,'#0c171e');
+function draw(t){if(view==='dungeon'||view==='contract'){drawDungeon(t);return}g.imageSmoothingEnabled=false;box(0,0,800,440,'#0c171e');
  for(let i=0;i<34;i++){let xx=(i*113+31)%800,yy=(i*47+11)%185;box(xx,yy,(i%3===0?2:1),2,'#8ca3a766')}
  for(let i=0;i<14;i++){let ridge=130+(i*19)%80;box(i*63,ridge,70,235,'#172226');box(i*63,ridge,65,4,'#283033')}
  for(let i=0;i<5;i++){let xx=((i*190+t*5)%1150)-200;box(xx,116+i*17,125,9,'#778e8e13')}
@@ -174,7 +269,8 @@ const shade=g.createLinearGradient(0,0,0,440);shade.addColorStop(0,'#00000088');
 /* The dungeon is a second camera onto the same persistent merchant world. */
 function cameraClamp(v){return Math.max(0,Math.min(D.worldWidth-800,v))}
 function openDungeon(){
- D.ensure(s);view='dungeon';cameraX=0;floorOffset=1;drag=null;followId=null;focusId=null;updateFollowButton();
+ D.ensure(s);contractRunId=null;view='dungeon';
+ $('contractReport').classList.add('hidden');$('dungeonFollow').classList.remove('hidden');$('dungeonFloorMenuButton').classList.remove('hidden');$('dungeonBack').textContent='‹ SHOP';cameraX=0;floorOffset=1;drag=null;followId=null;focusId=null;updateFollowButton();
  $('npcCard').classList.add('hidden');$('partyRoster').classList.add('hidden');$('dungeonControls').classList.remove('hidden');
  closeFloorMenu();updateFloorPicker();
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • EXPEDITION WATCH';
@@ -185,7 +281,8 @@ function openDungeon(){
  persist();
 }
 function closeDungeon(showDeferred=false){
- view='shop';drag=null;followId=null;focusId=null;
+ view='shop';contractRunId=null;drag=null;followId=null;focusId=null;
+ $('contractReport').classList.add('hidden');$('dungeonFollow').classList.remove('hidden');$('dungeonFloorMenuButton').classList.remove('hidden');$('dungeonBack').textContent='‹ SHOP';
  $('dungeonControls').classList.add('hidden');closeFloorMenu();
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET';
  $('sceneHint').textContent='◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER';
@@ -217,6 +314,7 @@ function updateFloorPicker(){
  });
 }
 function selectDungeonFloor(floor){
+ if(view==='contract')return;
  if(!Number.isInteger(floor)||floor<1||floor>D.floorCount)return;
  floorOffset=floor;followId=null;cameraX=0;
  updateFollowButton();updateFloorPicker();closeFloorMenu();
@@ -240,7 +338,9 @@ function drawMonster(x,y,kind,t,hp,maxHp){
 }
 function drawDungeon(t){
  g.imageSmoothingEnabled=false;dungeonHit=[];
- const tracked=followId&&s.dungeon.adventurers.find(a=>a.id===followId);
+ const run=view==='contract'?currentContractRun():null;
+ const ds=run?run.instance:s;
+ const tracked=run?(ds.dungeon.adventurers.find(a=>a.id===followId&&a.status!=='recovering')||ds.dungeon.adventurers.find(a=>a.status!=='recovering')||ds.dungeon.adventurers[0]):followId&&s.dungeon.adventurers.find(a=>a.id===followId);
  if(tracked){
   if(tracked.floor!==floorOffset){floorOffset=tracked.floor;updateFloorPicker();$('npcCard').classList.add('hidden')}
   cameraX=cameraClamp(cameraX+(cameraClamp(tracked.x-370)-cameraX)*.16);
@@ -298,7 +398,7 @@ function drawDungeon(t){
   }
  }
  // Filter on the selected floor before painting and collecting touch targets.
- for(const m of s.dungeon.monsters){
+ for(const m of ds.dungeon.monsters){
   if(m.floor!==floor||m.hp<=0)continue;
   const x=m.x-cameraX;
   if(x<-100||x>900)continue;
@@ -312,7 +412,7 @@ function drawDungeon(t){
   }
   dungeonHit.push({x,y:m.boss?305:325,type:'monster',ref:m});
  }
- for(const a of s.dungeon.adventurers){
+ for(const a of ds.dungeon.adventurers){
   if(a.floor!==floor||a.status==='recovering')continue;
   const x=a.x-cameraX;
   if(x<-80||x>880)continue;
@@ -331,26 +431,28 @@ function drawDungeon(t){
   if(followId===a.id)stroke(x-29,276,58,82,'#e7cf91');
   dungeonHit.push({x,y:315,type:'adventurer',ref:a});
  }
- const heroes=s.dungeon.adventurers.filter(a=>a.floor===floor&&a.status!=='recovering');
+ const heroes=ds.dungeon.adventurers.filter(a=>a.floor===floor&&a.status!=='recovering');
  const partyCount=new Set(heroes.filter(a=>a.partyId).map(a=>a.partyId)).size;
  const solos=heroes.filter(a=>!a.partyId).length;
  dungeonBox(0,0,800,42,'#091016ea');dungeonBox(0,41,800,2,palette[2]);
  g.textAlign='left';g.fillStyle='#f0d4a1';g.font='bold 17px Georgia';
  g.fillText('FLOOR '+floor+' / '+D.floorCount+'  •  '+D.floorNames[floor-1].toUpperCase(),14,25);
  g.textAlign='right';g.font='bold 11px Arial';g.fillStyle='#b6c8c5';
- g.fillText(partyCount+' PARTIES  /  '+solos+' SOLOS',785,25);
+ g.fillText(run?'CONTRACT · '+contractStatusLine(run):partyCount+' PARTIES  /  '+solos+' SOLOS',785,25);
  if(raid){
-  const boss=s.dungeon.monsters.find(m=>m.boss&&m.floor===floor);
+  const boss=ds.dungeon.monsters.find(m=>m.boss&&m.floor===floor);
   dungeonBox(210,48,380,34,'#381922cc');
   g.textAlign='center';g.fillStyle='#f4b4c0';g.font='bold 14px Arial';
   g.fillText(boss&&boss.hp>0?'☠ RAID FLOOR • ABYSSAL SOVEREIGN ☠':'✦ RAID BOSS DEFEATED • RESPAWNING ✦',400,69);
  }
  g.textAlign='left';g.font='bold 10px Arial';g.fillStyle='#b4c9c2';
- g.fillText('HORIZONTAL SWIPE TO EXPLORE • UP/DOWN FOR ANOTHER FLOOR',12,429);
+ g.fillText(run?'AUTO-FOLLOW · '+run.offer.title.toUpperCase():'HORIZONTAL SWIPE TO EXPLORE • UP/DOWN FOR ANOTHER FLOOR',12,429);
  g.textAlign='right';g.fillText(Math.floor(cameraX)+' / '+(D.worldWidth-800),790,429);
+ paintContractReport();
 }
 function showAdventurer(o){
- const members=o.partyId?D.partyMembers(s,o.partyId):[];
+ const ds=view==='contract'&&currentContractRun()?currentContractRun().instance:s;
+ const members=o.partyId?D.partyMembers(ds,o.partyId):[];
  const card=$('npcCard'),roster=$('partyRoster');
  if(o.partyId){
   $('npcName').textContent='◆ PARTY '+o.partyId+' · '+members.length+' MEMBERS';
@@ -395,11 +497,12 @@ function inspectDungeon(x,y){
 $('partyRoster').addEventListener('click',e=>{
  const button=e.target.closest('button[data-member-id]');
  if(!button)return;
- const a=s.dungeon.adventurers.find(x=>x.id===Number(button.dataset.memberId));
+ const ds=view==='contract'&&currentContractRun()?currentContractRun().instance:s;
+ const a=ds.dungeon.adventurers.find(x=>x.id===Number(button.dataset.memberId));
  if(a)showAdventurer(a);
 });
 function scenePoint(e){const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)*800/b.width,y:(e.clientY-b.top)*440/b.height}}
-$('dungeonBack').addEventListener('click',()=>closeDungeon(true));
+$('dungeonBack').addEventListener('click',()=>view==='contract'?openContractBoard():closeDungeon(true));
 $('dungeonFollow').addEventListener('click',()=>{closeFloorMenu();if(followId){followId=null}else if(focusId){const target=s.dungeon.adventurers.find(a=>a.id===focusId);if(target)followId=target.id}updateFollowButton()});
 $('dungeonFloorMenuButton').addEventListener('click',()=>{
  const menu=$('dungeonFloorMenu');
@@ -432,8 +535,8 @@ function frame(now){
   $('pauseOverlay').classList.remove('hidden');
  }
 }requestAnimationFrame(frame);
-function start(){D.ensure(s);closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
-function title(){closeDungeon();active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
+function start(){D.ensure(s);C.ensure(s);closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
+function title(){closeContractBoard();closeDungeon();active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
 function leaveIntro(){const v=$('introVideo');try{v.pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
 const introVideo=$('introVideo');
 // WebView may momentarily render default media chrome while preparing the video.
@@ -472,7 +575,8 @@ canvas.addEventListener('pointerup',e=>{
  if(!drag||drag.id!==e.pointerId)return;
  const p=scenePoint(e),start=drag.start,dx=p.x-start.x,dy=p.y-start.y,moved=drag.moved;
  drag=null;
- if(view==='dungeon'){
+ if(view==='dungeon'||view==='contract'){
+  if(view==='contract'){if(Math.abs(dx)<12&&Math.abs(dy)<12)inspectDungeon(p.x,p.y);return;}
   if(Math.abs(dy)>35&&Math.abs(dy)>Math.abs(dx)){dungeonFloor(dy<0?1:-1);return}
   if(!moved&&Math.abs(dx)<12&&Math.abs(dy)<12)inspectDungeon(p.x,p.y);
   return;
@@ -493,12 +597,12 @@ if(!new URLSearchParams(location.search).has('skipIntro')&&!new URLSearchParams(
   introVideo.play().catch(()=>{$('introPlay').classList.remove('hidden')});
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();last=performance.now()}});window.addEventListener('pagehide',persist);
-window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(visitorOpen){
+window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(contractBoardOpen){closeContractBoard(true);return true}if(visitorOpen){
  const enc=E.visitorEncounters[s.pendingEncounter];
  if(enc)chooseVisitor(enc.choices[enc.choices.length-1].id);
  return true;
  }
- if(!$('dungeonFloorMenu').classList.contains('hidden')){closeFloorMenu();return true}if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(view==='dungeon'){closeDungeon(true);return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
+ if(!$('dungeonFloorMenu').classList.contains('hidden')){closeFloorMenu();return true}if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(view==='contract'){openContractBoard();return true}if(view==='dungeon'){closeDungeon(true);return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
 if(new URLSearchParams(location.search).has('skipIntro'))leaveIntro();
 if(new URLSearchParams(location.search).has('debugGame'))start();
 })();
