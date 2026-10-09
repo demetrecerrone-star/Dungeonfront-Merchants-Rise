@@ -44,6 +44,20 @@ test('all scripted options maintain nonnegative gold and stock',()=>{
   }
  }
 });
+test('most roadside event types offer adventurer loot for sale',()=>{
+ const events=Object.values(E.visitorEncounters);
+ const sellers=events.filter(e=>e.choices.some(x=>(x.gold||0)<0&&((x.iron||0)+(x.herb||0)+(x.stockQty||0)>0)));
+ assert.ok(sellers.length/events.length>=.7,'more than 70% of events are loot sellers');
+});
+test('bought equipment enters stock without breaching shelf capacity',()=>{
+ const s=E.initialState();s.pendingEncounter='swordhunter';
+ const beforeGold=s.gold,beforeStock=s.stock.blade;
+ assert.equal(E.resolveVisitor(s,'swordhunter','buy').ok,true);
+ assert.equal(s.stock.blade,beforeStock+1);assert.equal(s.gold,beforeGold-25);
+ const t=E.initialState();t.pendingEncounter='swordhunter';t.stock.blade=14;
+ assert.equal(E.resolveVisitor(t,'swordhunter','buy').ok,false);
+ assert.equal(t.pendingEncounter,'swordhunter');
+});
 test('daily commissions still pay only once per day',()=>{
  const s=E.initialState();const a=E.fulfillCommission(s);
  assert.equal(a.ok,true);assert.equal(E.fulfillCommission(s).ok,false);
