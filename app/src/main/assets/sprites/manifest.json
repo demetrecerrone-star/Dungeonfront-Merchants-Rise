@@ -188,5 +188,459 @@
         "loop": false
       }
     }
+  },
+  "monsters": {
+    "slime": {
+      "idle": {
+        "src": "sprites/monsters/slime/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/slime/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/slime/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/slime/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/slime/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "goblin": {
+      "idle": {
+        "src": "sprites/monsters/goblin/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/goblin/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/goblin/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/goblin/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/goblin/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "skeleton": {
+      "idle": {
+        "src": "sprites/monsters/skeleton/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/skeleton/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/skeleton/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/skeleton/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/skeleton/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "imp": {
+      "idle": {
+        "src": "sprites/monsters/imp/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/imp/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/imp/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/imp/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/imp/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "spider": {
+      "idle": {
+        "src": "sprites/monsters/spider/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/spider/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/spider/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/spider/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/spider/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "wraith": {
+      "idle": {
+        "src": "sprites/monsters/wraith/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/wraith/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/wraith/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/wraith/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/wraith/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "hound": {
+      "idle": {
+        "src": "sprites/monsters/hound/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/hound/walk.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/hound/attack.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/hound/hurt.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/hound/death.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "guardian": {
+      "idle": {
+        "src": "sprites/monsters/guardian/idle.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/guardian/walk.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/guardian/attack.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/guardian/hurt.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/guardian/death.png",
+        "frameW": 48,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      }
+    },
+    "abyssal_sovereign": {
+      "idle": {
+        "src": "sprites/monsters/abyssal_sovereign/idle.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/monsters/abyssal_sovereign/walk.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/monsters/abyssal_sovereign/attack.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      },
+      "hurt": {
+        "src": "sprites/monsters/abyssal_sovereign/hurt.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 2,
+        "fps": 12,
+        "loop": false
+      },
+      "death": {
+        "src": "sprites/monsters/abyssal_sovereign/death.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 10,
+        "loop": false
+      },
+      "special": {
+        "src": "sprites/monsters/abyssal_sovereign/special.png",
+        "frameW": 80,
+        "frameH": 80,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  },
+  "effects": {
+    "slash": {
+      "src": "sprites/effects/slash.png",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "fps": 12,
+      "loop": false
+    },
+    "heavy_slash": {
+      "src": "sprites/effects/heavy_slash.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 5,
+      "fps": 12,
+      "loop": false
+    },
+    "arrow": {
+      "src": "sprites/effects/arrow.png",
+      "frameW": 32,
+      "frameH": 16,
+      "frames": 4,
+      "fps": 12,
+      "loop": false
+    },
+    "magic_bolt": {
+      "src": "sprites/effects/magic_bolt.png",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    "healing_pulse": {
+      "src": "sprites/effects/healing_pulse.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    },
+    "hit_flash": {
+      "src": "sprites/effects/hit_flash.png",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 3,
+      "fps": 12,
+      "loop": false
+    },
+    "critical": {
+      "src": "sprites/effects/critical.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 5,
+      "fps": 12,
+      "loop": false
+    },
+    "death_burst": {
+      "src": "sprites/effects/death_burst.png",
+      "frameW": 48,
+      "frameH": 48,
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    }
   }
 }
