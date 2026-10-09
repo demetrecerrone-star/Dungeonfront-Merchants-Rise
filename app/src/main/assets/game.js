@@ -528,18 +528,41 @@ function drawDungeon(t){
  }
  // Filter on the selected floor before painting and collecting touch targets.
  for(const m of ds.dungeon.monsters){
-  if(m.floor!==floor||m.hp<=0)continue;
+  // Death frames continue briefly after HP reaches zero; dead monsters cannot
+  // be selected or attacked again until their ordinary respawn timer expires.
+  if(m.floor!==floor||(m.hp<=0&&!(m.deathFX>0)))continue;
   const x=m.x-cameraX;
-  if(x<-100||x>900)continue;
-  g.save();g.translate(x,356);g.scale(m.boss?3:2.2,m.boss?3:2.2);
-  drawMonster(0,0,m.kind,t,m.hp,m.maxHp);g.restore();
-  if(m.boss){
-   dungeonBox(x-80,207,160,11,'#2a131a');
-   dungeonBox(x-78,209,156*m.hp/m.maxHp,7,'#da7384');
-   g.textAlign='center';g.font='bold 14px Arial';g.fillStyle='#ffb3be';
-   g.fillText('☠ RAID BOSS ☠',x,195);
+  if(x<-115||x>915)continue;
+  const spriteScale=m.boss?2:m.kind===7?1.85:2.15;
+  g.save();g.translate(x,355);g.scale(spriteScale,spriteScale);
+  const rendered=window.DFSprites&&window.DFSprites.drawMonster(g,m,t);
+  if(!rendered&&m.hp>0)drawMonster(0,0,m.kind,t,m.hp,m.maxHp);
+  g.restore();
+  if(m.hp>0){
+   if(m.boss){
+    dungeonBox(x-80,184,160,9,'#2a131a');
+    dungeonBox(x-78,186,156*Math.max(0,m.hp)/m.maxHp,5,'#da7384');
+    g.textAlign='center';g.font='bold 12px Arial';g.fillStyle='#ffb3be';
+    g.fillText('☠ ABYSSAL SOVEREIGN ☠',x,173);
+   }else{
+    const yy=m.kind===7?258:279;
+    dungeonBox(x-21,yy,42,5,'#2b2228');
+    dungeonBox(x-20,yy+1,40*Math.max(0,m.hp)/m.maxHp,3,'#d58a70');
+   }
+   dungeonHit.push({x,y:m.boss?285:325,type:'monster',ref:m});
   }
-  dungeonHit.push({x,y:m.boss?305:325,type:'monster',ref:m});
+  if(window.DFSprites){
+   if(m.deathFX>0){
+    g.save();g.translate(x,317);window.DFSprites.drawEffect(g,'death_burst',1-m.deathFX/(m.deathDuration||.7),m.boss?2:1.2);g.restore();
+   }else if(m.flash>0){
+    g.save();g.translate(x,m.boss?263:316);window.DFSprites.drawEffect(g,'hit_flash',1-m.flash/.18,m.boss?2.2:1.1);g.restore();
+   }
+   if(m.attackFX>0&&m.hp>0){
+    g.save();g.translate(x-35,m.boss?273:318);
+    window.DFSprites.drawEffect(g,m.boss?'heavy_slash':'slash',1-m.attackFX/.5,m.boss?2:1.2);
+    g.restore();
+   }
+  }
  }
  for(const a of ds.dungeon.adventurers){
   if(a.floor!==floor||a.status==='recovering'||a.status==='extracted')continue;
@@ -551,10 +574,24 @@ function drawDungeon(t){
   g.restore();
   dungeonBox(x-21,267,42,6,'#322827');
   dungeonBox(x-20,268,40*Math.max(0,a.hp)/a.maxHp,4,'#9ac293');
-  if((a.swing||0)>0){
-   if(a.special==='spell'){dungeonBox(x+17,289,18,18,'#9b83e6');dungeonBox(x+23,284,7,7,'#e8d7ff')}
-   else if(a.special==='arrow'){dungeonBox(x+18,306,32,3,'#caa665');dungeonBox(x+44,302,8,10,'#dde5be')}
-   else{dungeonBox(x+16,307,27,4,'#f4d4a2');dungeonBox(x+33,298,5,25,'#ffffffaa')}
+  if((a.fxTime||0)>0&&a.fxType){
+   const isHeal=a.fxType==='healing_pulse';
+   const duration=isHeal?.5:a.fxType==='hit_flash'?.22:.34;
+   const progress=1-a.fxTime/duration;
+   let played=false;
+   if(window.DFSprites){
+    g.save();g.translate(x+(isHeal?0:a.fxType==='arrow'?39:26),isHeal?317:a.fxType==='magic_bolt'?291:311);
+    played=window.DFSprites.drawEffect(g,a.fxType,progress,a.fxType==='critical'?1.4:1.25);
+    g.restore();
+   }
+   // Existing procedural effect remains available if a PNG fails on Android.
+   if(!played&&!isHeal){
+    if(a.fxType==='magic_bolt'){dungeonBox(x+17,289,18,18,'#9b83e6');dungeonBox(x+23,284,7,7,'#e8d7ff')}
+    else if(a.fxType==='arrow'){dungeonBox(x+18,306,32,3,'#caa665');dungeonBox(x+44,302,8,10,'#dde5be')}
+    else{dungeonBox(x+16,307,27,4,'#f4d4a2');dungeonBox(x+33,298,5,25,'#ffffffaa')}
+   }else if(!played&&isHeal){
+    dungeonBox(x-15,292,30,4,'#9fd6b2');dungeonBox(x-2,279,4,30,'#c5ecd1');
+   }
   }
   g.textAlign='center';g.fillStyle='#f2e0c2';g.font='bold 12px Arial';
   g.fillText(a.name,x,260);
