@@ -3,13 +3,14 @@
 const E=window.DFEconomy,D=window.DFDungeon,$=id=>document.getElementById(id),key='dungeonfront_merchants_rise_save_v1';
 let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.valid(old))s=Object.assign(E.initialState(),old)}catch(e){}
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
-let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
+let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
+let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
 let view='shop',cameraX=0,floorOffset=0,drag=null,dungeonHit=[];
 const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowan','Mira','Dain','Iris','Sable','Thorne'],classes=['Knight','Rogue','Mage','Ranger','Cleric','Mercenary'],colors=['#b9a4a0','#8795a8','#b093bd','#9ab49d','#d1af73','#a48d87'],needs=['potion','potion','torch','bandage','blade','torch','bandage','forged'];
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
-function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerText').textContent=msg;paintPanel()}
+function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerText').textContent=msg;panelDirty=true}
 function feedback(msg){
  // Shop transactions continue while watching the dungeon, but only the shop
  // may interrupt play with commerce notifications.
@@ -83,7 +84,16 @@ if(tab==='stock'){const order=E.commission(s);html+='<article class="commission"
 if(tab==='craft'){html='<div class="ledger-grid"><div class="ledger-box"><small>SCRAP IRON</small><strong>⚒ '+s.mats.iron+'</strong></div><div class="ledger-box"><small>WILD HERBS</small><strong>❀ '+s.mats.herb+'</strong></div></div><article class="upgrade-card"><strong>✚ Brew Healing Potions</strong><p>Two potions, using wild herbs.</p><div class="recipe-footer"><span>2 herbs + 8G</span><button class="action-btn" data-action="craft" data-id="potion" '+(s.mats.herb<2||s.gold<8?'disabled':'')+'>BREW ×2</button></div></article><article class="upgrade-card"><strong>⚔ Reforge Dungeon Iron</strong><p>One longblade. Requires the Ember Forge.</p><div class="recipe-footer"><span>3 iron + 14G</span><button class="action-btn" data-action="craft" data-id="forged" '+(!s.upgrades.forge||s.mats.iron<3||s.gold<14?'disabled':'')+'>FORGE ×1</button></div></article><div class="panel-tip">Returning adventurers sometimes sell the shop salvage.</div>'}
 if(tab==='upgrade'){for(const [id,u] of Object.entries(E.upgrades))html+='<article class="upgrade-card"><strong>⚒ '+esc(u.name)+'</strong><p>'+esc(u.desc)+'</p><div class="upgrade-bottom"><span>'+(s.upgrades[id]?'BUILT ✓':u.cost+' GOLD')+'</span><button class="action-btn" data-action="upgrade" data-id="'+id+'" '+(s.upgrades[id]||s.gold<u.cost?'disabled':'')+'>'+(s.upgrades[id]?'COMPLETE':'BUILD')+'</button></div></article>'}
 if(tab==='ledger'){html='<div class="ledger-grid"><div class="ledger-box"><small>GROSS SALES</small><strong>'+s.earned+'G</strong></div><div class="ledger-box"><small>EXPENSES</small><strong>'+s.spent+'G</strong></div><div class="ledger-box"><small>ITEMS SOLD</small><strong>'+s.sales+'</strong></div><div class="ledger-box"><small>BANDIT RAIDS</small><strong>'+s.raidCount+'</strong></div><div class="ledger-box"><small>GUILD ORDERS</small><strong>'+(s.commissionsCompleted||0)+'</strong></div></div>'+s.events.map(e=>'<div class="log-entry">'+esc(e)+'</div>').join('')}
-const panel=$('panelContent'),scroll=panel.scrollTop;panel.innerHTML=html;panel.scrollTop=scroll}
+const panel=$('panelContent');
+// Keep the same DOM nodes alive while the simulation updates in the background.
+// Replacing them every frame/event can interrupt a tap mid-switch on Android.
+if(tab!==lastPanelTab||html!==lastPanelHTML){
+ const scroll=panel.scrollTop;
+ panel.innerHTML=html;
+ panel.scrollTop=tab===lastPanelTab?scroll:0;
+ lastPanelHTML=html;lastPanelTab=tab;
+}
+panelDirty=false}
 function spawn(){if(guests.length>=(s.upgrades.shelf?5:4))return;const i=Math.floor(r(0,classes.length));guests.push({id:++guestId,name:names[Math.floor(r(0,names.length))],cls:classes[i],color:colors[i],level:1+Math.floor(r(0,7+s.depth*3)),need:needs[Math.floor(r(0,needs.length))],budget:Math.floor(r(30,160)+s.depth*16),returning:Math.random()<.3,x:-25,y:346+Math.floor(r(-3,17)),stage:0,hold:0,line:''})}
 function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',count=1+Math.floor(r(0,3)),cost=count*(mat==='iron'?8:5);const tx=E.buyLoot(s,mat,count,cost);c.line=tx.ok?'Loot sold':'No deal';if(tx.ok)feedback('⚒ Salvage acquired: '+count+' '+mat);say(tx.ok?c.name+' returned from the dungeon. Bought '+count+' '+mat+' for '+cost+'G.':c.name+' offered salvage, but the treasury was empty.')}else{let tx=E.attemptSale(s,c.need,c.budget,Math.random());c.line=tx.ok?'Thank you!':tx.reason==='out-of-stock'?'Out of stock!':'No sale';if(tx.ok){D.enter(s,c,E.items[c.need].name);feedback('◆ +'+tx.earned+'G • '+c.name+' made a purchase');}say(tx.ok?c.name+' the '+c.cls+' bought '+E.items[c.need].name+' for '+tx.earned+'G.':c.name+' the '+c.cls+' left without a purchase.')}persist()}
 function tick(dt){
@@ -99,7 +109,10 @@ function tick(dt){
  }
  if(s.pendingEncounter&&view==='shop'){presentVisitor();return}
  next-=dt;if(next<=0){spawn();next=r(s.upgrades.lantern?2.7:3.8,s.upgrades.lantern?5.2:7.1)}for(const c of guests){if(c.stage===0){c.x+=dt*70;if(c.x>=520){c.x=520;c.stage=1;c.hold=1.2;transact(c)}}else if(c.stage===1){c.hold-=dt;if(c.hold<=0)c.stage=2}else c.x-=dt*94}guests=guests.filter(c=>c.x>-70||c.stage===0);
-if(s.clock>=95){s.clock-=95;s.day++;visitorCountdown=r(14,29);const raid=E.raid(s,Math.random());say(raid.happened?'NIGHT RAID: Bandits stole '+raid.loss+'G.':'Dawn breaks over the dungeon. Day '+s.day+' begins.');persist()}clock+=dt;if(clock>=3){clock=0;persist();paintPanel()}}
+if(s.clock>=95){s.clock-=95;s.day++;visitorCountdown=r(14,29);const raid=E.raid(s,Math.random());say(raid.happened?'NIGHT RAID: Bandits stole '+raid.loss+'G.':'Dawn breaks over the dungeon. Day '+s.day+' begins.');persist()}
+// Batch costly side-panel DOM work, while keeping tab taps immediate.
+uiClock+=dt;if(uiClock>=.6){uiClock=0;hud();if(panelDirty)paintPanel()}
+clock+=dt;if(clock>=3){clock=0;persist()}}
 function box(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),Math.ceil(w),Math.ceil(h))}
 function stroke(x,y,w,h,color){g.strokeStyle=color;g.strokeRect(x,y,w,h)}
 function drawActor(x,y,color,t,role,cls,stage){
@@ -272,7 +285,22 @@ $('dungeonRight').addEventListener('click',()=>dungeonCamera(200));
 $('dungeonUp').addEventListener('click',()=>dungeonFloor(-1));
 $('dungeonDown').addEventListener('click',()=>dungeonFloor(1));
 
-function frame(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;if(active){tick(dt);draw(now/1000)}requestAnimationFrame(frame)}requestAnimationFrame(frame);
+function frame(now){
+ // Always reschedule first so one unexpected UI error cannot permanently stop animation.
+ requestAnimationFrame(frame);
+ const dt=Math.min(.05,Math.max(0,(now-last)/1000||0));last=now;
+ if(!active)return;
+ try{
+  tick(dt);
+  // Thirty canvas draws per second is ample for the current pixel-art animation.
+  if(now-renderDue>=33){renderDue=now;draw(now/1000)}
+ }catch(err){
+  console.error('Dungeonfront frame error',err);
+  $('tickerText').textContent='Game interface error: please save and reopen the shop.';
+  paused=true;persist();
+  $('pauseOverlay').classList.remove('hidden');
+ }
+}requestAnimationFrame(frame);
 function start(){D.ensure(s);closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
 function title(){closeDungeon();active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
 function leaveIntro(){const v=$('introVideo');try{v.pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
