@@ -27,6 +27,7 @@ class FakeElement{
  addEventListener(type,fn){(this.listeners[type]||(this.listeners[type]=[])).push(fn)}
  click(){if(this.onclick)this.onclick();for(const f of this.listeners.click||[])f({target:this})}
  dispatch(type,e){for(const f of this.listeners[type]||[])f(e)}
+ setAttribute(){}
  removeAttribute(){}
  pause(){}
  play(){return Promise.resolve()}
