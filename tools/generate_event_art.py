@@ -101,6 +101,7 @@ def event_sprite(kind,action):
    R(8,8,8-gap,18,4);R(23-gap,8,3+gap,18,4)
    R(13-gap,12,6,2,6);R(15-gap,10,2,6,6)
    R(13-gap,18,6,2,5)
+   if not anim:R(11+pulse*2,6,2,2,6)
    if anim and f>2:R(17,11,5,14,1);R(20,14,2,3,6)
   elif kind=="merchant":
    # Hooded trader, backpack and glowing lantern.
