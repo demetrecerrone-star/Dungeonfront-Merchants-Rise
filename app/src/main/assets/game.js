@@ -71,21 +71,26 @@ function refreshContractBadge(){
  $('contractsButton').setAttribute('aria-label',count?'Open the Contract Board, '+count+' contract'+(count===1?'':'s')+' ready to settle':'Open the Contract Board');
 }
 function contractStatusLine(run){
+ if(run.status==='returning'){
+  const heroes=run.instance.dungeon.adventurers;
+  return 'RETURNING TO PORTAL '+heroes.filter(a=>a.status==='extracted').length+'/'+heroes.length;
+ }
  const p=C.progress(run);
- return run.offer.kind==='reach'?'FLOOR '+p.value+' / '+p.target:run.offer.kind==='boss'?'RAID BOSS '+p.value+' / 1':'MONSTERS '+p.value+' / '+p.target;
+ const label={reach:'FLOOR',escort:'ESCORT FLOOR',boss:'RAID BOSS',defeat:'MONSTERS',gather:'SALVAGE',treasure:'RELICS'}[run.offer.kind]||'PROGRESS';
+ return label+' '+p.value+' / '+p.target;
 }
 function renderContractBoard(){
  const c=C.ensure(s),busy=C.busyIds(c);
  for(const id of Array.from(chosenHires))if(!c.staff.some(a=>a.id===id)||busy.has(id))chosenHires.delete(id);
  const roster=c.staff.map(a=>{
   const occupied=busy.has(a.id),selected=chosenHires.has(a.id);
-  return '<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · '+(occupied?'ON EXPEDITION':'AVAILABLE')+'</p><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(occupied?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':selected?'✓ SELECTED':'SELECT')+'</button></div></article>';
+  return '<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LV '+a.level+' · XP '+(a.xp||0)+' · '+esc(a.trait||'Steadfast')+'</p><small>'+esc(a.gear||'Contract Kit')+' · '+(occupied?'ON EXPEDITION':'AVAILABLE')+'</small><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(occupied?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':selected?'✓ SELECTED':'SELECT')+'</button>'+(!occupied?'<button data-contract-action="equip" data-id="'+esc(a.id)+'" data-item="blade" '+(!s.stock.blade?'disabled':'')+'>⚔ GEAR</button><button data-contract-action="equip" data-id="'+esc(a.id)+'" data-item="potion" '+(!s.stock.potion?'disabled':'')+'>✚ POTION</button>':'')+'</div></article>';
  }).join('');
  const offers=c.offers.map(o=>'<article class="contract-entry"><small class="contract-rank">RANK '+esc(o.rank)+'</small><strong>'+esc(o.title)+'</strong><p>'+esc(o.desc)+'</p><small>REWARD '+o.reward+'G · +'+o.rep+' REP · '+(o.minParty||1)+'–5 HEROES</small><div class="contract-entry-actions"><button data-contract-action="start" data-id="'+esc(o.id)+'" '+(!chosenHires.size?'disabled':'')+'>SEND SELECTED PARTY</button></div></article>').join('');
  const applicants=c.applicants.map(a=>'<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · HIRING FEE '+a.fee+'G</p><div class="contract-entry-actions"><button data-contract-action="hire" data-id="'+esc(a.id)+'" '+(s.gold<a.fee||c.staff.length>=C.maxHired?'disabled':'')+'>HIRE '+a.fee+'G</button></div></article>').join('');
  const runs=c.runs.slice(0,12).map(run=>{
   const done=run.status==='completed'||run.status==='failed',claimed=run.status==='claimed';
-  return '<article class="contract-entry"><small class="contract-rank">'+esc(run.offer.rank)+'</small><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' remaining · '+esc(run.status.toUpperCase())+' · '+esc(contractStatusLine(run))+'</p>'+(run.fallen?.length?'<p class="contract-death">☠ '+run.fallen.length+' fallen permanently</p>':'')+'<div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
+  return '<article class="contract-entry"><small class="contract-rank">'+esc(run.offer.rank)+'</small><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' remaining · '+esc(run.status==='returning'?'EXTRACTING':run.status.toUpperCase())+' · '+esc(contractStatusLine(run))+'</p>'+(run.fallen?.length?'<p class="contract-death">☠ '+run.fallen.length+' fallen permanently</p>':'')+'<div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
  }).join('');
  $('contractBody').innerHTML='<section class="contract-column"><h3>✉ AVAILABLE CONTRACTS</h3><p class="contract-sub">Select 1–5 available hires, then send them on a job.</p>'+(offers||'<p>No new postings today. Check tomorrow.</p>')+'</section>'+
  '<section class="contract-column"><h3>⚔ ADVENTURERS FOR HIRE</h3>'+(applicants||'<p>New applicants arrive tomorrow.</p>')+'<div class="contract-separator"></div><h3>YOUR ROSTER · '+c.staff.length+'/'+C.maxHired+'</h3>'+(roster||'<p>Hire an adventurer to start taking contracts.</p>')+'</section>'+
@@ -139,9 +144,10 @@ $('contractBody').addEventListener('click',e=>{
  }else if(action==='start'){
   result=C.start(s,id,Array.from(chosenHires));
   if(result.ok)chosenHires.clear();
- }else if(action==='claim')result=C.claim(s,id);
+ }else if(action==='equip')result=C.equip(s,id,b.dataset.item);
+ else if(action==='claim')result=C.claim(s,id);
  if(result){
-  const message=result.ok?action==='hire'?'Adventurer hired and ready.':action==='start'?'Expedition launched! Tap WATCH RUN to follow.':result.success?'Contract settled: +'+result.reward+'G and recovered salvage.':'Expedition settled without payment.':result.reason;
+  const message=result.ok?action==='hire'?'Adventurer hired and ready.':action==='equip'?'Equipment issued to '+result.adventurer.name+'.':action==='start'?'Expedition launched! Tap WATCH RUN to follow.':result.success?'Contract settled: +'+result.reward+'G, salvage and loot.':'Expedition settled without payment.':result.reason;
   contractNotice(message);
   if(result.ok){say(message);persist();hud();paintPanel();}
   renderContractBoard();refreshContractBadge();
@@ -155,7 +161,7 @@ $('contractClaim').addEventListener('click',()=>{
 });
 function paintContractReport(){
  const run=currentContractRun(),panel=$('contractReport');
- if(view!=='contract'||!run||run.status==='active'||run.status==='claimed'){panel.classList.add('hidden');return;}
+ if(view!=='contract'||!run||(run.status!=='completed'&&run.status!=='failed')){panel.classList.add('hidden');return;}
  panel.classList.remove('hidden');
  $('contractReportText').textContent=run.offer.title+' — '+(run.status==='completed'?'COMPLETE! '+run.offer.reward+'G reward, +'+run.offer.rep+' reputation and salvage.':'FAILED. No reward.')+(run.fallen?.length?' ☠ '+run.fallen.length+' adventurer(s) lost permanently.':'');
  $('contractClaim').textContent=run.status==='completed'?'CLAIM PAYMENT':'CLOSE REPORT';
@@ -355,7 +361,7 @@ function drawDungeon(t){
  g.imageSmoothingEnabled=false;dungeonHit=[];
  const run=view==='contract'?currentContractRun():null;
  const ds=run?run.instance:s;
- const tracked=run?(ds.dungeon.adventurers.find(a=>a.id===followId&&a.status!=='recovering')||ds.dungeon.adventurers.find(a=>a.status!=='recovering')||ds.dungeon.adventurers[0]):followId&&s.dungeon.adventurers.find(a=>a.id===followId);
+ const tracked=run?(ds.dungeon.adventurers.find(a=>a.id===followId&&a.status!=='recovering'&&a.status!=='extracted')||ds.dungeon.adventurers.find(a=>a.status!=='recovering'&&a.status!=='extracted')||null):followId&&s.dungeon.adventurers.find(a=>a.id===followId);
  if(tracked){
   if(tracked.floor!==floorOffset){floorOffset=tracked.floor;updateFloorPicker();$('npcCard').classList.add('hidden')}
   cameraX=cameraClamp(cameraX+(cameraClamp(tracked.x-370)-cameraX)*.16);
@@ -402,14 +408,30 @@ function drawDungeon(t){
   dungeonBox(x-9,181+flame,18,24,'#e6a24e');
   dungeonBox(x-4,185+flame,9,14,'#ffe3a1');
  }
- for(const worldX of [30,D.worldWidth-65]){
-  const x=worldX-cameraX;
-  if(x>-75&&x<875){
-   dungeonBox(x-30,230,60,126,'#474b49');
-   dungeonBox(x-24,236,48,108,'#111c23');
-   dungeonBox(x-34,228,68,12,palette[2]);
-   g.fillStyle='#ddc899';g.font='bold 10px Arial';g.textAlign='center';
-   g.fillText(worldX<100?'ENTRANCE':(raid?(ds.dungeon.monsters.find(m=>m.boss&&m.floor===floor)?.hp<=0?'EXIT OPEN':'RAID EXIT'):'STAIRS ↓'),x,223);
+ // Exit portal is at the START of every floor (left side).
+ {
+  const x=65-cameraX;
+  if(x>-95&&x<895){
+   dungeonBox(x-32,224,64,132,'#525d59');
+   dungeonBox(x-25,232,50,116,'#11262a');
+   dungeonBox(x-21,239,42,105,'#277a80');
+   dungeonBox(x-14,248,28,90,'#53afaa');
+   dungeonBox(x-34,220,68,12,palette[2]);
+   g.fillStyle='#d8f4e2';g.font='bold 10px Arial';g.textAlign='center';
+   g.fillText('EXIT PORTAL',x,214);
+  }
+ }
+ // The far end ALWAYS progresses to the next floor. The final raid floor
+ // intentionally has NO portal or staircase at its far end.
+ if(floor<D.bossFloor){
+  const x=D.worldWidth-65-cameraX;
+  if(x>-90&&x<890){
+   dungeonBox(x-29,249,58,107,'#5e625b');
+   dungeonBox(x-23,256,46,100,'#151c20');
+   dungeonBox(x-19,277,38,76,'#393d41');
+   dungeonBox(x-32,244,64,12,palette[2]);
+   g.fillStyle='#e5c997';g.font='bold 10px Arial';g.textAlign='center';
+   g.fillText('NEXT FLOOR →',x,234);
   }
  }
  // Filter on the selected floor before painting and collecting touch targets.
@@ -441,7 +463,8 @@ function drawDungeon(t){
   g.textAlign='center';g.fillStyle='#f2e0c2';g.font='bold 12px Arial';
   g.fillText(a.name,x,260);
   g.font='bold 10px Arial';
-  if(a.partyId){g.fillStyle='#a9ced2';g.fillText('◆ '+a.partyId,x,280)}
+  if(a.escort){g.fillStyle='#e0c28e';g.fillText('GUILD COURIER',x,280)}
+  else if(a.partyId){g.fillStyle='#a9ced2';g.fillText('◆ '+a.partyId,x,280)}
   else{g.fillStyle='#e1bd8c';g.fillText('SOLO',x,280)}
   if(followId===a.id)stroke(x-29,276,58,82,'#e7cf91');
   dungeonHit.push({x,y:315,type:'adventurer',ref:a});
@@ -458,7 +481,7 @@ function drawDungeon(t){
   const boss=ds.dungeon.monsters.find(m=>m.boss&&m.floor===floor);
   dungeonBox(210,48,380,34,'#381922cc');
   g.textAlign='center';g.fillStyle='#f4b4c0';g.font='bold 14px Arial';
-  g.fillText(boss&&boss.hp>0?'☠ RAID FLOOR • ABYSSAL SOVEREIGN ☠':'✦ RAID BOSS DEFEATED • EXIT PORTAL OPEN ✦',400,69);
+  g.fillText(boss&&boss.hp>0?'☠ RAID FLOOR • ABYSSAL SOVEREIGN ☠':'✦ RAID BOSS DEFEATED • RETURN TO ENTRANCE ✦',400,69);
  }
  // Keep contract context only; old floor and arrow-key instructions are gone.
  if(run){
