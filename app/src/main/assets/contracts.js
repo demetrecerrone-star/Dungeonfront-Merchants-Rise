@@ -88,7 +88,7 @@ function start(s,offerId,memberIds){
  const id='run'+c.nextRun++;
  // A private instance owns its heroes, monsters and salvage. Ordinary dungeon
  // residents never enter this simulation, and rewards transfer only on claim.
- const instance={mats:{iron:0,herb:0},reputation:0};
+ const instance={mats:{iron:0,herb:0},reputation:0,contractExpedition:true};
  const dungeon=D.ensure(instance);
  dungeon.adventurers=[];dungeon.nextId=1;dungeon.enters=0;dungeon.nextParty=1;
  for(const member of members){
