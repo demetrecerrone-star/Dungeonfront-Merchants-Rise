@@ -19,8 +19,9 @@ const actions={
 };
 const cache=Object.create(null);
 let enabled=false;
-// Preview art is limited to Knight. Other classes always use v1 until approved.
-const approvedClasses=new Set(['Knight']);
+// This opt-in development branch previews the five user-approved prototypes
+// alongside the previously approved Knight. Published builds stay unchanged.
+const approvedClasses=new Set(classes);
 function isEnabled(){return enabled}
 function setEnabled(value){enabled=value===true;return enabled}
 function validClass(cls){return typeof cls==='string'&&approvedClasses.has(cls)}
@@ -58,7 +59,7 @@ function preloadClass(cls,requested=['idle','walk','attack']){
 function selectAction(a){
  if(!a||typeof a!=='object')return 'idle';
  // An HP-zero adventurer may still be ALIVE and actively retreating.
- // The simulation deliberately sends wounded Knights to the entrance at 0 HP.
+ // The simulation deliberately sends wounded actors to the entrance at 0 HP.
  // Never draw the prone death pose while their world position is moving.
  if(['retreating','returning'].includes(a.status))return 'walk';
  if((a.hp||0)<=0)return 'death';
@@ -83,8 +84,11 @@ function combatFacing(a,monsters){
  if(!a||typeof a!=='object')return 1;
  if(a.status==='retreating'||a.status==='returning')return -1;
  if((a.status==='fighting'||(a.swing||0)>0)&&Array.isArray(monsters)){
+  // Mirror the simulator's actual ranges: ranged heroes must turn toward
+  // monsters even when those monsters are more than a melee swing away.
+  const range=a.cls==='Mage'?145:a.cls==='Ranger'?115:43;
   const enemy=monsters.find(m=>m&&m.floor===a.floor&&
-   (m.hp>0||(m.deathFX||0)>0)&&Math.abs(m.x-a.x)<48);
+   (m.hp>0||(m.deathFX||0)>0)&&Math.abs(m.x-a.x)<range);
   if(enemy)return enemy.x<a.x?-1:1;
  }
  return facing(a);
