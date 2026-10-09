@@ -14,8 +14,8 @@ android {
   minSdk 26
   targetSdk 35
   testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-  versionCode 19
-  versionName '0.9.0-knight-preview.4'
+  versionCode 20
+  versionName '0.9.0-classes-preview.1'
  }
  signingConfigs {
   if (usePersistentSigning) {
