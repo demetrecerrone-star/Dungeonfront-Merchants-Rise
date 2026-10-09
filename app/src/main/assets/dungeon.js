@@ -98,6 +98,16 @@ function ensure(s){
      d.monsters.push(monster(f,k,patrolPositions[k]+(f%3)*12,f-1,false));
    }
   }
+  // Rebalance old patrol markers into evenly spaced encounters on each floor.
+  // Keep monster identity, current HP, and respawn state from the player's save.
+  for(const m of d.monsters){
+   if(m.boss)continue;
+   const k=Number(String(m.id).split('-')[1]);
+   if(Number.isInteger(k)&&k>=0&&k<patrolPositions.length){
+    const x=patrolPositions[k]+(m.floor%3)*12;
+    m.homeX=x;m.x=x;
+   }
+  }
   d.schema=7;
  }
  for(const a of d.adventurers){
