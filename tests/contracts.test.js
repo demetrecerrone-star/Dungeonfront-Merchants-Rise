@@ -46,7 +46,7 @@ test('failed expedition pays no reward and releases adventurers',()=>{
  const s=E.initialState(),c=C.ensure(s);
  C.hire(s,c.applicants[0].id);
  const t=C.start(s,c.offers[1].id,[c.staff[0].id]),run=t.run;
- run.elapsed=361;
+ run.elapsed=run.offer.limit+1;
  C.advance(s,.05);assert.equal(run.status,'failed');
  const gold=s.gold;
  assert.equal(C.claim(s,run.id).ok,true);assert.equal(s.gold,gold);
@@ -59,5 +59,85 @@ test('new day refreshes contracts without deleting current expeditions',()=>{
  assert.equal(next.runs.length,1);
  assert.equal(next.offers.length,3);
  assert.equal(next.boardDay,s.day);
+});
+test('completed and failed contracts keep an unsettled notification until claimed',()=>{
+ const s=E.initialState(),c=C.ensure(s);
+ C.hire(s,c.applicants[0].id);
+ const run=C.start(s,c.offers[0].id,[c.staff[0].id]).run;
+ assert.equal(C.unclaimedCount(s),0);
+ run.instance.dungeon.adventurers[0].wins=run.offer.target;
+ C.advance(s,.05);
+ assert.equal(run.status,'completed');assert.equal(C.unclaimedCount(s),1);
+ const saved=JSON.parse(JSON.stringify(s));
+ assert.equal(C.unclaimedCount(saved),1,'red dot persists after reopening saved game');
+ C.claim(s,run.id);assert.equal(C.unclaimedCount(s),0);
+});
+test('zero HP permanently removes a hired hero and posts a level-one replacement',()=>{
+ const s=E.initialState(),c=C.ensure(s);
+ for(const a of c.applicants.slice(0,2))assert.equal(C.hire(s,a.id).ok,true);
+ const lostId=c.staff[0].id,ids=c.staff.map(a=>a.id);
+ const run=C.start(s,c.offers[1].id,ids).run,heroes=run.instance.dungeon.adventurers;
+ const doomed=heroes[0],survivor=heroes[1],target=run.instance.dungeon.monsters.find(m=>m.floor===1&&!m.boss);
+ doomed.x=target.x;doomed.hp=1;doomed.cooldown=5;survivor.x=60;target.cooldown=0;
+ C.advance(s,.05);
+ assert.equal(c.staff.some(a=>a.id===lostId),false,'fallen hero gone from hires');
+ assert.equal(run.memberIds.includes(lostId),false,'fallen hero gone from active party');
+ assert.equal(run.instance.dungeon.adventurers.some(a=>a.hireId===lostId),false,'fallen hero gone from live dungeon');
+ assert.equal(run.fallen.length,1,'casualty recorded in memorial');
+ assert.equal(run.status,'active','a surviving party can continue the run');
+ const rookie=c.applicants.find(a=>a.id.startsWith('rookie-'));
+ assert.ok(rookie,'replacement added to applicant pool');
+ assert.equal(rookie.level,1);assert.equal(c.staff.some(a=>a.id===rookie.id),false,'rookie is not automatically hired');
+ s.day++;C.ensure(s);
+ assert.equal(c.applicants.some(a=>a.id===rookie.id),true,'rookie survives day rollover');
+ assert.equal(C.hire(s,rookie.id).ok,true,'rookie can be hired for a fee');
+});
+test('a fully wiped hired party fails and can be settled without a reward',()=>{
+ const s=E.initialState(),c=C.ensure(s);
+ C.hire(s,c.applicants[0].id);
+ const run=C.start(s,c.offers[0].id,[c.staff[0].id]).run;
+ const hero=run.instance.dungeon.adventurers[0],target=run.instance.dungeon.monsters.find(m=>m.floor===1&&!m.boss);
+ hero.x=target.x;hero.hp=1;hero.cooldown=5;target.cooldown=0;
+ const treasury=s.gold;
+ C.advance(s,.05);
+ assert.equal(run.status,'failed');assert.equal(run.memberIds.length,0);
+ assert.equal(c.staff.length,0);assert.equal(C.unclaimedCount(s),1);
+ const tx=C.claim(s,run.id);
+ assert.equal(tx.ok,true);assert.equal(tx.success,false);
+ assert.equal(s.gold,treasury);assert.equal(C.unclaimedCount(s),0);
+});
+test('surviving hired characters retain earned levels and experience',()=>{
+ const s=E.initialState(),c=C.ensure(s);
+ C.hire(s,c.applicants[0].id);
+ const member=c.staff[0],run=C.start(s,c.offers[1].id,[member.id]).run;
+ const hero=run.instance.dungeon.adventurers[0],target=run.instance.dungeon.monsters.find(m=>m.floor===1&&!m.boss);
+ const originalLevel=member.level;
+ hero.x=target.x;hero.xp=Math.max(3,Math.ceil(hero.level/2)+2)-1;
+ hero.cooldown=0;target.hp=1;target.cooldown=5;
+ C.advance(s,.05);
+ assert.equal(member.level,originalLevel+1);assert.equal(member.xp,0);
+ assert.equal(run.status,'active');
+});
+test('rank constraints and extended raid deadlines scale contract risk',()=>{
+ const s=E.initialState(),c=C.ensure(s),ids=[];
+ for(const a of c.applicants.slice(0,2)){C.hire(s,a.id);ids.push(a.id);}
+ const scout=c.offers.find(o=>o.rank==='C');
+ assert.equal(C.start(s,scout.id,[ids[0]]).ok,false);
+ assert.equal(C.start(s,scout.id,ids).ok,true);
+ const high=E.initialState();high.depth=10;high.day=4;
+ const hard=C.ensure(high).offers.find(o=>o.rank==='S');
+ assert.ok(hard.limit>=1000,'raid is allowed enough time to reach floor 8');
+ assert.ok(hard.minParty>=4,'raid requires an appropriately sized team');
+});
+test('old v0.7 saved expedition migrates hired identifiers and notification state',()=>{
+ const s=E.initialState(),c=C.ensure(s);C.hire(s,c.applicants[0].id);
+ const run=C.start(s,c.offers[1].id,[c.staff[0].id]).run;
+ delete run.instance.dungeon.adventurers[0].hireId;
+ delete run.fallen;delete run.fallenWins;delete c.nextRecruit;
+ const copy=JSON.parse(JSON.stringify(s));
+ C.ensure(copy);
+ assert.equal(copy.contracts.runs[0].instance.dungeon.adventurers[0].hireId,c.staff[0].id);
+ assert.equal(copy.contracts.nextRecruit,1);
+ assert.equal(copy.contracts.runs[0].fallen.length,0);
 });
 console.log('All '+count+' contract tests passed.');
