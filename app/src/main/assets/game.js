@@ -3,6 +3,8 @@
 const E=window.DFEconomy,D=window.DFDungeon,C=window.DFContracts,$=id=>document.getElementById(id),key='dungeonfront_merchants_rise_save_v1';
 let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.valid(old))s=Object.assign(E.initialState(),old)}catch(e){}
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
+// Strict preview opt-in; standard APK and ordinary game launches stay on v1 art.
+if(window.DFModernSprites)window.DFModernSprites.setEnabled(new URLSearchParams(location.search).get('knightPreview')==='1');
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
 let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
@@ -518,13 +520,25 @@ function draw(t){
  drawShopRoom(t);
  // Shoppers appear in front of the shopfront and may still be tapped.
  for(const c of guests){
-  drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);
+  // The same Knight art is used in the shop, public dungeon and contract runs.
+  // Shop stage 0/2 means walking, stage 1 means waiting at the trade counter.
+  let modernShop=false;
+  if(c.cls==='Knight'&&window.DFModernSprites){
+   g.save();g.translate(c.x,c.y);
+   modernShop=window.DFModernSprites.draw(g,{
+    cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking'
+   },t);
+   g.restore();
+  }
+  if(!modernShop)drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);
   g.textAlign='center';
-  box(c.x-31,c.y-59,62,14,'#1e2424');
-  g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,c.y-49);
+  const labelY=c.y-(modernShop?116:59);
+  box(c.x-31,labelY,62,14,'#1e2424');
+  g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,labelY+10);
   if(c.stage===1&&c.line){
-   box(c.x-50,c.y-89,100,19,'#e4d3b3');
-   g.fillStyle='#332822';g.fillText(c.line,c.x,c.y-75);
+   const bubbleY=c.y-(modernShop?149:89);
+   box(c.x-50,bubbleY,100,19,'#e4d3b3');
+   g.fillStyle='#332822';g.fillText(c.line,c.x,bubbleY+14);
   }
  }
  // Time-of-day tint and soft vignette stop short of obscuring shop text.
@@ -966,7 +980,10 @@ canvas.addEventListener('pointerup',e=>{
   return;
  }
  if(Math.pow((p.x-145)/82,2)+Math.pow((p.y-267)/99,2)<1&&p.y>175&&p.y<367){openDungeon();return}
- const customer=guests.find(c=>Math.abs(c.x-p.x)<35&&Math.abs(c.y-25-p.y)<50);
+ const customer=guests.find(c=>{
+  const modern=c.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled();
+  return Math.abs(c.x-p.x)<(modern?43:35)&&Math.abs(c.y-(modern?55:25)-p.y)<(modern?63:50);
+ });
  if(customer){
   selected=customer;$('partyRoster').classList.add('hidden');$('npcCard').classList.remove('party-open');$('npcName').textContent=customer.name+' the '+customer.cls;
   $('npcMeta').textContent='LEVEL '+customer.level+' · '+customer.budget+'G PURSE · FLOOR '+s.depth;
