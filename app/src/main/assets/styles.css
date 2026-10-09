@@ -256,3 +256,47 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 .roster-body button:disabled{opacity:.4!important;cursor:default}
 @media(max-width:850px){.roster-screen{padding:6px}.roster-heading h2{font-size:18px}.roster-heading p{font-size:9px}.roster-entry{padding:6px!important}.roster-entry small{font-size:9px}.roster-body{grid-template-columns:minmax(160px,41%) 1fr}}
 @media(max-height:420px){.roster-screen{gap:3px}.roster-heading h2{font-size:16px}.roster-meters{margin:4px 0}.roster-kit{margin:5px 0}.roster-actions{gap:4px;margin-top:5px}.roster-detail-header h3{font-size:16px}}
+
+/* Dungeonfront v0.8 visual pass: readable rank, class and recovery indicators. */
+.guild-identity{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.guild-identity strong{min-width:0;flex:1}
+.class-icon,.guild-status img,.rarity-icon{image-rendering:pixelated;image-rendering:crisp-edges;flex-shrink:0;vertical-align:middle;object-fit:contain}
+.class-icon{width:18px;height:18px}
+.guild-status img{width:12px;height:12px}
+.rarity-icon{width:15px;height:15px;margin-right:5px}
+.guild-status{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border:1px solid #74836f;border-radius:3px;background:#233c32;color:#bbe0b3;font:bold 9px Arial,sans-serif;white-space:nowrap;letter-spacing:.25px;line-height:1}
+.guild-injured,.guild-exhausted{border-color:#a77b5f;background:#4a312c;color:#f2bda3}
+.guild-busy,.run-active{border-color:#628aa1;background:#253949;color:#a9cddf}
+.run-returning{border-color:#ba9a65;background:#4b3c27;color:#f7d6a2}
+.run-completed{border-color:#7aab8b;background:#234e38;color:#d2efb8}
+.run-failed{border-color:#b57577;background:#482b33;color:#f5b4b7}
+.run-claimed{border-color:#616660;background:#2a3030;color:#aeb4ad}
+.contract-offer{border-left:3px solid #aa8c5c}
+.contract-type{color:#b8c8b2;font:bold 9px Arial,sans-serif;letter-spacing:.5px}
+.contract-run{border-left:3px solid #647c82}
+.contract-run.run-returning{border-left-color:#c7aa64}
+.contract-run.run-completed{border-left-color:#85be94}
+.contract-run.run-failed{border-left-color:#c3797c}
+.contract-run.run-claimed{opacity:.78}
+.contract-rank.rank-E{background:#4c6750;border-color:#83ac85;color:#d8f0d0}
+.contract-rank.rank-D{background:#466778;border-color:#88aeb9;color:#d3e6f1}
+.contract-rank.rank-C{background:#655678;border-color:#a594cb;color:#ebddfc}
+.contract-rank.rank-B{background:#855738;border-color:#bd8850;color:#ffe1a6}
+.contract-rank.rank-A{background:#836144;border-color:#dbb56f;color:#fff1bf}
+.contract-rank.rank-S{background:#763848;border-color:#ce7c98;color:#fff1ce;box-shadow:0 0 7px #db729933}
+.contract-return-track{height:8px;width:100%;margin:7px 0 5px;border:1px solid #b9a06e;background:#1a2625;border-radius:3px;overflow:hidden}
+.contract-return-track>span{display:block;height:100%;background:linear-gradient(90deg,#6c9f85,#b8dbb1);transition:width .25s}
+.contract-entry .guild-identity{margin-bottom:6px}
+.contract-entry-actions button:focus-visible,.roster-entry:focus-visible{outline:2px solid #e2c88f;outline-offset:2px}
+.roster-identity{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.roster-identity>span{min-width:0;flex:1}
+.roster-identity small{white-space:normal}
+.roster-entry .guild-status{font-size:8px;padding:3px 4px}
+.roster-mini-fatigue{display:block;width:100%;max-width:120px;height:4px;background:#332d2b;margin-top:5px;border:1px solid #594a3a}
+.roster-mini-fatigue>span{display:block;height:100%;background:#d6a47a}
+.roster-bar.roster-danger>span{background:#d56e61}
+.roster-detail-header .guild-identity{gap:8px}
+.roster-detail-header .guild-identity h3{margin:2px 0}
+.item-top .rarity-icon{width:17px;height:17px;margin-right:6px}
+@media(max-width:850px){.contract-entry .guild-status{font-size:8px}.class-icon{width:16px;height:16px}.roster-entry .guild-status{font-size:7px}.contract-type{font-size:8px}}
+@media(max-height:420px){.contract-return-track{height:6px;margin:4px 0}.guild-status{padding:2px 4px}.contract-entry .guild-identity{margin-bottom:3px}}
