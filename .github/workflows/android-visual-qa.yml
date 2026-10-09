@@ -6,6 +6,7 @@ on:
       - 'work/v0.8-roster-combat-treasure'
       - 'work/v0.9-shop-layout'
       - 'work/v0.9-character-art-v2'
+      - 'work/v0.9-six-class-preview'
     paths:
       - 'app/src/main/**'
       - 'app/src/androidTest/**'
@@ -28,9 +29,12 @@ jobs:
           gradle-version: '8.10.2'
       - name: Bake offline Knight PNG sheets before Android emulator test
         run: |
-          python3 -m pip install --quiet cairosvg
+          python3 -m pip install --quiet cairosvg pillow
           python3 tools/build_knight_atlas.py
+          python3 tools/build_remaining_actor_atlases.py
+          python3 tools/stage_remaining_actor_atlases.py --approved
           test -s app/src/main/assets/sprites/actors_v2/knight/idle.png
+          for cls in ranger mage cleric rogue mercenary; do test -s "app/src/main/assets/sprites/actors_v2/$cls/idle.png"; done
       - name: Verify intact Dabski cinematic and unchanged save key
         run: |
           echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
