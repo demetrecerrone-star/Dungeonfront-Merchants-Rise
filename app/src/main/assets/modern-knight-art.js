@@ -9,7 +9,91 @@
 'use strict';
 const counts={idle:8,walk:10,attack:12,hurt:5,death:12,special:12};
 const built=Object.create(null);
+/* Directional three-quarter Knight.
+   All live movement/combat poses point right in source coordinates.
+   The game flips the complete frame for leftward motion: no backpedalling
+   because feet, visor, shield and sword are all physically side-on. */
+function sideFrame(action,n){
+ const count=counts[action],p=n/Math.max(1,count-1),phase=n/count*Math.PI*2;
+ const walk=action==='walk',strike=action==='attack',hurt=action==='hurt',guard=action==='special';
+ const run=walk?Math.sin(phase)*22:0;
+ const front=run.toFixed(2),rear=(-run).toFixed(2);
+ const bounce=walk?Math.abs(Math.sin(phase))*3:Math.sin(phase)*1.2;
+ const thrust=strike?Math.sin(Math.PI*p)*8:0;
+ const backstep=hurt?-Math.sin(Math.PI*p)*10:0;
+ const cape=walk?Math.sin(phase+.8)*12:strike?-11*Math.sin(Math.PI*p):Math.sin(phase)*3;
+ const blade=strike?(p<.3?-38:p<.63?(-38+(p-.3)*295):59):walk?-9:guard?32:12;
+ const shield=guard?(-17*Math.sin(Math.PI*p)):hurt?-12:walk?3:0;
+ const ready=strike?Math.sin(Math.PI*p)*7:0;
+ const slash=strike&&p>.34&&p<.75;
+ return `<g transform="translate(64 190) translate(${(thrust+backstep).toFixed(2)} ${(-bounce).toFixed(2)})">
+  <!-- Motion always faces RIGHT: the cape trails LEFT, visor and sword point RIGHT. -->
+  <ellipse cx="-1" cy="0" rx="27" ry="4" fill="#09121c" opacity=".37"/>
+  <!-- trailing layered blue cape -->
+  <path d="M-21 -126 Q-44 -116 -42 -93 Q-50 -63 -61 -49 L-34 -55 Q-42 -24 -51 -14 L-17 -38 L-9 -103Z"
+   fill="url(#cape)" stroke="#1e365b" stroke-width="3" transform="translate(${cape.toFixed(2)} 0)"/>
+  <path d="M-38 -82 Q-45 -47 -55 -38" fill="none" stroke="#6399ce" stroke-width="2" opacity=".85"/>
+  <!-- far leg stays behind near leg -->
+  <g transform="rotate(${(rear*.76).toFixed(2)} -9 -60)">
+   <path d="M-18 -64 L-2 -64 L-1 -37 L-15 -30Z" fill="#344a64" stroke="#18283c" stroke-width="2"/>
+   <path d="M-12 -39 L0 -35 L-9 -9 L-21 -11Z" fill="url(#steel)" stroke="#39556d" stroke-width="2"/>
+   <path d="M-20 -14 L-4 -10 L-2 -2 L-28 -2Z" fill="#7895ac" stroke="#233c56" stroke-width="2"/>
+  </g>
+  <g transform="rotate(${front} 9 -60)">
+   <path d="M6 -66 L24 -63 L22 -34 L8 -36Z" fill="url(#steel)" stroke="#34495d" stroke-width="2.7"/>
+   <path d="M11 -38 L24 -33 L20 -10 L8 -10Z" fill="#b8c6cb" stroke="#385169" stroke-width="2"/>
+   <path d="M7 -13 L23 -12 L32 -3 L8 -2Z" fill="url(#steel)" stroke="#304c65" stroke-width="2"/>
+   <path d="M14 -31 L21 -29" stroke="#f7d089" stroke-width="2"/>
+  </g>
+  <!-- tall side-on plate cuirass, protected flank -->
+  <path d="M-23 -115 L4 -123 Q25 -118 26 -99 L22 -73 L-18 -75Z"
+    fill="url(#steel)" stroke="#2d4255" stroke-width="3"/>
+  <path d="M-17 -108 L8 -114 Q17 -111 17 -101 L10 -84 L-14 -87Z"
+    fill="url(#shield)" stroke="#a88e66" stroke-width="2"/>
+  <path d="M-2 -110 L14 -102 L7 -89 L-10 -92Z"
+    fill="#b8c7cf" stroke="#eacb88" stroke-width="2"/>
+  <path d="M-23 -82 L21 -77 L26 -59 L6 -61 L-6 -70 L-20 -53 L-33 -58Z"
+    fill="#18487c" stroke="#e3b96e" stroke-width="2.5"/>
+  <path d="M-19 -77 L20 -77" stroke="#e4b574" stroke-width="5"/>
+  <path d="M-2 -80 L7 -80 L7 -73 L-2 -73Z" fill="#30415a" stroke="#efd196" stroke-width="2"/>
+  <!-- large rearward defensive shield: stays LEFT of the body -->
+  <g transform="rotate(${shield} -20 -100)">
+   <path d="M-33 -120 Q-18 -127 -8 -113 L-7 -73 Q-12 -54 -24 -39 Q-40 -62 -43 -83 L-43 -110Z"
+      fill="url(#gold)" stroke="#f3d192" stroke-width="2"/>
+   <path d="M-32 -115 Q-20 -122 -13 -110 L-13 -74 Q-16 -60 -24 -47 Q-35 -66 -37 -83 L-37 -109Z"
+      fill="url(#shield)" stroke="#dfaa58" stroke-width="2"/>
+   <path d="M-26 -103 L-21 -94 L-16 -90 L-22 -85 L-21 -72 L-27 -79 L-30 -71 L-29 -86 L-35 -92 L-26 -92Z"
+     fill="#f0c778"/>
+   <path d="M-36 -110 L-14 -109" stroke="#ffe5aa" stroke-width="1.5"/>
+  </g>
+  <!-- shoulder / sword arm point towards destination -->
+  <path d="M6 -124 Q27 -127 31 -111 L20 -103 L5 -106Z"
+   fill="url(#silver)" stroke="#435873" stroke-width="3"/>
+  <path d="M17 -112 L32 -89 L24 -79 L9 -105Z" fill="url(#steel)" stroke="#3e556d" stroke-width="2.8"/>
+  <g transform="rotate(${blade.toFixed(2)} 25 -83)">
+   <path d="M24 -85 L34 -79 L37 -73 L29 -68 L20 -77Z" fill="#71859b" stroke="#eac17e" stroke-width="1.5"/>
+   <path d="M28 -83 L48 -83 L53 -80 L50 -76 L29 -77Z" fill="url(#silver)" stroke="#e7f0f3" stroke-width="1.4"/>
+   <path d="M29 -86 L29 -74" stroke="#f1cb82" stroke-width="3.5"/>
+   <path d="M24 -80 L17 -80" stroke="#59412f" stroke-width="3"/>
+   <circle cx="17" cy="-80" r="2.5" fill="#efc677"/>
+  </g>
+  <!-- unmistakable knight helmet PROFILE: back on left, protruding visor to right -->
+  <path d="M-6 -147 L3 -162 L18 -161 L29 -146 L25 -132 L12 -123 L-4 -132Z"
+    fill="url(#silver)" stroke="#294358" stroke-width="3"/>
+  <path d="M2 -162 L7 -171 L14 -163" fill="#e7be70" stroke="#ffdfa2" stroke-width="1.5"/>
+  <path d="M13 -151 L34 -146 L38 -139 L32 -132 L21 -133 L16 -141Z"
+    fill="url(#steel)" stroke="#435b6f" stroke-width="2"/>
+  <path d="M18 -143 L36 -141 L31 -137 L19 -139Z" fill="#13283c" stroke="#e5ba75" stroke-width="1.8"/>
+  <path d="M26 -135 L30 -129 L18 -126" fill="none" stroke="#e7c98f" stroke-width="2"/>
+  <path d="M-4 -142 L8 -144" stroke="#fff1d4" stroke-width="2"/>
+  ${slash?`<path d="M35 -157 Q65 -123 51 -77" fill="none" stroke="#80d7ff" stroke-width="6" opacity=".85"/>
+     <path d="M39 -156 Q62 -117 50 -78" fill="none" stroke="#f3cb85" stroke-width="2"/>`:''}
+  ${guard&&p>.22&&p<.86?`<path d="M-47 -134 Q-67 -78 -45 -33" fill="none" stroke="#a0d5ff" stroke-width="5" opacity=".72"/>`:''}
+ </g>`;
+}
 function frame(action,n){
+ // Side-profile frames are required for convincing movement and combat.
+ if(action!=='death')return sideFrame(action,n);
  const count=counts[action],p=n/Math.max(1,count-1);
  const cycle=n/count*2*Math.PI;
  const walking=action==='walk';
