@@ -175,7 +175,7 @@ const shade=g.createLinearGradient(0,0,0,440);shade.addColorStop(0,'#00000088');
 function cameraClamp(v){return Math.max(0,Math.min(D.worldWidth-800,v))}
 function openDungeon(){
  D.ensure(s);view='dungeon';cameraX=0;floorOffset=1;drag=null;followId=null;focusId=null;updateFollowButton();
- $('npcCard').classList.add('hidden');$('dungeonControls').classList.remove('hidden');
+ $('npcCard').classList.add('hidden');$('partyRoster').classList.add('hidden');$('dungeonControls').classList.remove('hidden');
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • EXPEDITION WATCH';
  $('sceneHint').textContent='◈ ONE FLOOR PER VIEW · TAP A HERO TO FOLLOW';
  $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
@@ -331,27 +331,56 @@ function drawDungeon(t){
  g.fillText('HORIZONTAL SWIPE TO EXPLORE • UP/DOWN FOR ANOTHER FLOOR',12,429);
  g.textAlign='right';g.fillText(Math.floor(cameraX)+' / '+(D.worldWidth-800),790,429);
 }
+function showAdventurer(o){
+ const members=o.partyId?D.partyMembers(s,o.partyId):[];
+ const card=$('npcCard'),roster=$('partyRoster');
+ if(o.partyId){
+  $('npcName').textContent='◆ PARTY '+o.partyId+' · '+members.length+' MEMBERS';
+  $('npcMeta').textContent='SELECT A MEMBER TO INSPECT OR FOLLOW';
+  $('npcText').textContent=o.name+' the '+o.cls+' · LV '+o.level+' · HP '+o.hp+'/'+o.maxHp+' · '+o.status+'. Equipment: '+o.gear+'.';
+  roster.innerHTML=members.map(member=>{
+   const selected=member.id===o.id;
+   const pct=Math.max(0,Math.min(100,Math.round(100*member.hp/member.maxHp)));
+   return '<button type="button" class="party-member'+(selected?' selected':'')+'" data-member-id="'+member.id+'" aria-label="Follow '+esc(member.name)+'">'+
+     '<span class="party-member-top"><strong>'+esc(member.name)+'</strong><small>F'+member.floor+' · LV '+member.level+'</small></span>'+
+     '<span class="party-member-role">'+esc(member.cls)+' · '+esc(member.status)+'</span>'+
+     '<span class="party-hp"><span style="width:'+pct+'%"></span></span>'+
+     '<small class="party-health">'+member.hp+'/'+member.maxHp+' HP</small></button>';
+  }).join('');
+  roster.classList.remove('hidden');card.classList.add('party-open');
+ }else{
+  $('npcName').textContent=o.name+' the '+o.cls;
+  $('npcMeta').textContent='SOLO · FLOOR '+o.floor+' · LV '+o.level+' · HP '+o.hp+'/'+o.maxHp;
+  $('npcText').textContent='Status: '+o.status+'. Equipment: '+o.gear+'. Monsters defeated: '+(o.wins||0)+'.';
+  roster.classList.add('hidden');card.classList.remove('party-open');
+ }
+ focusId=o.id;followId=o.id;updateFollowButton();
+ card.classList.remove('hidden');
+}
 function inspectDungeon(x,y){
  let closest=null,best=Infinity;
  for(const target of dungeonHit){
   const dist=Math.hypot(target.x-x,(target.y+2)-y);
-  if(dist<best&&dist<40){closest=target;best=dist}
+  if(dist<best&&dist<44){closest=target;best=dist}
  }
  if(!closest){$('npcCard').classList.add('hidden');return}
  const o=closest.ref;
- if(closest.type==='adventurer'){
-  $('npcName').textContent=o.name+' the '+o.cls;
-  $('npcMeta').textContent='FLOOR '+o.floor+' · LV '+o.level+' · HP '+o.hp+'/'+o.maxHp;
-  $('npcText').textContent=(o.partyId?'Party '+o.partyId+'. ':'Solo delver. ')+'Status: '+o.status+'. Equipment: '+o.gear+'. Monsters defeated: '+(o.wins||0)+'.';
-  focusId=o.id;followId=o.id;updateFollowButton();
- }else{
+ if(closest.type==='adventurer'){showAdventurer(o)}
+ else{
   const spec=D.monsterKinds[o.kind];
   $('npcName').textContent=spec.name;
   $('npcMeta').textContent='FLOOR '+o.floor+' · HP '+o.hp+'/'+o.maxHp;
   $('npcText').textContent=(o.boss?'RAID BOSS. Strong teams recommended. ':'Hostile dungeon creature. ')+'Damage: '+spec.damage+'.';
+  $('partyRoster').classList.add('hidden');$('npcCard').classList.remove('party-open');
+  $('npcCard').classList.remove('hidden');
  }
- $('npcCard').classList.remove('hidden');
 }
+$('partyRoster').addEventListener('click',e=>{
+ const button=e.target.closest('button[data-member-id]');
+ if(!button)return;
+ const a=s.dungeon.adventurers.find(x=>x.id===Number(button.dataset.memberId));
+ if(a)showAdventurer(a);
+});
 function scenePoint(e){const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)*800/b.width,y:(e.clientY-b.top)*440/b.height}}
 $('dungeonBack').addEventListener('click',()=>closeDungeon(true));
 $('dungeonLeft').addEventListener('click',()=>dungeonCamera(-200));
@@ -424,7 +453,7 @@ canvas.addEventListener('pointerup',e=>{
  if(Math.pow((p.x-145)/82,2)+Math.pow((p.y-267)/99,2)<1&&p.y>175&&p.y<367){openDungeon();return}
  const customer=guests.find(c=>Math.abs(c.x-p.x)<35&&Math.abs(c.y-25-p.y)<50);
  if(customer){
-  selected=customer;$('npcName').textContent=customer.name+' the '+customer.cls;
+  selected=customer;$('partyRoster').classList.add('hidden');$('npcCard').classList.remove('party-open');$('npcName').textContent=customer.name+' the '+customer.cls;
   $('npcMeta').textContent='LEVEL '+customer.level+' · '+customer.budget+'G PURSE · FLOOR '+s.depth;
   $('npcText').textContent=customer.returning?'Returning with dungeon salvage.':'Looking for '+E.items[customer.need].name.toLowerCase()+' before entering the dungeon.';
   $('npcCard').classList.remove('hidden');
