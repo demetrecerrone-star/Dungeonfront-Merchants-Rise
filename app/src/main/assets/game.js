@@ -176,6 +176,7 @@ function cameraClamp(v){return Math.max(0,Math.min(D.worldWidth-800,v))}
 function openDungeon(){
  D.ensure(s);view='dungeon';cameraX=0;floorOffset=1;drag=null;followId=null;focusId=null;updateFollowButton();
  $('npcCard').classList.add('hidden');$('partyRoster').classList.add('hidden');$('dungeonControls').classList.remove('hidden');
+ closeFloorMenu();updateFloorPicker();
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • EXPEDITION WATCH';
  $('sceneHint').textContent='◈ ONE FLOOR PER VIEW · TAP A HERO TO FOLLOW';
  $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
@@ -185,7 +186,7 @@ function openDungeon(){
 }
 function closeDungeon(showDeferred=false){
  view='shop';drag=null;followId=null;focusId=null;
- $('dungeonControls').classList.add('hidden');
+ $('dungeonControls').classList.add('hidden');closeFloorMenu();
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET';
  $('sceneHint').textContent='◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER';
  $('scene').closest('.scene-wrap').classList.remove('dungeon-mode');
@@ -198,14 +199,31 @@ function updateFollowButton(){
  $('dungeonFollow').textContent=chosen?'◉ '+chosen.name.toUpperCase():'◎ FOLLOW';
  $('dungeonFollow').classList.toggle('tracking',!!chosen);
 }
-function dungeonFloor(delta){
- followId=null;cameraX=0;
- floorOffset=Math.max(1,Math.min(D.floorCount,floorOffset+delta));
- updateFollowButton();$('npcCard').classList.add('hidden');
+function closeFloorMenu(){
+ $('dungeonFloorMenu').classList.add('hidden');
+ $('dungeonFloorMenuButton').setAttribute('aria-expanded','false');
 }
-function dungeonCamera(delta){
- followId=null;cameraX=cameraClamp(cameraX+delta);
- updateFollowButton();$('npcCard').classList.add('hidden');
+function updateFloorPicker(){
+ $('dungeonFloorMenuButton').textContent='▴ FLOORS · '+floorOffset;
+ const menu=$('dungeonFloorMenu');
+ if(!menu.childElementCount){
+  menu.innerHTML=D.floorNames.map((name,i)=>'<button type="button" data-floor="'+(i+1)+'" aria-label="Floor '+(i+1)+': '+esc(name)+'"><strong>F'+(i+1)+'</strong><span>'+esc(name)+'</span></button>').join('');
+ }
+ menu.querySelectorAll('[data-floor]').forEach(button=>{
+  const current=Number(button.dataset.floor)===floorOffset;
+  button.classList.toggle('active',current);
+  if(current)button.setAttribute('aria-current','true');
+  else button.removeAttribute('aria-current');
+ });
+}
+function selectDungeonFloor(floor){
+ if(!Number.isInteger(floor)||floor<1||floor>D.floorCount)return;
+ floorOffset=floor;followId=null;cameraX=0;
+ updateFollowButton();updateFloorPicker();closeFloorMenu();
+ $('npcCard').classList.add('hidden');
+}
+function dungeonFloor(delta){
+ selectDungeonFloor(Math.max(1,Math.min(D.floorCount,floorOffset+delta)));
 }
 function dungeonBox(x,y,w,h,fill){box(x,y,w,h,fill)}
 function drawMonster(x,y,kind,t,hp,maxHp){
@@ -224,7 +242,7 @@ function drawDungeon(t){
  g.imageSmoothingEnabled=false;dungeonHit=[];
  const tracked=followId&&s.dungeon.adventurers.find(a=>a.id===followId);
  if(tracked){
-  if(tracked.floor!==floorOffset){floorOffset=tracked.floor;$('npcCard').classList.add('hidden')}
+  if(tracked.floor!==floorOffset){floorOffset=tracked.floor;updateFloorPicker();$('npcCard').classList.add('hidden')}
   cameraX=cameraClamp(cameraX+(cameraClamp(tracked.x-370)-cameraX)*.16);
  }
  const floor=floorOffset,raid=floor===D.bossFloor;
@@ -336,16 +354,15 @@ function showAdventurer(o){
  const card=$('npcCard'),roster=$('partyRoster');
  if(o.partyId){
   $('npcName').textContent='◆ PARTY '+o.partyId+' · '+members.length+' MEMBERS';
-  $('npcMeta').textContent='SELECT A MEMBER TO INSPECT OR FOLLOW';
-  $('npcText').textContent=o.name+' the '+o.cls+' · LV '+o.level+' · HP '+o.hp+'/'+o.maxHp+' · '+o.status+'. Equipment: '+o.gear+'.';
+  $('npcMeta').textContent='TAP A MEMBER TO FOLLOW';
+  $('npcText').textContent='SELECTED: '+o.name+' · '+o.cls+' · '+o.gear;
   roster.innerHTML=members.map(member=>{
    const selected=member.id===o.id;
    const pct=Math.max(0,Math.min(100,Math.round(100*member.hp/member.maxHp)));
    return '<button type="button" class="party-member'+(selected?' selected':'')+'" data-member-id="'+member.id+'" aria-label="Follow '+esc(member.name)+'">'+
      '<span class="party-member-top"><strong>'+esc(member.name)+'</strong><small>F'+member.floor+' · LV '+member.level+'</small></span>'+
-     '<span class="party-member-role">'+esc(member.cls)+' · '+esc(member.status)+'</span>'+
-     '<span class="party-hp"><span style="width:'+pct+'%"></span></span>'+
-     '<small class="party-health">'+member.hp+'/'+member.maxHp+' HP</small></button>';
+     '<span class="party-member-role"><span>'+esc(member.cls)+' · '+esc(member.status)+'</span><small class="party-health">'+member.hp+'/'+member.maxHp+' HP</small></span>'+
+     '<span class="party-hp"><span style="width:'+pct+'%"></span></span></button>';
   }).join('');
   roster.classList.remove('hidden');card.classList.add('party-open');
  }else{
@@ -383,11 +400,21 @@ $('partyRoster').addEventListener('click',e=>{
 });
 function scenePoint(e){const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)*800/b.width,y:(e.clientY-b.top)*440/b.height}}
 $('dungeonBack').addEventListener('click',()=>closeDungeon(true));
-$('dungeonLeft').addEventListener('click',()=>dungeonCamera(-200));
-$('dungeonRight').addEventListener('click',()=>dungeonCamera(200));
-$('dungeonFollow').addEventListener('click',()=>{if(followId){followId=null}else if(focusId){const target=s.dungeon.adventurers.find(a=>a.id===focusId);if(target)followId=target.id}updateFollowButton()});
-$('dungeonUp').addEventListener('click',()=>dungeonFloor(-1));
-$('dungeonDown').addEventListener('click',()=>dungeonFloor(1));
+$('dungeonFollow').addEventListener('click',()=>{closeFloorMenu();if(followId){followId=null}else if(focusId){const target=s.dungeon.adventurers.find(a=>a.id===focusId);if(target)followId=target.id}updateFollowButton()});
+$('dungeonFloorMenuButton').addEventListener('click',()=>{
+ const menu=$('dungeonFloorMenu');
+ const willOpen=menu.classList.contains('hidden');
+ menu.classList.toggle('hidden',!willOpen);
+ $('dungeonFloorMenuButton').setAttribute('aria-expanded',String(willOpen));
+ if(willOpen)updateFloorPicker();
+});
+$('dungeonFloorMenu').addEventListener('click',e=>{
+ const button=e.target.closest('button[data-floor]');
+ if(button)selectDungeonFloor(Number(button.dataset.floor));
+});
+document.addEventListener('pointerdown',e=>{
+ if(!$('dungeonFloorMenu').classList.contains('hidden')&&!e.target.closest('#dungeonFloorMenu')&&!e.target.closest('#dungeonFloorMenuButton'))closeFloorMenu();
+});
 
 function frame(now){
  // Always reschedule first so one unexpected UI error cannot permanently stop animation.
@@ -471,7 +498,7 @@ window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){l
  if(enc)chooseVisitor(enc.choices[enc.choices.length-1].id);
  return true;
  }
- if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(view==='dungeon'){closeDungeon(true);return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
+ if(!$('dungeonFloorMenu').classList.contains('hidden')){closeFloorMenu();return true}if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(view==='dungeon'){closeDungeon(true);return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
 if(new URLSearchParams(location.search).has('skipIntro'))leaveIntro();
 if(new URLSearchParams(location.search).has('debugGame'))start();
 })();

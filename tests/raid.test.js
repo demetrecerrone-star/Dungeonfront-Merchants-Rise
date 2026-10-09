@@ -16,7 +16,7 @@ test('existing merchant and dungeon progress survives upgrade to raid schema',()
  assert.equal(s.gold,1087);assert.equal(s.stock.potion,5);assert.equal(s.mats.iron,19);
  const hero=d.adventurers.find(x=>x.id===9);
  assert.equal(hero.hp,22);assert.equal(hero.x,620);assert.equal(hero.floor,4);
- assert.equal(d.schema,7);assert.equal(d.monsters.length,65);
+ assert.equal(d.schema,8);assert.equal(d.monsters.length,65);
  assert.ok(d.adventurers.some(x=>x.partyId));assert.ok(d.adventurers.some(x=>!x.partyId));
  const countBefore=d.adventurers.length;
  D.ensure(s);assert.equal(d.adventurers.length,countBefore);
@@ -119,5 +119,55 @@ test('party inspection retains all members across separate floors',()=>{
  assert.ok(src.includes('D.partyMembers(s,o.partyId)'),'party screen must enumerate every member');
  assert.ok(src.includes('data-member-id'),'party screen must offer a distinct button per member');
  assert.ok(src.includes("$('partyRoster').addEventListener('click'"),'member buttons must be selectable');
+});
+test('saved oversized parties split into groups of at most five without losing heroes',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const originals=d.adventurers.slice(0,8);
+ for(const a of originals)a.partyId='P-LEGACY';
+ originals[0].hp=11;originals[0].level=27;originals[0].floor=6;
+ d.schema=7;
+ const beforeIds=originals.map(a=>a.id);
+ D.ensure(s);
+ assert.deepEqual(originals.map(a=>a.id),beforeIds,'no saved heroes are dropped');
+ assert.equal(originals[0].hp,11);assert.equal(originals[0].level,27);assert.equal(originals[0].floor,6);
+ const groups=new Map();
+ for(const a of d.adventurers){
+  if(!a.partyId)continue;
+  groups.set(a.partyId,(groups.get(a.partyId)||0)+1);
+ }
+ assert.ok([...groups.values()].every(n=>n<=D.maxPartySize),'all groups obey five-member limit');
+ assert.equal(d.schema,8);
+ const persisted=JSON.parse(JSON.stringify(s));
+ D.ensure(persisted);
+ assert.equal(persisted.dungeon.adventurers.length,d.adventurers.length,'save round trip keeps all adventurers');
+});
+test('new merchant entrants stop joining a party at five and solo runs remain possible',()=>{
+ const s=E.initialState(),d=D.ensure(s),arrivals=[];
+ for(let i=0;i<12;i++)arrivals.push(D.enter(s,{name:'New'+i,cls:'Knight',level:3},'Sword'));
+ const counts=new Map();
+ for(const a of d.adventurers)if(a.partyId)counts.set(a.partyId,(counts.get(a.partyId)||0)+1);
+ assert.ok([...counts.values()].every(n=>n<=D.maxPartySize));
+ assert.ok(arrivals.some(a=>!a.partyId),'solo adventurers still enter the dungeon');
+ assert.ok(arrivals.some(a=>a.partyId),'new grouped adventurers enter the dungeon');
+});
+test('compact party screen and selectable eight-floor menu without redundant arrows',()=>{
+ const css=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/styles.css'),'utf8');
+ const html=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/index.html'),'utf8');
+ const src=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
+ assert.ok(css.includes('.party-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))'));
+ assert.ok(css.includes('.party-member{')&&css.includes('min-height:39px'));
+ assert.ok(css.includes('.dungeon-floor-menu{'));
+ assert.ok(src.includes("'TAP A MEMBER TO FOLLOW'"));
+ assert.ok(src.includes("party-health"));
+ assert.ok(src.includes("D.floorNames.map"));
+ assert.ok(src.includes("selectDungeonFloor(Number(button.dataset.floor))"));
+ assert.ok(src.includes("cameraX=cameraClamp(drag.cam-dx)"),'horizontal finger swipe remains');
+ assert.ok(html.includes('id="dungeonFloorMenuButton"'));
+ assert.ok(html.includes('id="dungeonFloorMenu"'));
+ for(const id of ['dungeonLeft','dungeonRight','dungeonUp','dungeonDown']){
+  assert.ok(!html.includes('id="'+id+'"'),'removed redundant '+id+' button');
+  assert.ok(!src.includes("$('"+id+"')"),'removed stale '+id+' listener');
+ }
+ assert.doesNotThrow(()=>new vm.Script(src));
 });
 console.log('All '+count+' raid and full-floor tests passed.');

@@ -43,12 +43,10 @@
         <canvas id="scene" width="800" height="440" aria-label="Animated shop and full-screen side-scrolling dungeon floors"></canvas>
         <div id="dungeonControls" class="dungeon-controls hidden" aria-label="Dungeon camera controls">
           <button id="dungeonBack" title="Return to shop" aria-label="Return to shop">‹ SHOP</button>
-          <button id="dungeonLeft" title="Scroll left" aria-label="Scroll left">◀</button>
-          <button id="dungeonRight" title="Scroll right" aria-label="Scroll right">▶</button>
           <button id="dungeonFollow" title="Follow selected adventurer" aria-label="Follow selected adventurer">◎ FOLLOW</button>
-          <button id="dungeonUp" title="See shallower floors" aria-label="See shallower floors">▲ FLOOR</button>
-          <button id="dungeonDown" title="See deeper floors" aria-label="See deeper floors">▼ FLOOR</button>
+          <button id="dungeonFloorMenuButton" title="Choose dungeon floor" aria-label="Choose dungeon floor" aria-controls="dungeonFloorMenu" aria-expanded="false">▴ FLOORS · 1</button>
         </div>
+        <div id="dungeonFloorMenu" class="dungeon-floor-menu hidden" role="group" aria-label="Choose dungeon floor"></div>
         <div class="day-track" aria-hidden="true"><div id="dayProgressFill"></div></div>
         <div class="scene-footer"><span>⚒ <span id="visitorsValue">0</span> ADVENTURERS SERVED</span><span id="sceneHint">◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER</span><span id="safetyNote">⚔ THREAT: UNEASY</span></div>
         <div id="npcCard" class="npc-card hidden" role="dialog" aria-label="Adventurer details">

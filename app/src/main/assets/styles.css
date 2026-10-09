@@ -123,29 +123,59 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 /* v0.6: one full-screen chamber, floor navigation and adventurer-follow state. */
 #dungeonFollow{background:#253d3ceb;border-color:#79a7a1}
 #dungeonFollow.tracking{background:#526548;color:#fff5c9;border-color:#d1ba78}
-#dungeonUp,#dungeonDown{border-color:#8f8d69}
+#dungeonFloorMenuButton{border-color:#8f8d69}
 @media(max-width:850px){#dungeonFollow{max-width:92px;overflow:hidden;text-overflow:ellipsis}}
 @media(max-height:400px){.dungeon-controls{bottom:24px;gap:3px}.dungeon-controls button{padding:3px 5px}}
 
-/* v0.6.1: party information is visible in one compact, tappable roster. */
-.scene-wrap.dungeon-mode .npc-card.party-open{
- width:min(410px,92%);max-width:410px;min-width:245px;
- max-height:calc(100% - 55px);overflow-y:auto;
- right:10px;bottom:34px;padding:11px 12px;
- background:#131f22f7;
+/* v0.6.2: compact five-member party panel and pull-up floor picker. */
+.scene-wrap.dungeon-mode .npc-card{
+ right:7px;bottom:31px;min-width:0;max-width:min(250px,96%);
+ max-height:calc(100% - 40px);overflow-y:auto;padding:7px 22px 7px 8px;
 }
-.npc-card.party-open #npcName{font:bold 14px Arial,sans-serif;color:#f1d29a;padding-right:16px}
-.npc-card.party-open #npcMeta{font:9px Arial,sans-serif;letter-spacing:.7px}
-.npc-card.party-open #npcText{font:11px/1.3 Arial,sans-serif;margin:6px 0}
-.party-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
-.party-member{min-width:0;border:1px solid #5e6256;border-radius:3px;background:#1f2c2d;padding:7px;text-align:left;color:#e3ddcc}
+.scene-wrap.dungeon-mode .npc-card #npcName{font:bold 12px/1.2 Arial,sans-serif;color:#f1d29a}
+.scene-wrap.dungeon-mode .npc-card #npcMeta{font:9px/1.1 Arial,sans-serif;letter-spacing:0;margin:3px 0}
+.scene-wrap.dungeon-mode .npc-card #npcText{font:10px/1.15 Arial,sans-serif;margin:4px 0}
+.scene-wrap.dungeon-mode .npc-card.party-open{
+ width:min(370px,95%);max-width:370px;
+ max-height:calc(100% - 40px);overflow-y:auto;
+ right:7px;bottom:31px;padding:7px;background:#131f22f7;
+}
+.npc-card.party-open #npcName{padding-right:22px}
+.npc-card.party-open #npcText{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.party-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin-top:4px}
+.party-member{min-width:0;border:1px solid #5e6256;border-radius:3px;background:#1f2c2d;padding:4px 5px;text-align:left;color:#e3ddcc;min-height:39px}
 .party-member.selected{border-color:#e1b96f;background:#38443d}
 .party-member:active{background:#505c51}
-.party-member-top{display:flex;justify-content:space-between;align-items:center;gap:5px}
-.party-member-top strong{font:bold 11px Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.party-member-top small{font:9px Arial,sans-serif;color:#e7be83;white-space:nowrap}
-.party-member-role{display:block;font:9px/1.4 Arial,sans-serif;color:#a9bab3;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.party-hp{display:block;width:100%;height:4px;background:#443b35;margin-top:5px}
+.party-member-top{display:flex;justify-content:space-between;align-items:center;gap:3px}
+.party-member-top strong{font:bold 10px/1.1 Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.party-member-top small{font:8px Arial,sans-serif;color:#e7be83;white-space:nowrap}
+.party-member-role{display:flex;align-items:center;justify-content:space-between;gap:3px;font:9px/1.2 Arial,sans-serif;color:#a9bab3;margin-top:2px}
+.party-member-role>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.party-health{font:8px Arial,sans-serif;color:#bfc7b3;white-space:nowrap;flex-shrink:0}
+.scene-wrap.dungeon-mode .npc-card .party-member small{display:inline;margin:0}
+.party-hp{display:block;width:100%;height:3px;background:#443b35;margin-top:3px}
 .party-hp span{display:block;height:100%;background:#91b78f}
-.party-health{font:9px Arial,sans-serif;color:#bfc7b3}
-@media(max-height:390px){.scene-wrap.dungeon-mode .npc-card.party-open{max-height:calc(100% - 42px);bottom:23px}.party-member{padding:5px}}
+.dungeon-floor-menu{
+ position:absolute;right:7px;bottom:65px;z-index:8;
+ width:min(380px,96%);max-height:calc(100% - 75px);overflow-y:auto;
+ padding:7px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;
+ border:1px solid #af9369;border-radius:5px;background:#101b1deb;
+ box-shadow:0 7px 25px #000c;
+}
+.dungeon-floor-menu button{
+ min-width:0;min-height:37px;display:flex;align-items:center;gap:7px;
+ border:1px solid #615a46;border-radius:3px;background:#253030;
+ color:#dbcfb4;padding:5px 7px;text-align:left;
+}
+.dungeon-floor-menu button strong{font:bold 12px Arial,sans-serif;color:#f2ce89;flex:0 0 20px}
+.dungeon-floor-menu button span{font:9px/1.2 Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dungeon-floor-menu button.active{border-color:#e9c073;background:#52503a;color:#fff1c8}
+.dungeon-floor-menu button:active{background:#6b5735}
+@media(max-height:390px){
+ .scene-wrap.dungeon-mode .npc-card{bottom:24px;max-height:calc(100% - 30px)}
+ .scene-wrap.dungeon-mode .npc-card.party-open{bottom:24px;max-height:calc(100% - 30px);padding:5px}
+ .party-member{padding:3px 4px;min-height:36px}
+ .party-roster{gap:3px;margin-top:3px}
+ .dungeon-floor-menu{bottom:53px;max-height:calc(100% - 63px)}
+ .dungeon-floor-menu button{min-height:30px;padding:3px 5px}
+}

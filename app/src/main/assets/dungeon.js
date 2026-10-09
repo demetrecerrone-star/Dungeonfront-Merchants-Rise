@@ -1,7 +1,7 @@
-/* Dungeonfront v0.6: solo delvers, grouped expeditions and an eight-floor raid. */
+/* Dungeonfront v0.6.2: compact party limits, solo delvers and eight-floor raids. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.DFDungeon=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
-const floorCount=8,worldWidth=2100,maxAdventurers=40,bossFloor=8;
+const floorCount=8,worldWidth=2100,maxAdventurers=40,bossFloor=8,maxPartySize=5;
 const patrolPositions=[160,405,650,895,1140,1385,1630,1930];
 const gateX=worldWidth-185;
 const floorNames=['The Gate Crypt','Mossbound Passage','Ember Chambers','The Forsaken Keep','Sunken Archives','Ashen Hollows','The Deep Warrens','Abyssal Threshold'];
@@ -110,6 +110,25 @@ function ensure(s){
   }
   d.schema=7;
  }
+ // v0.6.2: split oversized saved groups; preserve every hero and their individual progress.
+ if(d.schema<8){
+  const groups=new Map();
+  for(const a of d.adventurers){
+   if(!a.partyId)continue;
+   if(!groups.has(a.partyId))groups.set(a.partyId,[]);
+   groups.get(a.partyId).push(a);
+  }
+  const used=new Set(groups.keys());
+  for(const members of groups.values()){
+   for(let i=maxPartySize;i<members.length;i+=maxPartySize){
+    let newId;
+    do{newId='G'+d.nextParty++}while(used.has(newId));
+    used.add(newId);
+    for(const a of members.slice(i,i+maxPartySize))a.partyId=newId;
+   }
+  }
+  d.schema=8;
+ }
  for(const a of d.adventurers){
   if(!Number.isFinite(a.x))a.x=65;
   if(!Number.isFinite(a.floor)||a.floor<1||a.floor>floorCount)a.floor=1;
@@ -145,7 +164,7 @@ function enter(s,customer,gear){
   const open=d.adventurers.filter(x=>x.partyId&&String(x.partyId).startsWith('G')&&
    x.floor===1&&x.x<390&&x.status==='exploring');
   const recent=open.length?open[open.length-1]:null;
-  const party=recent&&d.adventurers.filter(x=>x.partyId===recent.partyId).length<4?recent.partyId:'G'+d.nextParty++;
+  const party=recent&&d.adventurers.filter(x=>x.partyId===recent.partyId).length<maxPartySize?recent.partyId:'G'+d.nextParty++;
   a.partyId=party;
  }
  d.adventurers.push(a);
@@ -240,5 +259,5 @@ function advance(s,seconds,rng){
  return reports.slice(0,4);
 }
 function snapshot(s){return ensure(s)}
-return{floorCount,worldWidth,bossFloor,floorNames,monsterKinds,ensure,enter,advance,snapshot,partyMembers};
+return{floorCount,worldWidth,bossFloor,maxPartySize,floorNames,monsterKinds,ensure,enter,advance,snapshot,partyMembers};
 });
