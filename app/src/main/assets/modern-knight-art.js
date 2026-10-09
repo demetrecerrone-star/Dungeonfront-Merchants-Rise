@@ -21,7 +21,7 @@ function frame(action,n){
  const leg=Math.sin(cycle)* (walking?14:1.7);
  const arm=attacking?(p<.35?-21:p<.68?44:2):walking?Math.sin(cycle)*3:Math.sin(cycle)*1.2;
  const shieldRaise=special?(p<.3?-14:p<.8?-25:-6):hurt?-8*Math.sin(Math.PI*p):0;
- const tilt=hurt?-12*Math.sin(Math.PI*p):dying?-84*p:attacking?Math.sin(Math.PI*p)*-8:0;
+ const tilt=hurt?-12*Math.sin(Math.PI*p):dying?-84*p:attacking?Math.sin(Math.PI*p)*-8:walking?7:0;
  const alpha=dying?Math.max(.6,1-p*.4):1;
  const left=leg.toFixed(2),right=(-leg).toFixed(2);
  const top=(-Math.abs(shift)-(attacking?Math.sin(Math.PI*p)*3:0)).toFixed(2);
@@ -87,6 +87,11 @@ function frame(action,n){
  <path d="M-13 -138 L13 -138 L11 -132 L-11 -131Z" fill="#122536" stroke="#ddbb79" stroke-width="2"/>
  <path d="M-9 -133 L-7 -123 M1 -134 L1 -121 M9 -133 L7 -124" stroke="#86a5b6" stroke-width="2"/>
  <path d="M-15 -146 L14 -145" stroke="#fff2c3" stroke-width="1.5"/>
+ <!-- Side-profile visor makes the direction of travel unambiguous.
+      Default art faces RIGHT; the renderer mirrors it for left motion. -->
+ ${walking?`<path d="M7 -143 L23 -141 L24 -133 L18 -126 L8 -128Z" fill="url(#steel)" stroke="#e5bf78" stroke-width="1.6"/>
+ <path d="M12 -137 L23 -136 L20 -133 L12 -133Z" fill="#122535"/>
+ <path d="M17 -128 L20 -122 L9 -121" fill="none" stroke="#b8c5d1" stroke-width="1.5"/>`:''}
  </g>
  ${flare?`<path d="M${(n*6)%37+62} 18 Q102 -6 111 42" fill="none" stroke="#8ad8ff" stroke-width="5" opacity=".85"/><path d="M77 21 Q111 -7 121 35" fill="none" stroke="#f5c875" stroke-width="2" opacity=".9"/>`:''}
  ${guard?`<ellipse cx="64" cy="99" rx="${(25+14*Math.sin(Math.PI*p)).toFixed(1)}" ry="${(57+14*Math.sin(Math.PI*p)).toFixed(1)}" fill="none" stroke="#87bbff" stroke-width="3" opacity=".7"/><path d="M32 100 Q64 18 98 100" fill="none" stroke="#f7d58e" stroke-width="2"/>`:''}`;
