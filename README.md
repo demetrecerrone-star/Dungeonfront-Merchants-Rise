@@ -1,4 +1,4 @@
-# Dungeonfront: Merchant's Rise — Android v0.5.2
+# Dungeonfront: Merchant's Rise — Android v0.6
 
 A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
 
@@ -12,10 +12,11 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 - Four special visitor encounters (herbalist, wounded ranger, scrap trader, pilgrim) with resource and reputation decisions; automatic save and one encounter per game day.
 - Stability improvements: rate-limited canvas drawing and batched shop-panel refreshes prevent unnecessary sidebar DOM replacement during tab navigation.
 - While watching the dungeon, shop transactions continue silently and roadside visitor events wait until the player returns to the shop. No commerce popups cover the dungeon camera.
-- Clickable shop portal opens a side-scrolling, eight-floor dungeon watch: inspect adventurers and monsters, swipe horizontally, use floor controls, and watch simple combat and salvage progress. Shop sales send equipped adventurers into the dungeon; dungeon data saves with the existing local merchant save.
+- Tap the shop portal to open an immersive, side-scrolling dungeon with one full-screen chamber per floor. Horizontal swipes explore within each floor; vertical swipes or arrows switch floors. Tap a hero to follow them automatically as they travel down to deeper floors.
+- Mixed solo adventurers and persistent named parties explore eight floors with multiple roaming enemies. Floor eight features the Abyssal Sovereign raid boss with 480 HP, raid-victory rewards and a respawn timer. Hero victories grant XP, level-ups and crafting materials. Older dungeon saves migrate forward without clearing merchant progress.
 - Landscape orientation and Android system navigation safe areas.
 - Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
-- Version **0.5.2** (Android versionCode **8**).
+- Version **0.6** (Android versionCode **9**).
 
 ## Build APK
 
