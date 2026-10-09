@@ -139,8 +139,53 @@ function drawEffect(g,id,progress,scale=1){
  }catch(e){try{g.restore()}catch(_){}item.state='invalid';return false;}
 }
 
+
+/* Discoveries have stable world anchors and simulation-timed activation.
+   Per-adventurer seenEvents remain the authoritative gameplay state; sprite
+   changes never make an event claimable again or alter dungeon resources. */
+const eventKinds=['chest','trap','shrine','hidden','merchant'];
+const eventSheets=Object.create(null);
+const eventSpecs={};
+for(const kind of eventKinds){
+ const height=kind==='merchant'?48:32;
+ eventSpecs[kind]={
+  idle:{frameW:32,frameH:height,frames:4,fps:5},
+  activate:{frameW:32,frameH:height,frames:6,fps:12}
+ };
+}
+function preloadEvents(){
+ let count=0;
+ for(const kind of eventKinds){
+  for(const [action,spec] of Object.entries(eventSpecs[kind])){
+   const id=kind+'/'+action;
+   if(queueImage(eventSheets,id,'sprites/events/'+kind+'/'+action+'.png',spec.frameW,spec.frameH,spec.frames))count++;
+  }
+ }
+ return count;
+}
+function eventAnimation(event,allDiscovered){
+ return (event.visualPulse||0)>0||allDiscovered?'activate':'idle';
+}
+function eventFrame(event,action,t,allDiscovered){
+ if(action==='idle')return Math.floor(Math.max(0,t)*5)%4;
+ if((event.visualPulse||0)>0)return Math.max(0,Math.min(5,Math.floor((1-event.visualPulse/.65)*6)));
+ return allDiscovered?5:0;
+}
+function drawEvent(g,event,t,allDiscovered=false){
+ if(!event||!eventKinds.includes(event.type))return false;
+ const action=eventAnimation(event,allDiscovered),item=eventSheets[event.type+'/'+action];
+ if(!item||item.state!=='ready')return false;
+ const frame=eventFrame(event,action,t,allDiscovered);
+ try{
+  g.save();g.imageSmoothingEnabled=false;
+  g.drawImage(item.img,frame*item.frameW,0,item.frameW,item.frameH,-item.frameW/2,-item.frameH+1,item.frameW,item.frameH);
+  g.restore();return true;
+ }catch(e){try{g.restore()}catch(_){}item.state='invalid';return false;}
+}
+function eventReadyCount(){return Object.values(eventSheets).filter(x=>x.state==='ready').length}
+
 function readyCount(){return Object.values(sheets).filter(x=>x.state==='ready').length}
 function status(){return {total:classes.length*3,ready:readyCount(),failed:Object.values(sheets).filter(x=>x.state==='invalid'||x.state==='missing').length}}
-if(typeof root.Image==='function'){preload();preloadMonsters();}
-return{classes,frameCount,fps,preload,selectAction,getFrame,draw,readyCount,status,monsterIds,monsterSizes,monsterActions,fxSpecs,preloadMonsters,chooseMonsterAction,monsterFrame,drawMonster,drawEffect};
+if(typeof root.Image==='function'){preload();preloadMonsters();preloadEvents();}
+return{classes,frameCount,fps,preload,selectAction,getFrame,draw,readyCount,status,monsterIds,monsterSizes,monsterActions,fxSpecs,preloadMonsters,chooseMonsterAction,monsterFrame,drawMonster,drawEffect,eventKinds,eventSpecs,preloadEvents,eventAnimation,eventFrame,drawEvent,eventReadyCount};
 });
