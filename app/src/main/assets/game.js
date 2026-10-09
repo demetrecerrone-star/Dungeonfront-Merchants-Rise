@@ -33,7 +33,8 @@ function visitorChoicesMarkup(enc){
  return enc.choices.map(choice=>{
   const noGold=(choice.gold||0)<0&&s.gold<-(choice.gold||0);
   const noItems=choice.item&&(s.stock[choice.item]||0)<choice.qty;
-  return '<button type="button" class="visitor-choice" data-visitor-choice="'+esc(choice.id)+'" '+(noGold||noItems?'disabled':'')+'><strong>'+esc(choice.label)+'</strong><small>'+esc(choice.desc)+'</small></button>';
+  const noRoom=choice.stockItem&&(s.stock[choice.stockItem]||0)+choice.stockQty>(s.upgrades.shelf?30:14);
+  return '<button type="button" class="visitor-choice" data-visitor-choice="'+esc(choice.id)+'" '+(noGold||noItems||noRoom?'disabled':'')+'><strong>'+esc(choice.label)+'</strong><small>'+esc(choice.desc)+'</small></button>';
  }).join('');
 }
 function presentVisitor(){
