@@ -43,7 +43,7 @@ function testSheet(item){
    hash=Math.imul(hash^pixels[y*w+f*item.frameW+x],16777619)>>>0;
   signatures.push(hash);
  }
- assert.ok(new Set(signatures).size>1,'Animation is identical in every frame: '+item.src);
+ if(item.frames>1)assert.ok(new Set(signatures).size>1,'Animation is identical in every frame: '+item.src);
  tested++;
 }
 for(const cls of manifest.classes){
@@ -60,7 +60,13 @@ for(const type of types){
 const effects=['slash','heavy_slash','arrow','magic_bolt','healing_pulse','hit_flash','critical','death_burst'];
 assert.deepEqual(Object.keys(manifest.effects),effects);
 for(const effect of effects)testSheet(manifest.effects[effect]);
-assert.equal(tested,72,'18 heroes + 46 monsters + 8 effects');
+assert.deepEqual(Object.keys(manifest.events),['chest','trap','shrine','hidden','merchant']);
+for(const kind of Object.keys(manifest.events)){
+ for(const action of ['idle','activate'])testSheet(manifest.events[kind][action]);
+}
+for(const category of ['classes','condition','rarity'])
+ for(const data of Object.values(manifest.ui[category]))testSheet(data);
+assert.equal(tested,95,'18 hero + 46 monster + 8 effect + 10 event + 13 indicator sheets');
 const renderer=fs.readFileSync(path.join(root,'sprite-system.js'),'utf8');
 const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
@@ -68,6 +74,7 @@ assert.ok(renderer.includes("item.state='missing'"),'Missing PNG fallback');
 assert.ok(game.includes('window.DFSprites.draw(g,a,t)'),'Hero sprites must be drawn');
 assert.ok(game.includes('window.DFSprites.drawMonster(g,m,t)'),'Monster sprites must be drawn');
 assert.ok(game.includes('window.DFSprites.drawEffect(g,a.fxType'),'Combat sprite effects must be drawn');
+assert.ok(game.includes('window.DFSprites.drawEvent(g,event,t,allDiscovered)'),'Event sprite sheets must be drawn');
 assert.ok(game.includes('if(!rendered&&m.hp>0)drawMonster'),'Monster procedural fallback must remain');
 assert.ok(html.indexOf('sprite-system.js')<html.indexOf('game.js'),'Load sprite system before the main game');
 assert.equal(renderer.includes('localStorage.setItem('),false,'Visual clock state must not alter saves');
