@@ -131,7 +131,7 @@ function renderRoster(){
   const working=busy.has(a.id),selected=chosenHires.has(a.id);
   const condition=working?'ON CONTRACT':a.injury>0?'INJURED':a.fatigue>=70?'EXHAUSTED':'READY';
   const flag=working?' working':a.injury>0?' injured':a.fatigue>=70?' tired':'';
-  return '<button type="button" class="roster-entry'+(a.id===rosterFocusId?' focused':'')+'" data-roster-action="focus" data-id="'+esc(a.id)+'"><span><strong>'+esc(a.name)+'</strong><small>'+esc(a.cls)+' · Lv '+a.level+' · '+esc(a.trait||'Steadfast')+'</small></span><span class="roster-condition'+flag+'">'+condition+'</span>'+(selected?'<span class="roster-selected">✓</span>':'')+'</button>';
+  return '<button type="button" class="roster-entry'+(a.id===rosterFocusId?' focused':'')+'" data-roster-action="focus" data-id="'+esc(a.id)+'"><span class="roster-identity">'+classEmblem(a.cls)+'<span><strong>'+esc(a.name)+'</strong><small>'+esc(a.cls)+' · Lv '+a.level+' · '+esc(a.trait||'Steadfast')+'</small><span class="roster-mini-fatigue"><span style="width:'+Math.max(0,Math.min(100,Math.round(a.fatigue||0)))+'%"></span></span></span></span>'+conditionBadge(a,working)+(selected?'<span class="roster-selected">✓</span>':'')+'</button>';
  }).join('');
  const a=c.staff.find(hero=>hero.id===rosterFocusId);
  let detail='<div class="panel-tip">Hire a recruit from the Contract Board to manage them here.</div>';
@@ -142,8 +142,8 @@ function renderRoster(){
   const equipment=Object.entries(equipped).map(([slot,id])=>esc(slot.toUpperCase())+': '+esc(E.items[id]?.name||id)).join(' · ')||'No issued equipment';
   const gearChoices=optionItems.map(([id,it])=>'<option value="'+esc(id)+'">'+esc(it.name)+' ('+s.stock[id]+' available)</option>').join('');
   const healChoices=['bandage','potion','elixir'].filter(id=>(s.stock[id]||0)>0).map(id=>'<option value="'+id+'">'+esc(E.items[id].name)+' ('+s.stock[id]+' left)</option>').join('');
-  detail='<div class="roster-detail-header"><div><small>GUILD ADVENTURER</small><h3>'+esc(a.name)+'</h3><p>'+esc(a.cls)+' · Lv '+a.level+' · '+esc(a.trait||'Steadfast')+'</p></div><span class="contract-rank">XP '+(a.xp||0)+'</span></div>'+
-  '<div class="roster-meters"><div><small>FATIGUE '+Math.round(a.fatigue||0)+'%</small><div class="roster-bar"><span style="width:'+Math.round(a.fatigue||0)+'%"></span></div></div><div><small>INJURY '+(a.injury||0)+' · '+(a.injury>0?'NEEDS TREATMENT':a.fatigue>=70?'NEEDS REST':'READY')+'</small></div></div>'+
+  detail='<div class="roster-detail-header"><div><small>GUILD ADVENTURER</small><div class="guild-identity">'+classEmblem(a.cls)+'<h3>'+esc(a.name)+'</h3></div><p>'+esc(a.cls)+' · Lv '+a.level+' · '+esc(a.trait||'Steadfast')+'</p>'+conditionBadge(a,working)+'</div><span class="contract-rank">XP '+(a.xp||0)+'</span></div>'+
+  '<div class="roster-meters"><div><small>FATIGUE '+Math.round(a.fatigue||0)+'%</small><div class="roster-bar'+(a.fatigue>=70?' roster-danger':'')+'"><span style="width:'+Math.max(0,Math.min(100,Math.round(a.fatigue||0)))+'%"></span></div></div><div><small>INJURY '+(a.injury||0)+' · '+(a.injury>0?'NEEDS TREATMENT':a.fatigue>=70?'NEEDS REST':'READY')+'</small></div></div>'+
   '<p class="roster-kit">'+equipment+'</p><p class="roster-kit">A tired or injured adventurer cannot start another contract. Unassigned adventurers recover each new in-game day.</p>'+
   '<div class="roster-actions">'+
   '<button data-roster-action="assign" data-id="'+esc(a.id)+'" '+(!ready?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(selected?'✓ IN PARTY':'ADD TO PARTY')+'</button>'+
@@ -288,7 +288,7 @@ if(tab==='craft'){
  html+='<div class="panel-title">RARE FINDS · RESALE MARKET</div>';
  for(const [id,loot] of Object.entries(E.lootKinds)){
   const qty=s.loot[id]||0;
-  html+='<article class="item"><div class="item-top"><strong>'+loot.icon+' '+esc(loot.name)+'</strong><span class="item-qty">'+qty+' · '+loot.sell+'G</span></div><div class="item-meta">'+esc(loot.rarity)+' · Market price increases with reputation</div><div class="item-bot"><span class="hint">DUNGEON FIND / SHOP TRADE</span><button class="action-btn" data-action="sell-find" data-id="'+id+'" '+(!qty?'disabled':'')+'>SELL 1 · '+loot.sell+'G+</button></div></article>';
+  html+='<article class="item"><div class="item-top"><strong><img class="rarity-icon" src="sprites/ui/rarity/'+esc(loot.rarity.toLowerCase())+'.png" alt="" aria-hidden="true">'+esc(loot.name)+'</strong><span class="item-qty">'+qty+' · '+loot.sell+'G</span></div><div class="item-meta">'+esc(loot.rarity)+' · Market price increases with reputation</div><div class="item-bot"><span class="hint">DUNGEON FIND / SHOP TRADE</span><button class="action-btn" data-action="sell-find" data-id="'+id+'" '+(!qty?'disabled':'')+'>SELL 1 · '+loot.sell+'G+</button></div></article>';
  }
 }
 if(tab==='upgrade'){for(const [id,u] of Object.entries(E.upgrades))html+='<article class="upgrade-card"><strong>⚒ '+esc(u.name)+'</strong><p>'+esc(u.desc)+'</p><div class="upgrade-bottom"><span>'+(s.upgrades[id]?'BUILT ✓':u.cost+' GOLD')+'</span><button class="action-btn" data-action="upgrade" data-id="'+id+'" '+(s.upgrades[id]||s.gold<u.cost?'disabled':'')+'>'+(s.upgrades[id]?'COMPLETE':'BUILD')+'</button></div></article>'}
