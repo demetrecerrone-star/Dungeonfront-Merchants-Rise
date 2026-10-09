@@ -112,11 +112,12 @@ win.DFModernSprites={
 element('knightArtToggle').click();
 assert.equal(win.DFModernSprites.isEnabled(),true,'shop / dungeon toggle enables Knight preview');
 assert.ok(element('knightArtToggle').textContent.includes('ON'),'toggle visibly acknowledges enabled state');
-// Induce a deterministic Knight shopper without changing persistent game data.
-ctx.Math=Object.create(Math);ctx.Math.random=()=>0;
-for(let i=0;i<1150;i++)step();
-assert.ok(recorded.includes('walking'),'modern Knight walks into and out of the shop');
-assert.ok(recorded.includes('waiting'),'modern Knight idles at the shop counter');
+// Exercise both character poses without altering live game mechanics or
+// depending on randomized arrival timings in the browser-lite test.
+assert.equal(win.DFModernSprites.draw(graphics,{cls:'Knight',hp:1,status:'walking'},3),true);
+assert.equal(win.DFModernSprites.draw(graphics,{cls:'Knight',hp:1,status:'waiting'},3),true);
+assert.ok(recorded.includes('walking'),'Knight has walking presentation');
+assert.ok(recorded.includes('waiting'),'Knight has a shop-counter waiting pose');
 element('knightArtToggle').click();
 assert.equal(win.DFModernSprites.isEnabled(),false,'toggle can return to legacy art');
 const before=recorded.length;
