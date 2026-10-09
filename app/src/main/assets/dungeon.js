@@ -139,6 +139,11 @@ function ensure(s){
   }
   d.schema=8;
  }
+ // Preserve already-looted chest visuals when loading saves made before v0.8.1.
+ if(d.schema<9){
+  for(const event of d.events||[])if(event.type==='chest'&&d.adventurers.some(a=>Array.isArray(a.seenEvents)&&a.seenEvents.includes(event.id)))event.opened=true;
+  d.schema=9;
+ }
  for(const a of d.adventurers){
   if(!Number.isFinite(a.x))a.x=65;
   if(!Number.isFinite(a.floor)||a.floor<1||a.floor>floorCount)a.floor=1;
@@ -223,6 +228,7 @@ function discover(s,d,a,event,random,reports){
  if(!a.seenEvents)a.seenEvents=[];
  if(a.seenEvents.includes(event.id))return;
  a.seenEvents.push(event.id);
+ if(event.type==='chest')event.opened=true;
  // This brief visual-only timer does not affect discovery, treasure or payout.
  event.visualPulse=.65;
  const n=event.floor;
@@ -277,7 +283,7 @@ function advance(s,seconds,rng){
   a.fxTime=Math.max(0,(a.fxTime||0)-dt);
   // All floors have an exit portal at their START (x=65).
   // Returning parties move toward it without starting new fights.
-  if(a.status==='extracted')continue;
+  if(a.status==='extracted'){a.chestAction=null;continue;}
   if(a.floor===bossFloor&&a.status!=='recovering'&&a.status!=='retreating'){
    const boss=d.monsters.find(m=>m.boss&&m.floor===bossFloor);
    if(a.bossClearedFloor!==bossFloor&&d.bossDefeats>0&&boss&&boss.hp<=0){
@@ -286,6 +292,7 @@ function advance(s,seconds,rng){
    if(a.bossClearedFloor===bossFloor)a.status='returning';
   }
   if(a.status==='returning'){
+   a.chestAction=null;
    a.x=Math.max(65,a.x-dt*(170+Math.min(60,Number(a.level||1)*2)));
    if(a.x<=65){
     a.status='extracted';
@@ -296,14 +303,33 @@ function advance(s,seconds,rng){
    continue;
   }
   if(a.status==='recovering'){
+   a.chestAction=null;
    a.recover-=dt;
    if(a.recover<=0){a.recover=0;a.status='exploring';a.hp=a.maxHp;a.floor=1;a.x=62;a.clearedFloor=0;a.bossClearedFloor=0}
    continue;
   }
   if(a.status==='retreating'){
+   a.chestAction=null;
    a.x=Math.max(65,a.x-dt*125);
    if(a.x<=65){a.status='recovering';a.recover=8;a.hp=Math.max(1,Math.floor(a.maxHp*.3))}
    continue;
+  }
+  // Opening a chest is a real, visible interaction: heroes stop at the
+  // chest for 0.8 seconds and only receive loot once the lid has opened.
+  // The pending action persists in the save and is cancelled by extraction.
+  if(a.chestAction){
+   const pending=d.events.find(e=>e.id===a.chestAction.eventId&&e.floor===a.floor&&e.type==='chest');
+   if(!pending||a.seenEvents.includes(pending.id)){a.chestAction=null}
+   else{
+    a.status='opening';
+    a.chestAction.remaining=Math.max(0,a.chestAction.remaining-dt);
+    if(a.chestAction.remaining<=0){
+     discover(s,d,a,pending,random,reports);
+     a.chestAction=null;
+     a.status='exploring';
+    }
+    continue;
+   }
   }
   // Party coordination: protect the courier, heal wounded allies, and stay together.
   const party=a.partyId?d.adventurers.filter(x=>x.partyId===a.partyId&&x.floor===a.floor&&x.hp>0&&x.status!=='returning'&&x.status!=='extracted'):[a];
@@ -320,11 +346,17 @@ function advance(s,seconds,rng){
   if(!a.escort){
    for(const event of d.events){
     if(event.floor===a.floor&&Math.abs(event.x-a.x)<=18&&!a.seenEvents.includes(event.id)){
+     if(event.type==='chest'){
+      a.chestAction={eventId:event.id,floor:a.floor,remaining:.8};
+      a.status='opening';
+      reports.push(a.name+' is opening a treasure chest.');
+      break;
+     }
      discover(s,d,a,event,random,reports);
      if(a.hp<=0)break;
     }
    }
-   if(a.hp<=0)continue;
+   if(a.hp<=0||a.chestAction)continue;
   }
   // Couriers remain behind their guards instead of attacking creatures.
   if(a.escort&&party.some(x=>!x.escort)){
