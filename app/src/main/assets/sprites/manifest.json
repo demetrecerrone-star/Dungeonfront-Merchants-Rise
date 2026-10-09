@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "frame": {
+    "width": 32,
+    "height": 48
+  },
+  "classes": [
+    "Knight",
+    "Ranger",
+    "Mage",
+    "Cleric",
+    "Rogue",
+    "Mercenary"
+  ],
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "fps": 5,
+      "loop": true
+    },
+    "walk": {
+      "frames": 6,
+      "fps": 9,
+      "loop": true
+    },
+    "attack": {
+      "frames": 6,
+      "fps": 12,
+      "loop": false
+    }
+  },
+  "origin": "bottom-center",
+  "imageSmoothing": false,
+  "actors": {
+    "Knight": {
+      "idle": {
+        "src": "sprites/actors/knight/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/knight/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/knight/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Ranger": {
+      "idle": {
+        "src": "sprites/actors/ranger/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/ranger/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/ranger/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Mage": {
+      "idle": {
+        "src": "sprites/actors/mage/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/mage/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/mage/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Cleric": {
+      "idle": {
+        "src": "sprites/actors/cleric/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/cleric/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/cleric/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Rogue": {
+      "idle": {
+        "src": "sprites/actors/rogue/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/rogue/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/rogue/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "Mercenary": {
+      "idle": {
+        "src": "sprites/actors/mercenary/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "walk": {
+        "src": "sprites/actors/mercenary/walk.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 9,
+        "loop": true
+      },
+      "attack": {
+        "src": "sprites/actors/mercenary/attack.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  }
+}
