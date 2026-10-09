@@ -64,8 +64,83 @@ function draw(g,a,t){
   return false;
  }
 }
+
+/* Monster art shares the same bottom-center pivot as the hero atlases.
+   Action clocks are derived from simulation pulses so no new saved frame state
+   or detached animation loop is required. */
+const monsterIds=['slime','goblin','skeleton','imp','spider','wraith','hound','guardian','abyssal_sovereign'];
+const monsterSizes=monsterIds.map((id,i)=>i===8?80:i===7?48:32);
+const monsterActions={idle:{frames:4,fps:5},walk:{frames:6,fps:9},attack:{frames:6,fps:12},hurt:{frames:2,fps:12},death:{frames:6,fps:10},special:{frames:6,fps:10}};
+const fxSpecs={
+ slash:[32,32,4],heavy_slash:[48,48,5],arrow:[32,16,4],magic_bolt:[32,32,6],
+ healing_pulse:[48,48,6],hit_flash:[32,32,3],critical:[48,48,5],death_burst:[48,48,6]
+};
+const monsters=Object.create(null),effects=Object.create(null);
+function queueImage(cache,id,path,frameW,frameH,frames){
+ if(typeof root.Image!=='function'||cache[id])return false;
+ const item={state:'loading',img:new root.Image(),frameW,frameH,frames};
+ cache[id]=item;
+ item.img.onload=function(){item.state=item.img.naturalWidth===frameW*frames&&item.img.naturalHeight===frameH?'ready':'invalid'};
+ item.img.onerror=function(){item.state='missing'};
+ item.img.src=path;
+ return true;
+}
+function preloadMonsters(){
+ let n=0;
+ for(let i=0;i<monsterIds.length;i++){
+  const id=monsterIds[i],size=monsterSizes[i];
+  for(const [action,spec] of Object.entries(monsterActions)){
+   if(action==='special'&&i!==8)continue;
+   if(queueImage(monsters,id+'/'+action,'sprites/monsters/'+id+'/'+action+'.png',size,size,spec.frames))n++;
+  }
+ }
+ for(const [id,[w,h,frames]] of Object.entries(fxSpecs))
+  if(queueImage(effects,id,'sprites/effects/'+id+'.png',w,h,frames))n++;
+ return n;
+}
+function chooseMonsterAction(m){
+ if((m.hp||0)<=0)return 'death';
+ if((m.flash||0)>0)return 'hurt';
+ if(m.boss&&(m.attackFX||0)>0)return 'special';
+ if((m.attackFX||0)>0)return 'attack';
+ if(!m.boss&&(m.phase||0)%4<2)return 'walk';
+ return 'idle';
+}
+function monsterFrame(m,action,t){
+ const spec=monsterActions[action];
+ if(action==='death')return Math.min(spec.frames-1,Math.floor(Math.max(0,(m.deathDuration||.7)-(m.deathFX||0))*spec.frames/(m.deathDuration||.7)));
+ if(action==='hurt')return Math.min(spec.frames-1,Math.floor((.18-Math.max(0,m.flash||0))*spec.frames/.18));
+ if(action==='attack'||action==='special')return Math.min(spec.frames-1,Math.floor((.5-Math.max(0,m.attackFX||0))*spec.frames/.5));
+ return Math.floor(Math.max(0,t)*spec.fps)%spec.frames;
+}
+function drawMonster(g,m,t){
+ const id=monsterIds[m.kind];
+ if(!id)return false;
+ const action=chooseMonsterAction(m),item=monsters[id+'/'+action];
+ if(!item||item.state!=='ready')return false;
+ const frame=Math.max(0,Math.min(item.frames-1,monsterFrame(m,action,t)));
+ try{
+  g.save();
+  g.imageSmoothingEnabled=false;
+  g.drawImage(item.img,frame*item.frameW,0,item.frameW,item.frameH,-item.frameW/2,-item.frameH+1,item.frameW,item.frameH);
+  g.restore();
+  return true;
+ }catch(e){try{g.restore()}catch(_){}item.state='invalid';return false;}
+}
+function drawEffect(g,id,progress,scale=1){
+ const item=effects[id];
+ if(!item||item.state!=='ready')return false;
+ const pct=Math.max(0,Math.min(.999999,Number(progress)||0));
+ const frame=Math.floor(pct*item.frames);
+ try{
+  g.save();g.scale(scale,scale);g.imageSmoothingEnabled=false;
+  g.drawImage(item.img,frame*item.frameW,0,item.frameW,item.frameH,-item.frameW/2,-item.frameH/2,item.frameW,item.frameH);
+  g.restore();return true;
+ }catch(e){try{g.restore()}catch(_){}item.state='invalid';return false;}
+}
+
 function readyCount(){return Object.values(sheets).filter(x=>x.state==='ready').length}
 function status(){return {total:classes.length*3,ready:readyCount(),failed:Object.values(sheets).filter(x=>x.state==='invalid'||x.state==='missing').length}}
-if(typeof root.Image==='function')preload();
-return{classes,frameCount,fps,preload,selectAction,getFrame,draw,readyCount,status};
+if(typeof root.Image==='function'){preload();preloadMonsters();}
+return{classes,frameCount,fps,preload,selectAction,getFrame,draw,readyCount,status,monsterIds,monsterSizes,monsterActions,fxSpecs,preloadMonsters,chooseMonsterAction,monsterFrame,drawMonster,drawEffect};
 });
