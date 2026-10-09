@@ -36,7 +36,7 @@ def extract_rgba(image:Image.Image, background=(255,0,255)):
     # Remove only connected background pixels. Disconnected magenta ornaments
     # inside the costume are not removed.
     import cv2
-    labels,n=cv2.connectedComponents((magenta.astype(np.uint8)),connectivity=4)
+    n,labels=cv2.connectedComponents((magenta.astype(np.uint8)),connectivity=4)
     border=set(np.unique(np.concatenate([labels[0,:],labels[-1,:],labels[:,0],labels[:,-1]])))
     bg=np.isin(labels,list(border-{0}))
     # Edge antialias softened around the keyed background.
