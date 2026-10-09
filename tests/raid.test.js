@@ -136,7 +136,7 @@ test('saved oversized parties split into groups of at most five without losing h
   groups.set(a.partyId,(groups.get(a.partyId)||0)+1);
  }
  assert.ok([...groups.values()].every(n=>n<=D.maxPartySize),'all groups obey five-member limit');
- assert.equal(d.schema,8);
+ assert.equal(d.schema,9);
  const persisted=JSON.parse(JSON.stringify(s));
  D.ensure(persisted);
  assert.equal(persisted.dungeon.adventurers.length,d.adventurers.length,'save round trip keeps all adventurers');
