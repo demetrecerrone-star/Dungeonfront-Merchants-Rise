@@ -33,6 +33,7 @@ class FakeElement{
  pause(){}
  play(){return Promise.resolve()}
  closest(){return element('scene-wrap')}
+ querySelectorAll(){return []}
  getBoundingClientRect(){return{left:0,top:0,width:800,height:440}}
  getContext(){return graphics}
 }
