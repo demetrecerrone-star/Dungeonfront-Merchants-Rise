@@ -56,7 +56,8 @@ function ensure(s){
  if(c.boardDay!==s.day){
   c.boardDay=s.day;
   c.offers=listings(s.day,s.depth);
-  c.applicants=applicants(s.day).filter(a=>!c.staff.some(x=>x.id===a.id));
+  const rookies=c.applicants.filter(a=>String(a.id).startsWith('rookie-'));
+  c.applicants=applicants(s.day).filter(a=>!c.staff.some(x=>x.id===a.id)).concat(rookies);
  }
  return c;
 }
