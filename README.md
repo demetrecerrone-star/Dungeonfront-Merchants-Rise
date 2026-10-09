@@ -8,6 +8,8 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 
 **Visual Batch A is in the repo:** 18 original class animation PNG sheets (idle/walk/attack, six classes), fallback-aware sprite renderer, and PNG validation tests. [Preview all 18 animation sheets](docs/SPRITE_PREVIEW.md). **No Android APK has been built for this art pass.**
 
+**Visual Batches C/D are now implemented:** nine distinct monster designs with 46 animated PNG sheets (including the Abyssal Sovereign's signature attack and death) and eight combat effect sheets. The dungeon uses these actual sprites and retains procedural fallback. [Preview monsters and effects](docs/MONSTER_SPRITE_PREVIEW.md). A [GitHub Actions run](https://github.com/demetrecerrone-star/Dungeonfront-Merchants-Rise/actions/runs/37921981641) contains the downloadable `Dungeonfront-Monster-Boss-Effects-Sprites` ZIP. Both sprite and combat regression suites passed; **no new APK yet**.
+
 
 This work is available on branch `work/v0.8-roster-combat-treasure`. It has **not** been packaged as an APK.
 
