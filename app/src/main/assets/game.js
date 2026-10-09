@@ -516,15 +516,27 @@ function drawDungeon(t){
   if(event.floor!==floor)continue;
   const x=event.x-cameraX;
   if(x<-40||x>840)continue;
-  const icons={chest:'▣',trap:'⚠',shrine:'✚',hidden:'✧',merchant:'◆'};
-  const hues={chest:'#b9924c',trap:'#c76d55',shrine:'#88bbad',hidden:'#ae88cb',merchant:'#c9a968'};
-  dungeonBox(x-15,316,30,38,'#1c2324');
-  dungeonBox(x-13,320,26,30,hues[event.type]||'#a98d62');
-  g.textAlign='center';g.font='bold 22px Georgia';g.fillStyle='#1d2425';
-  g.fillText(icons[event.type]||'?',x,341);
-  g.font='bold 9px Arial';g.fillStyle='#e3ce9d';
-  g.fillText(event.type.toUpperCase(),x,308);
-  dungeonHit.push({x,y:330,type:'event',ref:event});
+  // Each hero remembers discovered rooms independently. A shrine, chest or
+  // trap appears used only after all active adventurers on that floor saw it.
+  const present=ds.dungeon.adventurers.filter(a=>a.floor===floor&&a.hp>0&&a.status!=='recovering'&&a.status!=='extracted');
+  const allDiscovered=present.length>0&&present.every(a=>(a.seenEvents||[]).includes(event.id));
+  let drawn=false;
+  if(window.DFSprites){
+   g.save();g.translate(x,355);g.scale(event.type==='merchant'?1.28:1.65,event.type==='merchant'?1.28:1.65);
+   drawn=window.DFSprites.drawEvent(g,event,t,allDiscovered);
+   g.restore();
+  }
+  if(!drawn){
+   const icons={chest:'▣',trap:'⚠',shrine:'✚',hidden:'✧',merchant:'◆'};
+   const hues={chest:'#b9924c',trap:'#c76d55',shrine:'#88bbad',hidden:'#ae88cb',merchant:'#c9a968'};
+   dungeonBox(x-15,316,30,38,'#1c2324');
+   dungeonBox(x-13,320,26,30,hues[event.type]||'#a98d62');
+   g.textAlign='center';g.font='bold 22px Georgia';g.fillStyle='#1d2425';
+   g.fillText(icons[event.type]||'?',x,341);
+  }
+  g.textAlign='center';g.font='bold 9px Arial';g.fillStyle=allDiscovered?'#92b9a4':'#e3ce9d';
+  g.fillText((allDiscovered?'EXPLORED · ':'')+event.type.toUpperCase(),x,event.type==='merchant'?282:306);
+  dungeonHit.push({x,y:event.type==='merchant'?317:332,type:'event',ref:event});
  }
  // Filter on the selected floor before painting and collecting touch targets.
  for(const m of ds.dungeon.monsters){
