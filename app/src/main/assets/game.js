@@ -798,7 +798,19 @@ function drawDungeon(t){
   g.save();g.translate(x,355);
   // V2 draws smooth high-resolution art only when explicitly enabled and
   // a matching action sheet is ready. Default/offline behavior stays v1.
-  const modern=window.DFModernSprites&&window.DFModernSprites.draw(g,a,t);
+  // Choose facing from the ACTIVE combat target, not the hero's last
+  // walking direction. Monsters can stand on either side of an adventurer.
+  // Only the transient render copy changes; saves/combat logic are untouched.
+  let drawActorState=a;
+  if(a.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled()){
+   const movingOut=a.status==='retreating'||a.status==='returning';
+   const inCombat=a.status==='fighting'||(a.swing||0)>0;
+   const enemy=inCombat?ds.dungeon.monsters.find(m=>
+    m.floor===a.floor&&(m.hp>0||(m.deathFX||0)>0)&&Math.abs(m.x-a.x)<48):null;
+   const face=movingOut?-1:enemy?(enemy.x<a.x?-1:1):1;
+   drawActorState=Object.assign({},a,{facing:face});
+  }
+  const modern=window.DFModernSprites&&window.DFModernSprites.draw(g,drawActorState,t);
   if(!modern){
    g.scale(2.1,2.1);
    if(!(window.DFSprites&&window.DFSprites.draw(g,a,t)))drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
