@@ -23,7 +23,7 @@
       <h2>MERCHANT'S RISE</h2>
       <p>The dungeon devours heroes. You sell them hope.</p>
       <button id="startGame" class="large-btn">OPEN THE SHOP</button>
-      <small>LANDSCAPE · OFFLINE TYCOON · EARLY PLAYABLE BUILD v0.5.2</small>
+      <small>LANDSCAPE · OFFLINE TYCOON · EARLY PLAYABLE BUILD v0.6</small>
     </div>
   </div>
   <main id="game" class="game hidden">
@@ -40,13 +40,14 @@
     <section class="mid">
       <div class="scene-wrap">
         <div class="scene-header"><span id="sceneHeading"><i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET</span><div class="scene-live"><span id="stockSignal" class="status-chip">SUPPLIES READY</span><span id="liveStatus">NIGHT WATCH</span></div></div>
-        <canvas id="scene" width="800" height="440" aria-label="Animated shop and multi-floor dungeon view"></canvas>
+        <canvas id="scene" width="800" height="440" aria-label="Animated shop and full-screen side-scrolling dungeon floors"></canvas>
         <div id="dungeonControls" class="dungeon-controls hidden" aria-label="Dungeon camera controls">
           <button id="dungeonBack" title="Return to shop" aria-label="Return to shop">‹ SHOP</button>
           <button id="dungeonLeft" title="Scroll left" aria-label="Scroll left">◀</button>
           <button id="dungeonRight" title="Scroll right" aria-label="Scroll right">▶</button>
-          <button id="dungeonUp" title="See shallower floors" aria-label="See shallower floors">▲ FLOORS</button>
-          <button id="dungeonDown" title="See deeper floors" aria-label="See deeper floors">▼ FLOORS</button>
+          <button id="dungeonFollow" title="Follow selected adventurer" aria-label="Follow selected adventurer">◎ FOLLOW</button>
+          <button id="dungeonUp" title="See shallower floors" aria-label="See shallower floors">▲ FLOOR</button>
+          <button id="dungeonDown" title="See deeper floors" aria-label="See deeper floors">▼ FLOOR</button>
         </div>
         <div class="day-track" aria-hidden="true"><div id="dayProgressFill"></div></div>
         <div class="scene-footer"><span>⚒ <span id="visitorsValue">0</span> ADVENTURERS SERVED</span><span id="sceneHint">◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER</span><span id="safetyNote">⚔ THREAT: UNEASY</span></div>
