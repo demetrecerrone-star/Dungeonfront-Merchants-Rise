@@ -8,6 +8,8 @@ on:
       - 'tools/anime-style-details.js'
       - 'tools/generate_remaining_actor_art.js'
       - 'tools/build_anime_style_preview.py'
+      - 'tools/pack_anime_illustrated_frames.py'
+      - 'tests/test_anime_frame_pack.py'
       - 'app/src/main/assets/modern-knight-art.js'
       - 'tests/anime-style-polish.test.js'
       - '.github/workflows/build-anime-style-review.yml'
@@ -39,6 +41,9 @@ jobs:
       - name: Install offline RGBA rasterizer and preview renderer
         run: |
           python3 -m pip install --quiet cairosvg pillow
+      - name: Validate original hand-painted source frame packing and alpha safety
+        run: |
+          python3 -m unittest discover -s tests -p test_anime_frame_pack.py -v
       - name: Generate 36 styled transparent PNG atlases and actual-size review
         run: |
           python3 tools/build_anime_style_preview.py
