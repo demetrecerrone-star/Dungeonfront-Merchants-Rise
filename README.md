@@ -4,6 +4,9 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 
 ## Next development phase: v0.8 (unreleased)
 
+**Android smoke-test milestone:** [Emulator QA workflow](.github/workflows/android-visual-qa.yml) and [phone-specific test checklist](docs/ANDROID_QA.md). The emulator uses a Galaxy S23 FE-sized landscape display; screenshots/logs are uploaded as an artifact. It does not publish a game APK or substitute for hands-on Samsung testing.
+
+
 **Pixel-art production plan:** [Asset directory layout, frame counts, file naming and implementation checklist](docs/SPRITE_PRODUCTION_PLAN.md).
 
 **Visual Batch A is in the repo:** 18 original class animation PNG sheets (idle/walk/attack, six classes), fallback-aware sprite renderer, and PNG validation tests. [Preview all 18 animation sheets](docs/SPRITE_PREVIEW.md). **No Android APK has been built for this art pass.**
