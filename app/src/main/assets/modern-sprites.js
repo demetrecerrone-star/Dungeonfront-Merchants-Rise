@@ -69,6 +69,15 @@ function selectAction(a){
  if(['exploring','escorting','returning','retreating','walking','moving'].includes(a.status))return 'walk';
  return 'idle';
 }
+function facing(a){
+ // Explicit motion direction wins over implied status. A shop guest leaving
+ // the counter still has status "walking" but travels left (stage 2).
+ if(a&&a.facing===-1)return -1;
+ if(a&&a.facing===1)return 1;
+ if(a&&Number(a.dx)<0)return -1;
+ if(a&&Number(a.dx)>0)return 1;
+ return a&&(a.status==='returning'||a.status==='retreating')?-1:1;
+}
 function frameIndex(a,action,t){
  const def=actions[action];
  if(!def)return 0;
@@ -101,7 +110,8 @@ function draw(g,a,t){
  const frame=frameIndex(a,action,t);
  try{
   g.save();
-  if(a.status==='returning'||a.status==='retreating')g.scale(-1,1);
+  // Frame sprites face right by default; mirror ONLY when travelling left.
+  if(facing(a)<0)g.scale(-1,1);
   g.imageSmoothingEnabled=true;
   // Coordinates relative to the hero's world-baseline, NOT the canvas top.
   g.drawImage(record.img,frame*FRAME_W,0,FRAME_W,FRAME_H,-DRAW_W/2,-DRAW_H+1,DRAW_W,DRAW_H);
@@ -119,5 +129,5 @@ function status(){
   loading:values.filter(x=>x.state==='loading').length,
   failed:values.filter(x=>x.state==='missing'||x.state==='invalid').length};
 }
-return {classes,approvedClasses,actions,FRAME_W,FRAME_H,DRAW_W,DRAW_H,imagePath,isEnabled,setEnabled,preloadClass,selectAction,frameIndex,draw,status};
+return {classes,approvedClasses,actions,FRAME_W,FRAME_H,DRAW_W,DRAW_H,imagePath,isEnabled,setEnabled,preloadClass,selectAction,facing,frameIndex,draw,status};
 });
