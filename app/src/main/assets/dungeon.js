@@ -53,7 +53,7 @@ function ensure(s){
  if(!Number.isFinite(d.enters))d.enters=0;
  if(!Number.isFinite(d.nextParty))d.nextParty=1;
  d.nextId=Math.max(d.nextId,1+Math.max(0,...d.adventurers.map(a=>Number(a.id)||0)));
- if(d.schema<6){
+ if(!Number.isFinite(d.schema)||d.schema<6){
   // Migration is deliberately additive: retain every saved actor, HP, level and all merchant resources.
   for(const [id,leaderName,floor,companions] of formations){
    const leader=d.adventurers.find(a=>a.name===leaderName&&!a.partyId);
