@@ -116,7 +116,7 @@ test('approved Knight prototype provides six offline animation strips with match
   assert.equal(Art.sheet(action),uri,'same image uri is cached');
   const svg=decodeURIComponent(uri.slice(uri.indexOf(',')+1));
   assert.ok(svg.includes('width="'+128*frames+'" height="192"'));
-  assert.equal((svg.match(/<g transform="translate\\(\\d+ 0\\)">/g)||[]).length,frames);
+  assert.equal((svg.match(/<g transform="translate\(\d+ 0\)">/g)||[]).length,frames);
   const xml=spawnSync('python3',['-c','import sys,xml.etree.ElementTree as ET; ET.fromstring(sys.stdin.read())'],{input:svg,encoding:'utf8'});
   assert.equal(xml.status,0,'valid SVG source for '+action+': '+xml.stderr);
  }
