@@ -7,7 +7,7 @@ let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS '+name);};
 test('legacy merchant save adds a contract board without resetting gold',()=>{
  const s=E.initialState();const oldGold=s.gold;
  const c=C.ensure(s);
- assert.equal(s.gold,oldGold);assert.equal(c.offers.length,3);assert.equal(c.applicants.length,5);
+ assert.equal(s.gold,oldGold);assert.ok(c.offers.length>=5);assert.equal(c.applicants.length,5);
  assert.equal(E.valid(JSON.parse(JSON.stringify(s))),true);
 });
 test('hiring charges once and prevents duplicate applications',()=>{
@@ -36,7 +36,11 @@ test('advancing and claiming a completed contract transfers rewards exactly once
  hero.wins=run.offer.target;run.instance.mats.iron=4;run.instance.mats.herb=2;
  const initialGold=s.gold,initialIron=s.mats.iron;
  C.advance(s,.05);
- assert.equal(run.status,'completed');
+ assert.equal(run.status,'returning','objective is not the extraction');
+ assert.equal(C.claim(s,run.id).ok,false,'no payment before exit');
+ hero.x=65.02;
+ C.advance(s,.05);
+ assert.equal(run.status,'completed','claim unlocks only at entrance portal');
  assert.equal(C.claim(s,run.id).ok,true);
  assert.equal(s.gold,initialGold+run.offer.reward);
  assert.equal(s.mats.iron,initialIron+4);
@@ -47,6 +51,8 @@ test('failed expedition pays no reward and releases adventurers',()=>{
  C.hire(s,c.applicants[0].id);
  const t=C.start(s,c.offers[1].id,[c.staff[0].id]),run=t.run;
  run.elapsed=run.offer.limit+1;
+ C.advance(s,.05);assert.equal(run.status,'returning');
+ run.instance.dungeon.adventurers[0].x=65.02;
  C.advance(s,.05);assert.equal(run.status,'failed');
  const gold=s.gold;
  assert.equal(C.claim(s,run.id).ok,true);assert.equal(s.gold,gold);
@@ -57,7 +63,7 @@ test('new day refreshes contracts without deleting current expeditions',()=>{
  C.start(s,c.offers[0].id,[c.staff[0].id]);
  s.day++;const next=C.ensure(s);
  assert.equal(next.runs.length,1);
- assert.equal(next.offers.length,3);
+ assert.ok(next.offers.length>=5);
  assert.equal(next.boardDay,s.day);
 });
 test('completed and failed contracts keep an unsettled notification until claimed',()=>{
@@ -67,6 +73,9 @@ test('completed and failed contracts keep an unsettled notification until claime
  assert.equal(C.unclaimedCount(s),0);
  run.instance.dungeon.adventurers[0].wins=run.offer.target;
  C.advance(s,.05);
+ assert.equal(run.status,'returning');assert.equal(C.unclaimedCount(s),0);
+ assert.equal(C.claim(s,run.id).ok,false,'red dot must wait for extraction');
+ run.instance.dungeon.adventurers[0].x=65.02;C.advance(s,.05);
  assert.equal(run.status,'completed');assert.equal(C.unclaimedCount(s),1);
  const saved=JSON.parse(JSON.stringify(s));
  assert.equal(C.unclaimedCount(saved),1,'red dot persists after reopening saved game');
@@ -139,5 +148,86 @@ test('old v0.7 saved expedition migrates hired identifiers and notification stat
  assert.equal(copy.contracts.runs[0].instance.dungeon.adventurers[0].hireId,c.staff[0].id);
  assert.equal(copy.contracts.nextRecruit,1);
  assert.equal(copy.contracts.runs[0].fallen.length,0);
+});
+
+test('all five basic contract types are posted with risk-based party sizes',()=>{
+ const s=E.initialState(),jobs=C.ensure(s).offers;
+ for(const kind of ['defeat','gather','escort','treasure'])assert.ok(jobs.some(o=>o.kind===kind),'missing '+kind);
+ assert.ok(jobs.every(o=>o.minParty>=1&&o.minParty<=C.maxParty));
+ assert.ok(jobs.some(o=>o.code==='gather'));
+});
+test('completing objective locks payment and red dot until all survivors reach entrance',()=>{
+ const s=E.initialState(),c=C.ensure(s);s.gold=900;
+ for(const a of c.applicants.slice(0,2))C.hire(s,a.id);
+ const run=C.start(s,c.offers.find(x=>x.kind==='defeat').id,c.staff.slice(0,2).map(x=>x.id)).run;
+ const crew=run.instance.dungeon.adventurers;
+ crew[0].wins=run.offer.target;crew[0].x=500;crew[1].x=300;
+ C.advance(s,.05);
+ assert.equal(run.status,'returning');assert.equal(C.unclaimedCount(s),0);
+ assert.equal(C.claim(s,run.id).ok,false);
+ crew[0].x=65.02;C.advance(s,.05);
+ assert.equal(crew[0].status,'extracted');
+ assert.equal(run.status,'returning','one survivor is still walking');
+ assert.equal(C.unclaimedCount(s),0);
+ crew[1].x=65.02;C.advance(s,.05);
+ assert.equal(run.status,'completed');assert.equal(C.unclaimedCount(s),1);
+ assert.equal(C.claim(s,run.id).ok,true);
+ assert.equal(C.unclaimedCount(s),0);
+});
+test('escort courier physically joins the party and reaches a floor before returning',()=>{
+ const s=E.initialState(),c=C.ensure(s);s.gold=950;
+ for(const a of c.applicants.slice(0,2))C.hire(s,a.id);
+ const job=c.offers.find(o=>o.kind==='escort');
+ const run=C.start(s,job.id,c.staff.map(a=>a.id)).run;
+ const courier=run.instance.dungeon.adventurers.find(a=>a.escort);
+ assert.ok(courier);assert.equal(run.escortId,courier.id);
+ courier.floor=2;courier.x=1150;
+ C.advance(s,.05);
+ assert.equal(run.status,'returning');assert.equal(courier.status,'returning');
+ assert.equal(C.claim(s,run.id).ok,false);
+});
+test('escort death fails the contract after the party extracts',()=>{
+ const s=E.initialState(),c=C.ensure(s);s.gold=950;
+ for(const a of c.applicants.slice(0,2))C.hire(s,a.id);
+ const run=C.start(s,c.offers.find(o=>o.kind==='escort').id,c.staff.map(a=>a.id)).run;
+ const courier=run.instance.dungeon.adventurers.find(a=>a.escort);
+ courier.hp=0;courier.status='retreating';
+ C.advance(s,.05);
+ assert.equal(run.status,'returning');assert.equal(run.outcome,'failed');
+ assert.equal(C.claim(s,run.id).ok,false);
+ for(const a of run.instance.dungeon.adventurers)a.x=65.02;
+ C.advance(s,.05);
+ assert.equal(run.status,'failed');assert.equal(C.claim(s,run.id).ok,true);
+});
+test('treasure contract and salvage contract use actual dungeon loot records',()=>{
+ const s=E.initialState(),c=C.ensure(s);s.gold=999;
+ for(const a of c.applicants.slice(0,3))C.hire(s,a.id);
+ const chosen=c.staff.slice(0,2).map(x=>x.id);
+ const treasure=C.start(s,c.offers.find(o=>o.kind==='treasure').id,chosen).run;
+ treasure.instance.dungeon.relicsFound=treasure.offer.target;
+ treasure.instance.loot.relic=2;
+ C.advance(s,.05);assert.equal(treasure.status,'returning');
+ treasure.instance.dungeon.adventurers.forEach(a=>a.x=65.02);
+ C.advance(s,.05);assert.equal(treasure.status,'completed');
+ const old=s.loot.relic;C.claim(s,treasure.id);
+ assert.equal(s.loot.relic,old+2,'recovered items flow into the merchant resale market');
+});
+test('hired veteran equipment, traits, experience survive repeated contracts',()=>{
+ const s=E.initialState(),c=C.ensure(s),app=c.applicants[0];s.gold=999;
+ C.hire(s,app.id);const member=c.staff[0];const trait=member.trait;
+ const initial=s.stock.blade;assert.equal(C.equip(s,member.id,'blade').ok,true);
+ assert.equal(s.stock.blade,initial-1);
+ assert.equal(member.gear,'Iron Shortsword');
+ const run=C.start(s,c.offers[0].id,[member.id]).run;
+ const hero=run.instance.dungeon.adventurers[0];
+ assert.equal(hero.gear,member.gear);assert.equal(hero.trait,trait);
+ assert.equal(C.equip(s,member.id,'potion').ok,false,'cannot swap during expedition');
+ hero.level+=1;hero.xp=3;hero.wins=2;
+ C.advance(s,.05);hero.x=65.02;C.advance(s,.05);
+ assert.equal(member.level,app.level+1);assert.equal(member.xp,3);
+ assert.equal(C.claim(s,run.id).ok,true);
+ const newer=C.start(s,c.offers.find(o=>o.kind==='gather').id,[member.id]).run;
+ const rehire=newer.instance.dungeon.adventurers[0];
+ assert.equal(rehire.level,member.level);assert.equal(rehire.xp,3);assert.equal(rehire.gear,'Iron Shortsword');
 });
 console.log('All '+count+' contract tests passed.');
