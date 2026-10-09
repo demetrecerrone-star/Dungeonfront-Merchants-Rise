@@ -37,10 +37,9 @@ function queue(cls,action){
  };
  record.img.onerror=function(){record.state='missing'};
  try{
-  // SVG strip is real, transparent, offline animation for the Knight prototype.
-  // Final high-resolution art can replace it with the regular PNG atlas path.
-  const preview=cls==='Knight'&&root.DFModernKnightArt&&root.DFModernKnightArt.sheet(action);
-  record.img.src=preview||imagePath(cls,action);
+  // Use pre-rendered RGBA sheets, not runtime SVG data URIs. The vector
+  // source is baked at build time to avoid WebView renderer memory spikes.
+  record.img.src=imagePath(cls,action);
  }
  catch(e){record.state='missing'}
  return false;
