@@ -3,7 +3,7 @@ name: Build Dungeonfront APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, master, 'feature/**', 'work/v0.9-shop-layout', 'work/v0.9-character-art-v2']
+    branches: [main, master, 'feature/**', 'work/v0.9-shop-layout', 'work/v0.9-character-art-v2', 'work/v0.9-six-class-preview']
     paths:
       - 'app/**'
       - 'tests/**'
@@ -29,9 +29,12 @@ jobs:
           gradle-version: '8.10.2'
       - name: Bake offline high-resolution Knight PNG animation sheets
         run: |
-          python3 -m pip install --quiet cairosvg
+          python3 -m pip install --quiet cairosvg pillow
           python3 tools/build_knight_atlas.py
+          python3 tools/build_remaining_actor_atlases.py
+          python3 tools/stage_remaining_actor_atlases.py --approved
           test -s app/src/main/assets/sprites/actors_v2/knight/walk.png
+          for cls in ranger mage cleric rogue mercenary; do test -s "app/src/main/assets/sprites/actors_v2/$cls/attack.png"; done
           test -s app/src/main/assets/sprites/actors_v2/knight/attack.png
       - name: Test merchant economy and visitor encounters
         run: |
@@ -47,6 +50,7 @@ jobs:
           node tests/visual-combat.test.js
           node tests/events-art.test.js
           node tests/modern-sprites.test.js
+          node tests/remaining-actors-v2.test.js
       - name: Verify gameplay JavaScript and visual sprite-generator syntax
         run: |
           node --check app/src/main/assets/game.js
@@ -57,13 +61,13 @@ jobs:
       - name: Verify Android package and release version
         run: |
           grep -q "applicationId 'com.dabski.dungeonfront'" app/build.gradle
-          grep -q 'versionCode 19' app/build.gradle
-          grep -q "versionName '0.9.0-knight-preview.4'" app/build.gradle
+          grep -q 'versionCode 20' app/build.gradle
+          grep -q "versionName '0.9.0-classes-preview.1'" app/build.gradle
       - name: Verify original uploaded Dabski cinematic
         run: |
           test -f app/src/main/assets/dabski_intro.mp4
           echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
-      - name: Build v0.9.0-knight-preview.4 Android APK
+      - name: Build v0.9.0-classes-preview.1 Android APK
         id: build
         shell: bash
         env:
@@ -77,8 +81,8 @@ jobs:
             echo "::warning::No persistent signing secrets configured. Building a test-signed debug APK. This APK cannot update a differently signed installation."
             gradle --no-daemon :app:assembleDebug
             echo "apk_path=app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_OUTPUT"
-            echo "apk_label=Dungeonfront-v0.9.0-knight-preview.4-debug-APK" >> "$GITHUB_OUTPUT"
-            echo "### v0.9.0-knight-preview.4 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
+            echo "apk_label=Dungeonfront-v0.9.0-classes-preview.1-debug-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.9.0-classes-preview.1 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
           else
             if [[ -z "$KEYSTORE_B64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
               echo "::error::Incomplete signing configuration: set all four DUNGEONFRONT_* repository secrets."
@@ -92,29 +96,29 @@ jobs:
             keytool -list -keystore "$DUNGEONFRONT_KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null
             gradle --no-daemon :app:assembleRelease
             echo "apk_path=app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_OUTPUT"
-            echo "apk_label=Dungeonfront-v0.9.0-knight-preview.4-persistently-signed-APK" >> "$GITHUB_OUTPUT"
-            echo "### v0.9.0-knight-preview.4 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
+            echo "apk_label=Dungeonfront-v0.9.0-classes-preview.1-persistently-signed-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.9.0-classes-preview.1 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
           fi
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           "$APKSIGNER" verify --verbose "$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
           APK="$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.dabski.dungeonfront' versionCode='19' versionName='0.9.0-knight-preview.4'"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.dabski.dungeonfront' versionCode='20' versionName='0.9.0-classes-preview.1'"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.apk_label }}
           path: ${{ steps.build.outputs.apk_path }}
           if-no-files-found: error
 
-      - name: Publish signed v0.9.0-knight-preview.4 direct APK download
-        if: false && github.ref == 'refs/heads/main' && steps.build.outputs.apk_label == 'Dungeonfront-v0.9.0-knight-preview.4-persistently-signed-APK'
+      - name: Publish signed v0.9.0-classes-preview.1 direct APK download
+        if: false && github.ref == 'refs/heads/main' && steps.build.outputs.apk_label == 'Dungeonfront-v0.9.0-classes-preview.1-persistently-signed-APK'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          cp "${{ steps.build.outputs.apk_path }}" "Dungeonfront-v0.9.0-knight-preview.4.apk"
-          gh release view v0.9.0-knight-preview.4 >/dev/null 2>&1 || gh release create v0.9.0-knight-preview.4 --title "Dungeonfront: Merchant's Rise v0.9.0-knight-preview.4" --notes "Shop scene preview with warm timber interior, clearer stocking, counter, lanterns and merchant UI. No changes to portal placement, purchased goods, contracts or save keys."
-          gh release upload v0.9.0-knight-preview.4 Dungeonfront-v0.9.0-knight-preview.4.apk --clobber
+          cp "${{ steps.build.outputs.apk_path }}" "Dungeonfront-v0.9.0-classes-preview.1.apk"
+          gh release view v0.9.0-classes-preview.1 >/dev/null 2>&1 || gh release create v0.9.0-classes-preview.1 --title "Dungeonfront: Merchant's Rise v0.9.0-classes-preview.1" --notes "Shop scene preview with warm timber interior, clearer stocking, counter, lanterns and merchant UI. No changes to portal placement, purchased goods, contracts or save keys."
+          gh release upload v0.9.0-classes-preview.1 Dungeonfront-v0.9.0-classes-preview.1.apk --clobber
 
       - name: Package standalone Android APK signing tool for private, local signing
         run: |
