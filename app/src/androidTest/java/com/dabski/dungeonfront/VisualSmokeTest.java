@@ -168,6 +168,14 @@ public final class VisualSmokeTest {
         assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'waiting'},2))"));
         assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'walking'},2))"));
         assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'fighting',swing:.23},2))"));
+        // Regression: 0 HP while retreating is still MOVING toward the exit.
+        // The renderer must not show a prone death pose, and direction must
+        // come from actual stage / movement, including shop departure.
+        assertEquals("\"walk\"",eval("window.DFModernSprites.selectAction({cls:'Knight',hp:0,status:'retreating'})"));
+        assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:0,status:'retreating'})"));
+        assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:-1})"));
+        assertEquals("1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:1})"));
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:0,status:'retreating'},2))"));
         assertEquals("false",eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Mage',hp:100,status:'waiting'},2)"));
         screenshot("knight-v2-loaded");
 
