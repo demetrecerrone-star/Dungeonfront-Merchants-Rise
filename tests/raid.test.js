@@ -16,7 +16,7 @@ test('existing merchant and dungeon progress survives upgrade to raid schema',()
  assert.equal(s.gold,1087);assert.equal(s.stock.potion,5);assert.equal(s.mats.iron,19);
  const hero=d.adventurers.find(x=>x.id===9);
  assert.equal(hero.hp,22);assert.equal(hero.x,620);assert.equal(hero.floor,4);
- assert.equal(d.schema,8);assert.equal(d.monsters.length,65);
+ assert.equal(d.schema,9);assert.equal(d.monsters.length,65);
  assert.ok(d.adventurers.some(x=>x.partyId));assert.ok(d.adventurers.some(x=>!x.partyId));
  const countBefore=d.adventurers.length;
  D.ensure(s);assert.equal(d.adventurers.length,countBefore);
@@ -136,7 +136,7 @@ test('saved oversized parties split into groups of at most five without losing h
   groups.set(a.partyId,(groups.get(a.partyId)||0)+1);
  }
  assert.ok([...groups.values()].every(n=>n<=D.maxPartySize),'all groups obey five-member limit');
- assert.equal(d.schema,8);
+ assert.equal(d.schema,9);
  const persisted=JSON.parse(JSON.stringify(s));
  D.ensure(persisted);
  assert.equal(persisted.dungeon.adventurers.length,d.adventurers.length,'save round trip keeps all adventurers');
