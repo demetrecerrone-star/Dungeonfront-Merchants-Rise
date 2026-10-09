@@ -8,6 +8,7 @@ let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
 let view='shop',cameraX=0,floorOffset=1,drag=null,dungeonHit=[],followId=null,focusId=null;
 let contractRunId=null,contractBoardOpen=false,chosenHires=new Set();
+let rosterOpen=false,rosterFocusId=null;
 const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowan','Mira','Dain','Iris','Sable','Thorne'],classes=['Knight','Rogue','Mage','Ranger','Cleric','Mercenary'],colors=['#b9a4a0','#8795a8','#b093bd','#9ab49d','#d1af73','#a48d87'],needs=['potion','potion','torch','bandage','blade','torch','bandage','forged'];
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
@@ -96,8 +97,75 @@ function renderContractBoard(){
  '<section class="contract-column"><h3>⚔ ADVENTURERS FOR HIRE</h3>'+(applicants||'<p>New applicants arrive tomorrow.</p>')+'<div class="contract-separator"></div><h3>YOUR ROSTER · '+c.staff.length+'/'+C.maxHired+'</h3>'+(roster||'<p>Hire an adventurer to start taking contracts.</p>')+'</section>'+
  '<section class="contract-column"><h3>◈ ACTIVE & FINISHED RUNS</h3>'+(runs||'<p>No expeditions yet.</p>')+'</section>';
 }
+function renderRoster(){
+ E.ensureInventory(s);
+ const c=C.ensure(s),busy=C.busyIds(c);
+ if(!rosterFocusId||!c.staff.some(a=>a.id===rosterFocusId))rosterFocusId=c.staff[0]?.id||null;
+ const list=c.staff.map(a=>{
+  const working=busy.has(a.id),selected=chosenHires.has(a.id);
+  const condition=working?'ON CONTRACT':a.injury>0?'INJURED':a.fatigue>=70?'EXHAUSTED':'READY';
+  const flag=working?' working':a.injury>0?' injured':a.fatigue>=70?' tired':'';
+  return '<button type="button" class="roster-entry'+(a.id===rosterFocusId?' focused':'')+'" data-roster-action="focus" data-id="'+esc(a.id)+'"><span><strong>'+esc(a.name)+'</strong><small>'+esc(a.cls)+' · Lv '+a.level+' · '+esc(a.trait||'Steadfast')+'</small></span><span class="roster-condition'+flag+'">'+condition+'</span>'+(selected?'<span class="roster-selected">✓</span>':'')+'</button>';
+ }).join('');
+ const a=c.staff.find(hero=>hero.id===rosterFocusId);
+ let detail='<div class="panel-tip">Hire a recruit from the Contract Board to manage them here.</div>';
+ if(a){
+  const working=busy.has(a.id),selected=chosenHires.has(a.id),ready=!working&&a.injury<=0&&a.fatigue<70;
+  const equipped=a.equipment||{},items=Object.entries(E.items);
+  const optionItems=items.filter(([id])=>(s.stock[id]||0)>0);
+  const equipment=Object.entries(equipped).map(([slot,id])=>esc(slot.toUpperCase())+': '+esc(E.items[id]?.name||id)).join(' · ')||'No issued equipment';
+  const gearChoices=optionItems.map(([id,it])=>'<option value="'+esc(id)+'">'+esc(it.name)+' ('+s.stock[id]+' available)</option>').join('');
+  const healChoices=['bandage','potion','elixir'].filter(id=>(s.stock[id]||0)>0).map(id=>'<option value="'+id+'">'+esc(E.items[id].name)+' ('+s.stock[id]+' left)</option>').join('');
+  detail='<div class="roster-detail-header"><div><small>GUILD ADVENTURER</small><h3>'+esc(a.name)+'</h3><p>'+esc(a.cls)+' · Lv '+a.level+' · '+esc(a.trait||'Steadfast')+'</p></div><span class="contract-rank">XP '+(a.xp||0)+'</span></div>'+
+  '<div class="roster-meters"><div><small>FATIGUE '+Math.round(a.fatigue||0)+'%</small><div class="roster-bar"><span style="width:'+Math.round(a.fatigue||0)+'%"></span></div></div><div><small>INJURY '+(a.injury||0)+' · '+(a.injury>0?'NEEDS TREATMENT':a.fatigue>=70?'NEEDS REST':'READY')+'</small></div></div>'+
+  '<p class="roster-kit">'+equipment+'</p><p class="roster-kit">A tired or injured adventurer cannot start another contract. Unassigned adventurers recover each new in-game day.</p>'+
+  '<div class="roster-actions">'+
+  '<button data-roster-action="assign" data-id="'+esc(a.id)+'" '+(!ready?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(selected?'✓ IN PARTY':'ADD TO PARTY')+'</button>'+
+  '<div class="roster-input-row"><select id="rosterGearSelect" '+(working||!gearChoices?'disabled':'')+'>'+gearChoices+'</select><button data-roster-action="equip" data-id="'+esc(a.id)+'" '+(working||!gearChoices?'disabled':'')+'>ISSUE GEAR</button></div>'+
+  '<div class="roster-input-row"><select id="rosterHealSelect" '+(working||!healChoices?'disabled':'')+'>'+healChoices+'</select><button data-roster-action="treat" data-id="'+esc(a.id)+'" '+(working||!healChoices||(!a.injury&&!a.fatigue)?'disabled':'')+'>TREAT</button></div></div>';
+ }
+ $('rosterBody').innerHTML='<section class="roster-list"><h3>HIRED HEROES · '+c.staff.length+'/'+C.maxHired+'</h3>'+list+'</section><section class="roster-detail"><h3>ADVENTURER DETAILS · PARTY '+chosenHires.size+'/'+C.maxParty+'</h3>'+detail+'</section>';
+}
+function openRoster(){
+ if(!active)return;
+ contractBoardOpen=false;$('contractBoard').classList.add('hidden');
+ rosterOpen=true;$('rosterScreen').classList.remove('hidden');
+ $('rosterNotice').textContent='';
+ renderRoster();
+}
+function closeRoster(shop=false){
+ rosterOpen=false;$('rosterScreen').classList.add('hidden');
+ if(shop&&view!=='shop')closeDungeon(true);
+}
+$('rosterButton').addEventListener('click',openRoster);
+$('boardRoster').addEventListener('click',openRoster);
+$('rosterClose').addEventListener('click',()=>closeRoster(true));
+$('rosterContracts').addEventListener('click',()=>{closeRoster();openContractBoard()});
+$('rosterBody').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-roster-action]');
+ if(!b||b.disabled)return;
+ const id=b.dataset.id,action=b.dataset.rosterAction;
+ if(action==='focus'){rosterFocusId=id;renderRoster();return;}
+ if(action==='assign'){
+  if(chosenHires.has(id))chosenHires.delete(id);
+  else{
+   if(chosenHires.size>=C.maxParty){$('rosterNotice').textContent='Party limit: five adventurers.';return;}
+   const ready=C.readiness(s,id);
+   if(!ready.ok){$('rosterNotice').textContent=ready.reason;return;}
+   chosenHires.add(id);
+  }
+  $('rosterNotice').textContent='Party updated. Open Contracts to send them out.';
+  renderRoster();return;
+ }
+ const itemId=action==='equip'?$('rosterGearSelect')?.value:$('rosterHealSelect')?.value;
+ if(!itemId)return;
+ const result=action==='equip'?C.equip(s,id,itemId):C.treat(s,id,itemId);
+ $('rosterNotice').textContent=result.ok?(action==='equip'?'Equipment issued.':'Recovery treatment applied.'):result.reason;
+ if(result.ok){persist();paintPanel();renderRoster();}
+});
 function openContractBoard(){
  if(!active)return;
+ rosterOpen=false;$('rosterScreen').classList.add('hidden');
  contractBoardOpen=true;
  $('npcCard').classList.add('hidden');
  $('contractBoard').classList.remove('hidden');
@@ -185,7 +253,7 @@ function hud(){
  chip.textContent=empty?empty+' OUT OF STOCK':low?low+' LOW SUPPLIES':'SUPPLIES READY';
  $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
 }
-function paintPanel(){if(!active)return;hud();const labels={stock:'MERCHANT INVENTORY',craft:'WORKBENCH & MATERIALS',upgrade:'EXPAND YOUR SHOP',ledger:'THE BLACK LEDGER'};$('panelTitle').innerHTML=labels[tab]+' <small>◈ '+(tab==='stock'?'LIVE':'MANAGE')+'</small>';
+function paintPanel(){if(!active)return;E.ensureInventory(s);hud();const labels={stock:'MERCHANT INVENTORY',craft:'WORKBENCH & MATERIALS',upgrade:'EXPAND YOUR SHOP',ledger:'THE BLACK LEDGER'};$('panelTitle').innerHTML=labels[tab]+' <small>◈ '+(tab==='stock'?'LIVE':'MANAGE')+'</small>';
 let html='';
 if(tab==='stock'){const order=E.commission(s);html+='<article class="commission"><div class="commission-top"><span>✉ GUILD SUPPLY ORDER</span><b>DAY '+s.day+'</b></div><div class="commission-name">'+order.qty+' × '+esc(E.items[order.id].name)+'</div><div class="commission-bottom"><span>REWARD '+order.reward+'G · +3 REP</span><button class="action-btn" data-action="commission" '+(order.claimed||(s.stock[order.id]||0)<order.qty?'disabled':'')+'>'+(order.claimed?'DELIVERED ✓':'DELIVER')+'</button></div></article>';for(const [id,it] of Object.entries(E.items)){const qty=s.stock[id]||0,limit=s.upgrades.shelf?30:14,disabled=s.gold<it.cost*3||qty+3>limit;html+='<article class="item '+(qty===0?'out-stock':qty<=2?'low-stock':'')+'"><div class="item-top"><span class="item-name"><span class="item-icon">'+it.icon+'</span>'+esc(it.name)+'</span><span class="item-qty">'+qty+'/'+limit+'</span></div><div class="item-meta">'+esc(it.desc)+'</div><div class="item-bot"><div class="price-controls"><button data-action="price" data-id="'+id+'" data-dir="-1">−</button><b>'+s.price[id]+'G</b><button data-action="price" data-id="'+id+'" data-dir="1">+</button></div>'+(id==='forged'?'<small>CRAFT ONLY</small>':'<button data-action="restock" data-id="'+id+'" '+(disabled?'disabled':'')+'>+3 · '+it.cost*3+'G</button>')+'</div></article>'}html+='<div class="panel-tip">Set fair prices, watch stock levels, and supply dungeon-bound adventurers.</div>'}
 if(tab==='craft'){html='<div class="ledger-grid"><div class="ledger-box"><small>SCRAP IRON</small><strong>⚒ '+s.mats.iron+'</strong></div><div class="ledger-box"><small>WILD HERBS</small><strong>❀ '+s.mats.herb+'</strong></div></div><article class="upgrade-card"><strong>✚ Brew Healing Potions</strong><p>Two potions, using wild herbs.</p><div class="recipe-footer"><span>2 herbs + 8G</span><button class="action-btn" data-action="craft" data-id="potion" '+(s.mats.herb<2||s.gold<8?'disabled':'')+'>BREW ×2</button></div></article><article class="upgrade-card"><strong>⚔ Reforge Dungeon Iron</strong><p>One longblade. Requires the Ember Forge.</p><div class="recipe-footer"><span>3 iron + 14G</span><button class="action-btn" data-action="craft" data-id="forged" '+(!s.upgrades.forge||s.mats.iron<3||s.gold<14?'disabled':'')+'>FORGE ×1</button></div></article><div class="panel-tip">Returning adventurers sometimes sell the shop salvage.</div>'}
@@ -209,8 +277,8 @@ if(tab!==lastPanelTab||html!==lastPanelHTML){
  lastPanelHTML=html;lastPanelTab=tab;
 }
 panelDirty=false}
-function spawn(){if(guests.length>=(s.upgrades.shelf?5:4))return;const i=Math.floor(r(0,classes.length));guests.push({id:++guestId,name:names[Math.floor(r(0,names.length))],cls:classes[i],color:colors[i],level:1+Math.floor(r(0,7+s.depth*3)),need:needs[Math.floor(r(0,needs.length))],budget:Math.floor(r(30,160)+s.depth*16),returning:Math.random()<.62,x:-25,y:346+Math.floor(r(-3,17)),stage:0,hold:0,line:''})}
-function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',count=1+Math.floor(r(0,3)),cost=count*(mat==='iron'?8:5);const tx=E.buyLoot(s,mat,count,cost);c.line=tx.ok?'Loot sold':'No deal';if(tx.ok)feedback('⚒ Salvage acquired: '+count+' '+mat);say(tx.ok?c.name+' returned from the dungeon. Bought '+count+' '+mat+' for '+cost+'G.':c.name+' offered salvage, but the treasury was empty.')}else{let tx=E.attemptSale(s,c.need,c.budget,Math.random());c.line=tx.ok?'Thank you!':tx.reason==='out-of-stock'?'Out of stock!':'No sale';if(tx.ok){D.enter(s,c,E.items[c.need].name);feedback('◆ +'+tx.earned+'G • '+c.name+' made a purchase');}say(tx.ok?c.name+' the '+c.cls+' bought '+E.items[c.need].name+' for '+tx.earned+'G.':c.name+' the '+c.cls+' left without a purchase.')}persist()}
+function spawn(){if(guests.length>=(s.upgrades.shelf?5:4))return;const i=Math.floor(r(0,classes.length));guests.push({id:++guestId,name:names[Math.floor(r(0,names.length))],cls:classes[i],color:colors[i],level:1+Math.floor(r(0,7+s.depth*3)),need:E.needsForClass(classes[i]),budget:Math.floor(r(30,160)+s.depth*16),returning:Math.random()<.62,x:-25,y:346+Math.floor(r(-3,17)),stage:0,hold:0,line:''})}
+function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',count=1+Math.floor(r(0,3)),cost=count*(mat==='iron'?8:5);const tx=E.buyLoot(s,mat,count,cost);c.line=tx.ok?'Loot sold':'No deal';if(tx.ok)feedback('⚒ Salvage acquired: '+count+' '+mat);say(tx.ok?c.name+' returned from the dungeon. Bought '+count+' '+mat+' for '+cost+'G.':c.name+' offered salvage, but the treasury was empty.')}else{let tx=E.attemptSale(s,c.need,c.budget,Math.random(),c.cls);c.line=tx.ok?'Thank you!':tx.reason==='out-of-stock'?'Out of stock!':'No sale';if(tx.ok){D.enter(s,c,E.items[c.need].name);feedback('◆ +'+tx.earned+'G • '+c.name+' made a purchase');}say(tx.ok?c.name+' the '+c.cls+' bought '+E.items[c.need].name+' for '+tx.earned+'G.':c.name+' the '+c.cls+' left without a purchase.')}persist()}
 function tick(dt){
  if(!active||paused||visitorOpen)return;
  const dungeonReports=D.advance(s,dt);for(const report of dungeonReports)say('DUNGEON REPORT: '+report);
@@ -218,6 +286,7 @@ function tick(dt){
  if(contractReports.length){
   refreshContractBadge();persist();
   if(contractBoardOpen)renderContractBoard();
+  if(rosterOpen&&contractReports.some(x=>/FALLEN IN ACTION|COMPLETE|FAILED/.test(x)))renderRoster();
   if(view==='contract'&&contractReports.some(r=>r.includes('FALLEN IN ACTION'))){
    $('npcCard').classList.add('hidden');$('partyRoster').classList.add('hidden');
    focusId=null;followId=currentContractRun()?.instance?.dungeon?.adventurers?.[0]?.id||null;
@@ -583,8 +652,8 @@ function frame(now){
   $('pauseOverlay').classList.remove('hidden');
  }
 }requestAnimationFrame(frame);
-function start(){D.ensure(s);C.ensure(s);refreshContractBadge();closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
-function title(){closeContractBoard();closeDungeon();active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
+function start(){E.ensureInventory(s);D.ensure(s);C.ensure(s);refreshContractBadge();closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
+function title(){closeRoster();closeContractBoard();closeDungeon();active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
 function leaveIntro(){const v=$('introVideo');try{v.pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
 const introVideo=$('introVideo');
 // WebView may momentarily render default media chrome while preparing the video.
@@ -645,7 +714,7 @@ if(!new URLSearchParams(location.search).has('skipIntro')&&!new URLSearchParams(
   introVideo.play().catch(()=>{$('introPlay').classList.remove('hidden')});
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();last=performance.now()}});window.addEventListener('pagehide',persist);
-window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(contractBoardOpen){closeContractBoard(true);return true}if(visitorOpen){
+window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){leaveIntro();return true}if(rosterOpen){closeRoster(true);return true}if(contractBoardOpen){closeContractBoard(true);return true}if(visitorOpen){
  const enc=E.visitorEncounters[s.pendingEncounter];
  if(enc)chooseVisitor(enc.choices[enc.choices.length-1].id);
  return true;
