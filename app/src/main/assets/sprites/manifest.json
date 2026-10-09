@@ -642,5 +642,209 @@
       "fps": 12,
       "loop": false
     }
+  },
+  "events": {
+    "chest": {
+      "idle": {
+        "src": "sprites/events/chest/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/chest/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "trap": {
+      "idle": {
+        "src": "sprites/events/trap/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/trap/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "shrine": {
+      "idle": {
+        "src": "sprites/events/shrine/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/shrine/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "hidden": {
+      "idle": {
+        "src": "sprites/events/hidden/idle.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/hidden/activate.png",
+        "frameW": 32,
+        "frameH": 32,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    },
+    "merchant": {
+      "idle": {
+        "src": "sprites/events/merchant/idle.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "activate": {
+        "src": "sprites/events/merchant/activate.png",
+        "frameW": 32,
+        "frameH": 48,
+        "frames": 6,
+        "fps": 12,
+        "loop": false
+      }
+    }
+  },
+  "ui": {
+    "classes": {
+      "knight": {
+        "src": "sprites/ui/classes/knight.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "ranger": {
+        "src": "sprites/ui/classes/ranger.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "mage": {
+        "src": "sprites/ui/classes/mage.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "cleric": {
+        "src": "sprites/ui/classes/cleric.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "rogue": {
+        "src": "sprites/ui/classes/rogue.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "mercenary": {
+        "src": "sprites/ui/classes/mercenary.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      }
+    },
+    "condition": {
+      "ready": {
+        "src": "sprites/ui/condition/ready.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "busy": {
+        "src": "sprites/ui/condition/busy.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "injured": {
+        "src": "sprites/ui/condition/injured.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "exhausted": {
+        "src": "sprites/ui/condition/exhausted.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      }
+    },
+    "rarity": {
+      "uncommon": {
+        "src": "sprites/ui/rarity/uncommon.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "rare": {
+        "src": "sprites/ui/rarity/rare.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      },
+      "epic": {
+        "src": "sprites/ui/rarity/epic.png",
+        "frameW": 16,
+        "frameH": 16,
+        "frames": 1,
+        "fps": 1,
+        "loop": false
+      }
+    }
   }
 }
