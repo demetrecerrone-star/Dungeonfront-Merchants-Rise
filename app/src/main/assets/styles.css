@@ -119,3 +119,10 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 #dungeonBack{background:#513b2aea;margin-right:auto}
 @media(max-width:850px){.dungeon-controls{gap:4px;bottom:26px}.dungeon-controls button{padding:4px 6px;min-width:28px;min-height:27px;font-size:9px}}
 @media(max-height:460px){.dungeon-controls button{min-height:25px;padding:3px 7px}}
+
+/* v0.6: one full-screen chamber, floor navigation and adventurer-follow state. */
+#dungeonFollow{background:#253d3ceb;border-color:#79a7a1}
+#dungeonFollow.tracking{background:#526548;color:#fff5c9;border-color:#d1ba78}
+#dungeonUp,#dungeonDown{border-color:#8f8d69}
+@media(max-width:850px){#dungeonFollow{max-width:92px;overflow:hidden;text-overflow:ellipsis}}
+@media(max-height:400px){.dungeon-controls{bottom:24px;gap:3px}.dungeon-controls button{padding:3px 5px}}
