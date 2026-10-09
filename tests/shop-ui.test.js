@@ -78,3 +78,21 @@ assert.ok(win.Dungeonfront.getState().sales>=0,'merchant state remains readable'
 console.log('PASS rapid shop tab switching under live simulation');
 console.log('PASS non-changing panels retain stable DOM');
 console.log('PASS animation loop remains active');
+
+const sceneSource=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/styles.css'),'utf8');
+assert.ok(code.includes('function drawShopRoom(t)'), 'shop painter exists separately from dungeon camera');
+assert.ok(code.includes('shopStockShelf(328,159,89)'), 'shop displays actual inventory shelves');
+assert.ok(code.includes('drawActor(590,299'), 'merchant has a stable anchor behind the counter');
+assert.ok(code.includes('shopLamp(316,152,t)'), 'shop has warm interior lanterns');
+assert.ok(sceneSource.includes('.scene-wrap.shop-mode + .sidebar'), 'shop-only inventory theme exists');
+assert.ok(sceneSource.includes('min-width:32px'), 'shop prices have touch-sized stepper controls');
+assert.ok(element('scene-wrap').classList.contains('shop-mode'), 'shop uses themed view');
+const stage=element('scene');
+const click={pointerId:11,clientX:145,clientY:267};
+stage.dispatch('pointerdown',click);stage.dispatch('pointerup',click);
+assert.ok(element('scene-wrap').classList.contains('dungeon-mode'), 'portal tap still enters dungeon');
+assert.ok(!element('scene-wrap').classList.contains('shop-mode'), 'shop-only visual theme clears in dungeon');
+assert.equal(win.Dungeonfront.handleBack(),true);
+assert.ok(element('scene-wrap').classList.contains('shop-mode'), 'shop theme returns after extraction back button');
+console.log('PASS fantasy shop layout, themed inventory and preserved portal hitbox');
+
