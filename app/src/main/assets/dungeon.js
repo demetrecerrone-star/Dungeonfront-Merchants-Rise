@@ -56,6 +56,7 @@ function ensure(s){
  if(!Number.isFinite(d.nextId))d.nextId=9;
  if(!Number.isFinite(d.lootFound))d.lootFound=0;
  if(!Number.isFinite(d.bossDefeats))d.bossDefeats=0;
+ if(!Array.isArray(d.raidReturns))d.raidReturns=[];
  if(!Number.isFinite(d.enters))d.enters=0;
  if(!Number.isFinite(d.nextParty))d.nextParty=1;
  d.nextId=Math.max(d.nextId,1+Math.max(0,...d.adventurers.map(a=>Number(a.id)||0)));
@@ -208,6 +209,26 @@ function advance(s,seconds,rng){
  }
  for(const a of d.adventurers){
   a.cooldown=Math.max(0,(a.cooldown||0)-dt);
+  // Winning the raid opens a one-way exit; victors cannot fight the boss again.
+  if(a.status==='extracted')continue;
+  if(a.floor===bossFloor&&a.status!=='retreating'&&a.status!=='recovering'){
+   const boss=d.monsters.find(m=>m.boss&&m.floor===bossFloor);
+   // The shared portal opens for nearby survivors while the boss is down.
+   if(a.bossClearedFloor!==bossFloor&&d.bossDefeats>0&&boss&&boss.hp<=0){
+    a.clearedFloor=bossFloor;a.bossClearedFloor=bossFloor;
+   }
+   if(a.bossClearedFloor===bossFloor){
+    a.status='exiting';
+    a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)));
+    if(a.x>=worldWidth-45){
+     a.status='extracted';
+     d.raidReturns.unshift({name:a.name,cls:a.cls,level:a.level});
+     d.raidReturns=d.raidReturns.slice(0,30);
+     reports.push(a.name+' cleared the raid and exited through the portal.');
+    }
+    continue;
+   }
+  }
   if(a.status==='recovering'){
    a.recover-=dt;
    if(a.recover<=0){a.recover=0;a.status='exploring';a.hp=a.maxHp;a.floor=1;a.x=62;a.clearedFloor=0;a.bossClearedFloor=0}
@@ -251,11 +272,20 @@ function advance(s,seconds,rng){
      a.floor++;a.x=65;a.clearedFloor=0;a.bossClearedFloor=0;
      a.hp=Math.min(a.maxHp,a.hp+Math.floor(a.maxHp*.22));
      reports.push(a.name+' reached floor '+a.floor+' of the Hollow Descent.');
+    }else if(a.floor===bossFloor){
+     // Handle an existing save on the threshold after a boss victory.
+     a.status='extracted';
+     d.raidReturns.unshift({name:a.name,cls:a.cls,level:a.level});
+     d.raidReturns=d.raidReturns.slice(0,30);
+     reports.push(a.name+' cleared the raid and exited through the portal.');
     }else{a.status='recovering';a.recover=12;reports.push(a.name+' completed a deep dungeon expedition and is returning.')}
    }
   }
   a.swing=Math.max(0,(a.swing||0)-dt);
  }
+ // Normal dungeon heroes leave after extraction; private contract heroes
+ // stay available to the contract settlement and casualty systems.
+ if(!s.contractExpedition)d.adventurers=d.adventurers.filter(a=>a.status!=='extracted');
  return reports.slice(0,4);
 }
 function snapshot(s){return ensure(s)}
