@@ -56,6 +56,8 @@ function ensure(s){
  if(!Number.isFinite(d.nextId))d.nextId=9;
  if(!Number.isFinite(d.lootFound))d.lootFound=0;
  if(!Number.isFinite(d.bossDefeats))d.bossDefeats=0;
+ if(!Number.isFinite(d.relicsFound))d.relicsFound=0;
+ if(!s.loot||typeof s.loot!=='object')s.loot={};
  if(!Array.isArray(d.raidReturns))d.raidReturns=[];
  if(!Number.isFinite(d.enters))d.enters=0;
  if(!Number.isFinite(d.nextParty))d.nextParty=1;
@@ -187,6 +189,13 @@ function award(s,d,a,m,random,reports){
  }
  const mat=Number(random())<.5?'iron':'herb';
  const qty=m.boss?6:1;
+ // Ancient relics are a secondary, rarer source of merchant profit.
+ if(m.boss||Number(random())<.26){
+  const found=m.boss?3:1;
+  d.relicsFound+=found;
+  s.loot.relic=(s.loot.relic||0)+found;
+  reports.push(a.name+' recovered '+found+' dungeon relic'+(found===1?'':'s')+'.');
+ }
  if(s.mats&&Number.isFinite(s.mats[mat])){
   s.mats[mat]+=qty;d.lootFound+=qty;
   reports.push(a.name+' defeated '+monsterKinds[m.kind].name+' on floor '+a.floor+' (+'+qty+' '+mat+').');
@@ -209,25 +218,25 @@ function advance(s,seconds,rng){
  }
  for(const a of d.adventurers){
   a.cooldown=Math.max(0,(a.cooldown||0)-dt);
-  // Winning the raid opens a one-way exit; victors cannot fight the boss again.
+  // All floors have an exit portal at their START (x=65).
+  // Returning parties move toward it without starting new fights.
   if(a.status==='extracted')continue;
-  if(a.floor===bossFloor&&a.status!=='retreating'&&a.status!=='recovering'){
+  if(a.floor===bossFloor&&a.status!=='recovering'&&a.status!=='retreating'){
    const boss=d.monsters.find(m=>m.boss&&m.floor===bossFloor);
-   // The shared portal opens for nearby survivors while the boss is down.
    if(a.bossClearedFloor!==bossFloor&&d.bossDefeats>0&&boss&&boss.hp<=0){
     a.clearedFloor=bossFloor;a.bossClearedFloor=bossFloor;
    }
-   if(a.bossClearedFloor===bossFloor){
-    a.status='exiting';
-    a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)));
-    if(a.x>=worldWidth-45){
-     a.status='extracted';
-     d.raidReturns.unshift({name:a.name,cls:a.cls,level:a.level});
-     d.raidReturns=d.raidReturns.slice(0,30);
-     reports.push(a.name+' cleared the raid and exited through the portal.');
-    }
-    continue;
+   if(a.bossClearedFloor===bossFloor)a.status='returning';
+  }
+  if(a.status==='returning'){
+   a.x=Math.max(65,a.x-dt*(170+Math.min(60,Number(a.level||1)*2)));
+   if(a.x<=65){
+    a.status='extracted';
+    d.raidReturns.unshift({name:a.name,cls:a.cls,level:a.level,floor:a.floor});
+    d.raidReturns=d.raidReturns.slice(0,30);
+    reports.push(a.name+' returned through the floor '+a.floor+' entrance portal.');
    }
+   continue;
   }
   if(a.status==='recovering'){
    a.recover-=dt;
@@ -273,11 +282,9 @@ function advance(s,seconds,rng){
      a.hp=Math.min(a.maxHp,a.hp+Math.floor(a.maxHp*.22));
      reports.push(a.name+' reached floor '+a.floor+' of the Hollow Descent.');
     }else if(a.floor===bossFloor){
-     // Handle an existing save on the threshold after a boss victory.
-     a.status='extracted';
-     d.raidReturns.unshift({name:a.name,cls:a.cls,level:a.level});
-     d.raidReturns=d.raidReturns.slice(0,30);
-     reports.push(a.name+' cleared the raid and exited through the portal.');
+     // The raid floor has NO forward stairwell until more floors are added.
+     // Its victorious raiders exit via the portal at the entrance.
+     a.status='returning';
     }else{a.status='recovering';a.recover=12;reports.push(a.name+' completed a deep dungeon expedition and is returning.')}
    }
   }
