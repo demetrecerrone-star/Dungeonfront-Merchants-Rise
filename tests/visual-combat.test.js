@@ -12,7 +12,7 @@ function isolate(s,hero,floor=1){
   a.status='recovering';a.recover=999;
  }
  for(const m of d.monsters){m.hp=0;m.respawn=999;m.flash=0;m.attackFX=0;}
- const target=d.monsters.find(m=>m.floor===floor&&(!m.boss||floor===D.bossFloor));
+ const target=floor===D.bossFloor?d.monsters.find(m=>m.boss):d.monsters.find(m=>m.floor===floor&&!m.boss);
  target.hp=target.maxHp;target.respawn=0;target.cooldown=8;
  hero.floor=floor;hero.x=target.x;hero.cooldown=0;
  return {d,target};
