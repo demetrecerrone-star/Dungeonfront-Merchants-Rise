@@ -300,3 +300,123 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 .item-top .rarity-icon{width:17px;height:17px;margin-right:6px}
 @media(max-width:850px){.contract-entry .guild-status{font-size:8px}.class-icon{width:16px;height:16px}.roster-entry .guild-status{font-size:7px}.contract-type{font-size:8px}}
 @media(max-height:420px){.contract-return-track{height:6px;margin:4px 0}.guild-status{padding:2px 4px}.contract-entry .guild-identity{margin-bottom:3px}}
+
+/* Shop layout pass A: deliberately scoped to the shop view, leaving the
+   dungeon camera/controls and full-screen contract/roster interfaces intact. */
+.scene-wrap.shop-mode{
+  border:2px solid #866640;
+  background:#111c1b;
+  box-shadow:0 0 0 1px #12140f,inset 0 0 0 1px #ad8552,0 7px 18px #0008;
+}
+.scene-wrap.shop-mode .scene-header{
+  border-bottom:2px solid #88633e;
+  min-height:30px;
+  padding-inline:11px;
+  background:linear-gradient(180deg,#3c3427,#252c28);
+  color:#f4d7a1;
+  font-size:10px;
+  letter-spacing:.65px;
+}
+.scene-wrap.shop-mode #liveStatus{color:#ead1a3}
+.scene-wrap.shop-mode .scene-footer{
+  border-top:2px solid #83613c;
+  background:linear-gradient(180deg,#343329,#1b2927);
+  color:#e0c795;
+}
+.scene-wrap.shop-mode .day-track{height:5px;background:#30271b}
+.scene-wrap.shop-mode #dayProgressFill{background:linear-gradient(90deg,#6a9d83,#e3bd77)}
+.scene-wrap.shop-mode + .sidebar{
+  border:2px solid #896842;
+  background:linear-gradient(160deg,#34342b,#182421 76%);
+  box-shadow:inset 0 0 0 1px #a47a48,0 6px 18px #0008;
+}
+.scene-wrap.shop-mode + .sidebar .tabs{
+  flex-shrink:0;height:45px;
+  border-bottom:2px solid #876341;
+  background:#231e1a;
+}
+.scene-wrap.shop-mode + .sidebar .tabs button{
+  min-width:0;padding:4px 2px;
+  border-right:1px solid #5e4d36;
+  color:#e1d0ab;
+  font:bold clamp(9px,1.1vw,12px) Arial,sans-serif;
+  letter-spacing:.2px;
+  background:linear-gradient(#322a22,#231f1c);
+}
+.scene-wrap.shop-mode + .sidebar .tabs button.active{
+  color:#fff0c1;
+  background:linear-gradient(#735134,#483421);
+  box-shadow:inset 0 -4px #d9a55e;
+}
+.scene-wrap.shop-mode + .sidebar .tabs button:focus-visible{outline:2px solid #ffdf96;outline-offset:-2px}
+.scene-wrap.shop-mode + .sidebar .tab-symbol{color:#efd39a}
+.scene-wrap.shop-mode + .sidebar .panel-title{
+  min-height:36px;
+  padding:5px 10px;
+  border-bottom:1px solid #8d6d45;
+  background:linear-gradient(#42362a,#2c2d25);
+  font:bold 11px Arial,sans-serif;
+  letter-spacing:.9px;
+  color:#f6deae;
+}
+.scene-wrap.shop-mode + .sidebar .panel-title small{
+  padding:3px 6px;border:1px solid #668a65;background:#203d32;
+  color:#d3e5ae;white-space:nowrap;letter-spacing:.2px;
+}
+.scene-wrap.shop-mode + .sidebar .panel-scroll{
+  min-height:0;padding:10px;
+  background:repeating-linear-gradient(0deg,#171e1b 0 20px,#19211d 20px 21px);
+}
+.scene-wrap.shop-mode + .sidebar .item,
+.scene-wrap.shop-mode + .sidebar .upgrade-card,
+.scene-wrap.shop-mode + .sidebar .ledger-box{
+  background:linear-gradient(110deg,#39352b,#242d29 82%);
+  border:1px solid #786243;border-left:3px solid #bc8952;
+  color:#f0e0c0;
+  box-shadow:inset 0 1px #ffffff09,0 2px 4px #0005;
+}
+.scene-wrap.shop-mode + .sidebar .item-name,
+.scene-wrap.shop-mode + .sidebar .upgrade-card strong{color:#f6e5c0}
+.scene-wrap.shop-mode + .sidebar .item-meta,
+.scene-wrap.shop-mode + .sidebar .upgrade-card p,
+.scene-wrap.shop-mode + .sidebar .hint{color:#d2c8b1}
+.scene-wrap.shop-mode + .sidebar .item-qty{color:#ffdaa0;white-space:nowrap}
+.scene-wrap.shop-mode + .sidebar .item-bot button,
+.scene-wrap.shop-mode + .sidebar .action-btn{
+  min-height:34px;
+  background:linear-gradient(#8b6439,#604025);
+  border-color:#d1a46d;
+  color:#fff0cc;
+  font-weight:800;
+  touch-action:manipulation;
+}
+.scene-wrap.shop-mode + .sidebar .item-bot button:active:not(:disabled),
+.scene-wrap.shop-mode + .sidebar .action-btn:active:not(:disabled){background:#a37a43}
+.scene-wrap.shop-mode + .sidebar .price-controls button{
+  min-width:32px;background:#323e3b;border-color:#99805e;
+  color:#fce9bd;font-size:15px;
+}
+.scene-wrap.shop-mode + .sidebar .commission{
+  border:2px solid #bc8a4d;
+  background:linear-gradient(135deg,#62482d,#302b21);
+}
+.scene-wrap.shop-mode + .sidebar .commission-name{color:#fff1c9}
+.scene-wrap.shop-mode + .sidebar .item.out-stock{border-left-color:#d57965}
+.scene-wrap.shop-mode + .sidebar .item.low-stock{border-left-color:#e2b06d}
+.scene-wrap.shop-mode + .sidebar .panel-tip{background:#26332b;border-color:#9e8053;color:#d6cdb4}
+@media(max-width:850px){
+  .scene-wrap.shop-mode .scene-header{min-height:24px;font-size:8px;letter-spacing:.1px;padding-inline:5px}
+  .scene-wrap.shop-mode + .sidebar .tabs{height:35px}
+  .scene-wrap.shop-mode + .sidebar .tabs button{font-size:9px}
+  .scene-wrap.shop-mode + .sidebar .panel-scroll{padding:6px}
+  .scene-wrap.shop-mode + .sidebar .panel-title{min-height:28px;font-size:9px;letter-spacing:.3px;padding:3px 6px}
+  .scene-wrap.shop-mode + .sidebar .item-bot button{min-height:30px}
+}
+@media(max-height:460px){
+  .scene-wrap.shop-mode + .sidebar .tabs{height:31px}
+  .scene-wrap.shop-mode + .sidebar .panel-title{min-height:26px}
+  .scene-wrap.shop-mode + .sidebar .item-bot button,
+  .scene-wrap.shop-mode + .sidebar .action-btn{min-height:29px;padding:4px 6px}
+  .scene-wrap.shop-mode + .sidebar .panel-scroll{padding:5px}
+  .scene-wrap.shop-mode .scene-header{min-height:21px}
+}
