@@ -18,7 +18,7 @@ for(const name of names){
   assert.ok(svg.includes("width=\""+(128*count)+"\" height=\"192\""));
   const frameStart=(svg.match(/<g transform='translate\(\d+ 0\)'/g)||[]).length;
   assert.equal(frameStart,count,name+' '+action+' frame count');
-  assert.ok(svg.includes("url(#cape)")&&svg.includes("url(#metal)"),'detailed material shading');
+  assert.ok(svg.includes('id="metal"')&&svg.includes('id="cape"')&&svg.includes("url(#cape)"),'class materials have metal and cloak shading definitions');
   assert.ok(svg.includes("translate(64 190)"),'same feet-anchor origin');
   assert.ok(svg.includes(source.characters[name].glow),'class unique signature FX color');
   assert.notEqual(source.characterFrame(name,action,0),source.characterFrame(name,action,count-1),
