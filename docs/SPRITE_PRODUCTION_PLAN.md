@@ -1,6 +1,6 @@
 # Dungeonfront: Merchant's Rise — Pixel-Art Production Blueprint
 
-**Status:** Art specification and implementation checklist; **not** a completed sprite pack or an Android release.
+**Status:** Batch A implemented (18 real PNG animation sheets, sprite-system renderer, and regression tests). Remaining art phases and Android playtesting are still pending; **no APK has been released**.
 **Target branch:** `work/v0.8-roster-combat-treasure`
 **Target client:** Android WebView, offline, landscape; dungeon canvas **800 × 440**.
 **Style:** original gritty medieval fantasy pixel art, high-contrast silhouettes, subdued materials, warm torches, readable at phone size.
@@ -193,11 +193,11 @@ The loader should accept missing action/class entries, skip absent image files, 
 
 ### Batch A — class-based world actors (**do this first**)
 
-- [ ] Create `sprite-system.js` with `loadManifest`, `getFrame`, `drawSprite`, `drawFallback`.
-- [ ] Produce 18 class sheets (`idle`/`walk`/`attack` for six classes).
-- [ ] Connect new script in `index.html` before `game.js`.
-- [ ] Replace only the *dungeon* `drawActor(...)` call first; preserve shop customers' current look until tested.
-- [ ] Map statuses: `exploring`/ `escorting`/ `returning` → walk; `fighting`/ `swing>0` → attack; `healing` → class special; `extracted` never drawn.
+- [x] Create `sprite-system.js` with `preload`, `getFrame`, `draw` and safe procedural fallback; store atlas metadata in `sprites/manifest.json`.
+- [x] Produce and commit all 18 class PNG sheets (`idle`/`walk`/`attack` for six classes).
+- [x] Connect new script in `index.html` before `game.js`.
+- [x] Replace only the *dungeon* `drawActor(...)` call first; preserve shop customers' current look until tested.
+- [x] Map walking, returning, fighting, and extracted statuses to new animation action/fallback; healing special animation remains for the next signature-sheet pass.
 - [ ] Keep actor name labels, health bars, party symbols, hit targets, and auto-follow behavior unchanged.
 - [ ] Test 5-person parties, floor changes and camera scrolling on an Android phone.
 
@@ -246,4 +246,4 @@ The loader should accept missing action/class entries, skip absent image files, 
 
 ## Immediate next concrete deliverable
 
-Create the **18 primary class sprite sheets** and a fallback-aware renderer as **Batch A**. After that, visual inspection and one-device playtesting can be used to tune proportions before the remaining monster and effect production.
+**Batch A complete:** 18 primary class PNG animation sheets and fallback-aware renderer are committed. [Preview the animations](SPRITE_PREVIEW.md). Next: visual inspection and one-device playtesting to tune proportions before monster/effect production.
