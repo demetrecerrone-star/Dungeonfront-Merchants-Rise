@@ -1,4 +1,4 @@
-# Dungeonfront: Merchant's Rise — Android v0.6.2
+# Dungeonfront: Merchant's Rise — Android v0.7.0
 
 A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
 
@@ -9,6 +9,7 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 - Procedurally drawn pixel-art shop with improved scenery and class-specific walking adventurer animations; fully offline with local saves.
 - Daily guild supply orders: fulfill requests from existing stock for extra gold and reputation. Existing saves remain compatible.
 - Dynamic, streamlined HUD with live stock warnings, a market-day progress bar, cleaner panels, tab icons, and transaction feedback.
+- A parchment C button opens a dedicated Contract Board with rotating work orders, applicants, a hired roster and saved expeditions. Select one to five hired adventurers, start a job and tap WATCH to enter its own automatically followed dungeon instance; normal dungeon adventurers and combat never mix with contracted parties. Claim gold and recovered salvage after success, with a completion report.
 - Four special visitor encounters (herbalist, wounded ranger, scrap trader, pilgrim) with resource and reputation decisions; automatic save and one encounter per game day.
 - Stability improvements: rate-limited canvas drawing and batched shop-panel refreshes prevent unnecessary sidebar DOM replacement during tab navigation.
 - While watching the dungeon, shop transactions continue silently and roadside visitor events wait until the player returns to the shop. No commerce popups cover the dungeon camera.
@@ -17,7 +18,7 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 - Mixed solo adventurers and persistent named parties explore eight floors with multiple roaming enemies. Floor eight features the Abyssal Sovereign raid boss with 480 HP, raid-victory rewards and a respawn timer. Hero victories grant XP, level-ups and crafting materials. Older dungeon saves migrate forward without clearing merchant progress.
 - Landscape orientation and Android system navigation safe areas.
 - Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
-- Version **0.6.2** (Android versionCode **11**).
+- Version **0.7.0** (Android versionCode **12**).
 
 ## Build APK
 
