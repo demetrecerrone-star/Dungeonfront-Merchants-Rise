@@ -1,0 +1,29 @@
+name: Verify dungeon and contract refinements
+on:
+  push:
+    branches:
+      - 'work/contract-refinements-v0.7.1'
+    paths:
+      - 'app/src/main/assets/**'
+      - 'tests/**'
+      - '.github/workflows/verify-refinements.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run JavaScript regression suites — no Android APK build
+        run: |
+          node tests/economy.test.js
+          node tests/dungeon.test.js
+          node tests/dungeon-ui.test.js
+          node tests/shop-ui.test.js
+          node tests/raid.test.js
+          node tests/encounters.test.js
+          node tests/contracts.test.js
