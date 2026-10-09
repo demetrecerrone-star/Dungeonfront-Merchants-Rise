@@ -35,6 +35,7 @@
         <div class="stat"><small>DAY</small><strong id="dayValue">1</strong></div>
         <div class="stat"><small>DUNGEON</small><strong id="depthValue">FLOOR 1</strong></div>
       </div>
+      <button id="rosterButton" class="roster-shortcut" title="Manage hired adventurers" aria-label="Manage hired adventurers">⚔</button>
       <button id="contractsButton" class="contract-letter" title="Open the Contract Board" aria-label="Open the Contract Board"><span>C</span><span id="contractAlert" class="contract-alert hidden" aria-hidden="true"></span></button>
       <button id="pauseBtn" class="icon-button" title="Pause game">Ⅱ</button>
     </header>
@@ -69,7 +70,15 @@
       </aside>
     </section>
     <footer class="ticker"><span class="ticker-label">FIELD REPORT</span><span id="tickerText">The torches are lit. The dungeon is hungry.</span><button id="saveBtn">SAVE ◇</button></footer>
-    <section id="contractBoard" class="contract-board hidden" aria-label="Guild Contract Board" role="dialog" aria-modal="true"><div class="contract-board-top"><div><small>✥ THE HOLLOW DESCENT GUILD ✥</small><h2>CONTRACT BOARD</h2><p>Hire adventurers, post expeditions and watch their progress.</p></div><div class="contract-board-nav"><button id="contractShop" type="button">⌂ SHOP</button><button id="contractClose" type="button">✕ CLOSE</button></div></div><div id="contractNotice" class="contract-notice" role="status"></div><div id="contractBody" class="contract-body"></div></section>
+    <section id="contractBoard" class="contract-board hidden" aria-label="Guild Contract Board" role="dialog" aria-modal="true"><div class="contract-board-top"><div><small>✥ THE HOLLOW DESCENT GUILD ✥</small><h2>CONTRACT BOARD</h2><p>Hire adventurers, post expeditions and watch their progress.</p></div><div class="contract-board-nav"><button id="boardRoster" type="button">⚔ ROSTER</button><button id="contractShop" type="button">⌂ SHOP</button><button id="contractClose" type="button">✕ CLOSE</button></div></div><div id="contractNotice" class="contract-notice" role="status"></div><div id="contractBody" class="contract-body"></div></section>
+    <section id="rosterScreen" class="roster-screen hidden" aria-label="Hired Adventurer Roster" role="dialog" aria-modal="true">
+      <header class="roster-heading">
+        <div><small>✥ GUILD EXPEDITION MANAGEMENT ✥</small><h2>ADVENTURER ROSTER</h2><p>Form parties, equip heroes and treat wounds before contracts.</p></div>
+        <div class="contract-board-nav"><button id="rosterContracts" type="button">✉ CONTRACTS</button><button id="rosterClose" type="button">⌂ SHOP</button></div>
+      </header>
+      <div id="rosterNotice" class="contract-notice" role="status"></div>
+      <div id="rosterBody" class="roster-body"></div>
+    </section>
     <div id="visitorOverlay" class="visitor-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="visitorTitle"><div class="visitor-card"><div class="visitor-heading"><span id="visitorIcon" class="visitor-icon">✦</span><div><small>SPECIAL VISITOR • ROADSIDE ENCOUNTER</small><h2 id="visitorTitle">A traveler approaches</h2><span id="visitorWho"></span></div></div><p id="visitorStory"></p><div id="visitorChoices" class="visitor-choices"></div><div id="visitorHint" class="visitor-hint" role="status"></div></div></div>
     <div id="pauseOverlay" class="pause-overlay hidden"><div><h2>THE SHOP IS CLOSED</h2><p>The dungeon waits for no one.</p><button id="resumeBtn" class="large-btn">RESUME TRADE</button><button id="returnTitle" class="secondary-btn">TITLE SCREEN</button></div></div>
   </main>
