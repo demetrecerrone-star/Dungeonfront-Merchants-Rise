@@ -179,3 +179,36 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
  .dungeon-floor-menu{bottom:53px;max-height:calc(100% - 63px)}
  .dungeon-floor-menu button{min-height:30px;padding:3px 5px}
 }
+
+/* v0.7: medieval parchment contracts letter and independent guild screen. */
+.contract-letter{width:37px;height:43px;flex-shrink:0;display:grid;place-items:center;border:2px solid #775632;border-radius:4px;background:linear-gradient(140deg,#f1dcaa,#b68f51);color:#4b311f;box-shadow:inset 0 0 0 2px #eccea0,1px 2px 6px #000a;transform:rotate(-2deg);position:relative}
+.contract-letter::before,.contract-letter::after{content:'❧';position:absolute;font:9px Georgia;opacity:.6;left:2px;top:2px}
+.contract-letter::after{top:auto;left:auto;right:2px;bottom:2px;transform:rotate(180deg)}
+.contract-letter span{font:bold 27px Georgia,serif;text-shadow:0 1px #f5e7c0}
+.contract-letter:active{transform:scale(.95) rotate(1deg)}
+.contract-board{position:absolute;inset:0;z-index:16;padding:10px 14px;display:flex;flex-direction:column;gap:7px;background:radial-gradient(circle at 50% 15%,#374139,#0b1518 75%);border:3px solid #80653b;box-shadow:inset 0 0 0 4px #111e20;overflow:hidden}
+.contract-board-top{display:flex;justify-content:space-between;gap:15px;align-items:center;flex-shrink:0;border-bottom:1px solid #806a48;padding-bottom:5px}
+.contract-board-top small{font:8px Arial,sans-serif;color:#c0a77e;letter-spacing:1px}
+.contract-board-top h2{margin:2px 0;font:25px Georgia;color:#f2d59c;letter-spacing:2px}
+.contract-board-top p{margin:0;color:#b2c0b5;font:11px Arial,sans-serif}
+.contract-board-nav{display:flex;gap:6px}
+.contract-board button{border:1px solid #977b55;background:#3f3329;color:#f4d9a4;border-radius:3px;font:700 10px Arial,sans-serif;padding:7px 9px;min-height:28px}
+.contract-board button:active{background:#6a5839}
+.contract-board button:disabled{opacity:.45}
+.contract-board button.selected{background:#476154;border-color:#99c7a6;color:#fff1c7}
+.contract-notice{flex-shrink:0;min-height:13px;font:10px Arial,sans-serif;color:#eac58e}
+.contract-body{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:9px;overflow:auto;min-height:0;flex:1}
+.contract-column{background:#0e191ac9;border:1px solid #594c35;padding:8px;overflow-y:auto;min-height:0}
+.contract-column h3{position:sticky;top:-8px;margin:-8px -8px 7px;padding:9px 8px 7px;background:#2e332b;color:#e8c587;font:700 12px Georgia;z-index:1;border-bottom:1px solid #846b42}
+.contract-entry{margin:5px 0;padding:8px;background:linear-gradient(120deg,#30342d,#202928);border:1px solid #61563c;border-radius:3px}
+.contract-entry strong{color:#ebd4ac;font:700 12px Georgia;display:block}
+.contract-entry p{font:10px/1.35 Arial,sans-serif;color:#b9c3b5;margin:5px 0}
+.contract-entry small{font:9px Arial,sans-serif;color:#c5a476}
+.contract-entry-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.contract-entry-actions button{padding:5px 7px;min-height:24px}
+.contract-rank{display:inline-block;padding:2px 6px;font:700 10px Arial,sans-serif;color:#f2d399;background:#675032;border:1px solid #9d7847}
+.contract-separator{border-top:1px solid #584d3a;margin:9px 0}
+.contract-report{position:absolute;z-index:8;left:50%;top:49px;transform:translateX(-50%);width:min(410px,94%);padding:10px;text-align:center;background:#121d1df2;border:1px solid #d1a66d;color:#ebd9b0;box-shadow:0 8px 30px #000b;font:12px/1.4 Georgia;pointer-events:auto}
+.contract-report button{background:#695133;color:#fff1c8;border:1px solid #d4b378;padding:6px 9px;margin-top:5px;font:700 10px Arial,sans-serif}
+@media(max-width:700px){.contract-body{grid-template-columns:1fr 1fr}.contract-column:last-child{grid-column:span 2}.contract-letter{width:29px;height:34px}.contract-letter span{font-size:23px}.contract-board{padding:7px}.contract-board-top h2{font-size:19px}}
+@media(max-height:440px){.contract-board-top h2{font-size:18px}.contract-board-top p{font-size:9px}.contract-entry{padding:5px}.contract-column h3{padding:6px}.contract-report{top:44px;padding:6px}}
