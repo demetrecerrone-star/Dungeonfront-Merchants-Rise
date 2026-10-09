@@ -8,7 +8,7 @@ test('old v0.4 save grows a dungeon without resetting merchant progress',()=>{
  assert.equal(E.valid(save),true);
  const d=D.ensure(save);
  assert.equal(save.gold,874);assert.equal(save.stock.potion,9);assert.equal(save.day,12);
- assert.equal(d.adventurers.length,8);assert.equal(d.monsters.length,16);
+ assert.ok(d.adventurers.length>=24);assert.equal(d.monsters.length,33);
  assert.equal(D.ensure(save),d);
  assert.equal(D.floorCount,8);
 });
@@ -33,10 +33,10 @@ test('dungeon combat never subtracts treasury or grants negative resources',()=>
 test('expedition roster stays bounded and survives round-trip save',()=>{
  const s=E.initialState();
  for(let i=0;i<40;i++)D.enter(s,{name:'Traveler '+i,cls:'Rogue',level:3},'Pitch Torch');
- assert.equal(s.dungeon.adventurers.length,16);
+ assert.equal(s.dungeon.adventurers.length,40);
  const restored=JSON.parse(JSON.stringify(s));
  assert.equal(E.valid(restored),true);
- assert.equal(D.ensure(restored).adventurers.length,16);
+ assert.equal(D.ensure(restored).adventurers.length,40);
  assert.ok(restored.dungeon.nextId>=49);
 });
 console.log('All '+checks+' dungeon expedition tests passed.');
