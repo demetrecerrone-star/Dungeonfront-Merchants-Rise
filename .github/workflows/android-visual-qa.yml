@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'work/v0.8-roster-combat-treasure'
+      - 'work/v0.9-shop-layout'
     paths:
       - 'app/src/main/**'
       - 'app/src/androidTest/**'
