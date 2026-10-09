@@ -157,7 +157,7 @@ public final class VisualSmokeTest {
         assertEquals("true",eval("Boolean(window.__qaFrames>4)"));
         screenshot("dungeon");
     }
-    @Test public void modernKnightPreviewLoadsAndFallsBackSafelyInShopAndDungeon() {
+    @Test public void sixClassPreviewLoadsAndFallsBackSafelyInShopAndDungeon() {
         assertEquals("true",eval("Boolean(window.DFModernSprites && window.DFModernSprites.isEnabled()===false)"));
         assertEquals("true",eval("Boolean(window.DFModernSprites.status().loaded===0 && window.DFSprites.status().ready>=18)"));
         assertEquals("true",eval("Boolean(window.DFModernKnightArt && window.DFModernKnightArt.counts.attack===12)"));
@@ -180,7 +180,20 @@ public final class VisualSmokeTest {
         assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:-1})"));
         assertEquals("1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:1})"));
         assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:0,status:'retreating'},2))"));
-        assertEquals("false",eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Mage',hp:100,status:'waiting'},2)"));
+        // Pre-rendered PNGs for each of the five additional approved prototypes.
+        assertEquals("true",eval("Boolean(window.DFModernSprites.approvedClasses.size===6)"));
+        assertEquals("true",eval("(function(){for(const cls of ['Ranger','Mage','Cleric','Rogue','Mercenary'])window.DFModernSprites.preloadClass(cls,['idle']);return true})()"));
+        waitFor("Boolean(window.DFModernSprites.status().loaded>=8)",16000);
+        for(String cls : new String[]{"Ranger","Mage","Cleric","Rogue","Mercenary"}){
+            assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'"+cls+"',hp:100,status:'waiting'},2))"));
+        }
+        assertEquals("true",eval("(function(){window.DFModernSprites.preloadClass('Ranger',['walk','attack']);return true})()"));
+        waitFor("Boolean(window.DFModernSprites.status().loaded>=10)",16000);
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Ranger',hp:100,status:'fighting',swing:.22},2))"));
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Ranger',hp:100,status:'walking',facing:-1},2))"));
+        assertEquals("-1",eval("window.DFModernSprites.combatFacing({cls:'Ranger',hp:100,floor:3,x:200,status:'fighting'},[{floor:3,hp:22,x:110}])"));
+        assertEquals("1",eval("window.DFModernSprites.combatFacing({cls:'Mage',hp:100,floor:3,x:200,status:'fighting'},[{floor:3,hp:22,x:310}])"));
+        assertEquals("false",eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'NotAClass',hp:100,status:'waiting'},2)"));
         screenshot("knight-v2-loaded");
 
         // Both public and contracted adventurers share the game.js dungeon draw.
