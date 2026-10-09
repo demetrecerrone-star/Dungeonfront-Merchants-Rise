@@ -19,7 +19,7 @@ function listings(day,depth){
   {code:'salvage',title:'Clear the Gate Crypt',rank:'E',kind:'defeat',target:2,reward:95,rep:1,minParty:1,limit:360,desc:'Defeat 2 monsters and return through the entrance portal.'},
   {code:'patrol',title:'Hollow Descent Patrol',rank:'D',kind:'defeat',target:4,reward:155,rep:2,minParty:1,limit:480,desc:'Exterminate 4 dungeon monsters, then extract.'},
   {code:'gather',title:'Gather Crypt Salvage',rank:'D',kind:'gather',target:3,reward:125,rep:1,minParty:1,limit:480,desc:'Collect 3 salvage materials and return safely.'},
-  {code:'escort',title:'Escort the Guild Courier',rank:'C',kind:'escort',target:2,reward:245,rep:3,minParty:2,limit:750,desc:'Protect a guild courier until Floor 2, then bring them home.'},
+  {code:'escort',title:'Escort the Guild Courier',rank:'C',kind:'escort',target:2,reward:245,rep:3,minParty:2,maxParty:4,limit:750,desc:'Protect a guild courier until Floor 2, then bring them home.'},
   {code:'treasure',title:'Recover Ancient Relics',rank:'C',kind:'treasure',target:1,reward:195,rep:2,minParty:2,limit:750,desc:'Discover a rare relic and escort it back to the portal.'}
  ];
  if(rank>=1)defs.push({code:'deep',title:'Deep Warrens Bounty',rank:'B',kind:'defeat',target:7,reward:350,rep:4,minParty:3,limit:1250,desc:'Defeat 7 monsters and extract alive.'});
@@ -103,9 +103,9 @@ function equip(s,id,itemId){
 function start(s,offerId,memberIds){
  const c=ensure(s),offer=c.offers.find(x=>x.id===offerId);
  if(!offer)return{ok:false,reason:'That contract is no longer posted.'};
- const minParty=offer.minParty||1;
- if(!Array.isArray(memberIds)||memberIds.length<minParty||memberIds.length>maxParty||new Set(memberIds).size!==memberIds.length)
-  return{ok:false,reason:'This '+offer.rank+'-rank contract needs '+minParty+'–5 unique hired adventurers.'};
+ const minParty=offer.minParty||1,cap=Math.min(maxParty,offer.maxParty||maxParty);
+ if(!Array.isArray(memberIds)||memberIds.length<minParty||memberIds.length>cap||new Set(memberIds).size!==memberIds.length)
+  return{ok:false,reason:'This '+offer.rank+'-rank contract needs '+minParty+'–'+cap+' unique hired adventurers.'};
  if(c.runs.filter(x=>x.status==='active'||x.status==='returning').length>=maxActive)
   return{ok:false,reason:'Finish an active expedition first (maximum three).'};
  const busy=busyIds(c),members=memberIds.map(id=>c.staff.find(a=>a.id===id));
@@ -194,6 +194,8 @@ function advance(s,dt){
   const crew=survivors.filter(a=>!a.escort);
   if(!crew.length){
    run.status='failed';run.outcome='failed';
+   // A surviving courier is returned to the guild off-screen after a full wipe.
+   for(const a of survivors)if(a.escort)a.status='extracted';
    run.report='Entire hired party lost. No payment. Replacement recruits are available.';
    reports.push('CONTRACT FAILED: '+run.offer.title+'. All hired adventurers were lost.');
    continue;
