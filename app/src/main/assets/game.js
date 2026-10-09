@@ -304,7 +304,7 @@ function tick(dt){
  next-=dt;if(next<=0){spawn();next=r(s.upgrades.lantern?2.7:3.8,s.upgrades.lantern?5.2:7.1)}for(const c of guests){if(c.stage===0){c.x+=dt*70;if(c.x>=520){c.x=520;c.stage=1;c.hold=1.2;transact(c)}}else if(c.stage===1){c.hold-=dt;if(c.hold<=0)c.stage=2}else c.x-=dt*94}guests=guests.filter(c=>c.x>-70||c.stage===0);
 if(s.clock>=95){s.clock-=95;s.day++;visitorCountdown=r(14,29);const raid=E.raid(s,Math.random());say(raid.happened?'NIGHT RAID: Bandits stole '+raid.loss+'G.':'Dawn breaks over the dungeon. Day '+s.day+' begins.');persist()}
 // Batch costly side-panel DOM work, while keeping tab taps immediate.
-uiClock+=dt;if(uiClock>=.6){uiClock=0;hud();if(panelDirty)paintPanel()}
+uiClock+=dt;if(uiClock>=.6){uiClock=0;hud();refreshContractBadge();if(panelDirty)paintPanel()}
 clock+=dt;if(clock>=3){clock=0;persist()}}
 function box(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),Math.ceil(w),Math.ceil(h))}
 function stroke(x,y,w,h,color){g.strokeStyle=color;g.strokeRect(x,y,w,h)}
