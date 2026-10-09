@@ -222,53 +222,114 @@ function drawMonster(x,y,kind,t,hp,maxHp){
 }
 function drawDungeon(t){
  g.imageSmoothingEnabled=false;dungeonHit=[];
- dungeonBox(0,0,800,440,'#0b1419');
- for(let i=0;i<4;i++){
-  const floor=floorOffset+i+1,yy=3+i*108,shade=['#15252b','#1b2923','#2b2424','#202230'][((floor-1)%4)];
-  dungeonBox(0,yy,800,106,shade);
-  const backdrop=['#263337','#2e3932','#43312b','#30303d'][(floor-1)%4];
-  for(let k=-1;k<15;k++){
-   const xx=Math.round(k*116-(cameraX*.18%116));
-   dungeonBox(xx,yy+16,89,78,backdrop);
-   dungeonBox(xx+4,yy+20,81,6,'#ffffff08');
-   dungeonBox(xx+15,yy+46,3,35,'#101b20');
-   dungeonBox(xx+69,yy+46,3,35,'#101b20');
-  }
-  for(let tile=Math.floor(cameraX/46)-1;tile<Math.floor((cameraX+800)/46)+2;tile++){
-   let xx=tile*46-cameraX;
-   dungeonBox(xx,yy+90,44,15,'#464941');
-   dungeonBox(xx,yy+90,40,3,'#6e6755');
-  }
-  for(let light=0;light<7;light++){
-   const xx=130+light*239-cameraX;
-   if(xx>-10&&xx<810){dungeonBox(xx-1,yy+26,3,15,'#a47945');dungeonBox(xx-4,yy+20+Math.sin(t*8+light)*2,9,10,'#c46c37');dungeonBox(xx-2,yy+22,5,6,'#f0bf67')}
-  }
-  for(const m of s.dungeon.monsters){
-   if(m.floor!==floor||m.hp<=0)continue;
-   const x=m.x-cameraX;
-   if(x<-40||x>840)continue;
-   drawMonster(x,yy+87,m.kind,t,m.hp,m.maxHp);
-   dungeonHit.push({x,y:yy+68,type:'monster',ref:m});
-  }
-  for(const a of s.dungeon.adventurers){
-   if(a.floor!==floor)continue;
-   const x=a.x-cameraX;
-   if(x<-40||x>840)continue;
-   const clsIndex=classes.indexOf(a.cls);
-   drawActor(x,yy+82,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
-   dungeonBox(x-15,yy+28,30,3,'#443c37');
-   dungeonBox(x-15,yy+28,30*a.hp/a.maxHp,3,'#89ae86');
-   g.font='bold 9px Arial';g.textAlign='center';g.fillStyle='#edddc5';g.fillText(a.name,x,yy+19);
-   dungeonHit.push({x,y:yy+60,type:'adventurer',ref:a});
-  }
-  // Fixed row label stays readable while the chamber side-scrolls.
-  dungeonBox(3,yy+3,149,17,'#11191de8');
-  g.font='bold 11px Arial';g.textAlign='left';g.fillStyle='#eac891';
-  g.fillText('F'+floor+'  '+D.floorNames[floor-1],9,yy+15);
-  dungeonBox(0,yy+105,800,3,'#0a1013');
+ const tracked=followId&&s.dungeon.adventurers.find(a=>a.id===followId);
+ if(tracked){
+  if(tracked.floor!==floorOffset){floorOffset=tracked.floor;$('npcCard').classList.add('hidden')}
+  cameraX=cameraClamp(cameraX+(cameraClamp(tracked.x-370)-cameraX)*.16);
  }
- g.textAlign='right';g.font='bold 10px Arial';g.fillStyle='#b6c5bd';
- g.fillText('DISTANCE '+Math.floor(cameraX)+' / '+(D.worldWidth-800),792,436);
+ const floor=floorOffset,raid=floor===D.bossFloor;
+ const palette=[
+  ['#0c1e23','#20363a','#3b5254'],['#131f1a','#28372e','#4b5b44'],
+  ['#251c1b','#4c312a','#855d3d'],['#191f27','#303a43','#59616b'],
+  ['#102128','#2b4452','#426673'],['#251d2b','#413447','#665072'],
+  ['#1e1c28','#3c334a','#6e5379'],['#210f1d','#432133','#8b4259']
+ ][floor-1];
+ dungeonBox(0,0,800,440,palette[0]);
+ // Parallax cave walls: one large chamber occupies the entire canvas.
+ for(let k=-1;k<12;k++){
+  const xx=Math.round(k*150-(cameraX*.19%150));
+  dungeonBox(xx,43,123,292,palette[1]);
+  dungeonBox(xx+9,47,107,5,palette[2]);
+  dungeonBox(xx+16,91,8,229,'#08141a88');
+  dungeonBox(xx+100,91,8,229,'#08141a88');
+  dungeonBox(xx+27,142,69,170,'#07131955');
+  dungeonBox(xx+36,164,51,6,palette[2]);
+ }
+ for(let k=-1;k<12;k++){
+  const xx=Math.round(k*157-(cameraX*.43%157));
+  dungeonBox(xx,0,78,30,palette[1]);
+  dungeonBox(xx+12,30,13,39,palette[2]);
+  dungeonBox(xx+49,30,16,31,palette[2]);
+  dungeonBox(xx+28,60,12,19,palette[1]);
+ }
+ dungeonBox(0,361,800,79,'#151a1c');dungeonBox(0,356,800,9,palette[2]);
+ for(let tile=Math.floor(cameraX/59)-1;tile<Math.floor((cameraX+800)/59)+2;tile++){
+  const xx=tile*59-cameraX;
+  dungeonBox(xx+2,366,55,24,tile%2?'#2b3332':'#323637');
+  dungeonBox(xx+5,369,48,3,'#59605a');
+  dungeonBox(xx+11,398,42,13,'#252b2a');
+  dungeonBox(xx+35,413,3,27,'#0c1214');
+ }
+ for(let light=0;light<12;light++){
+  const x=148+light*194-cameraX;
+  if(x<0||x>800)continue;
+  dungeonBox(x-3,185,7,90,'#67523b');
+  const flame=Math.round(Math.sin(t*9+light)*5);
+  dungeonBox(x-13,174+flame,26,31,'#9d432d');
+  dungeonBox(x-9,181+flame,18,24,'#e6a24e');
+  dungeonBox(x-4,185+flame,9,14,'#ffe3a1');
+ }
+ for(const worldX of [30,D.worldWidth-65]){
+  const x=worldX-cameraX;
+  if(x>-75&&x<875){
+   dungeonBox(x-30,230,60,126,'#474b49');
+   dungeonBox(x-24,236,48,108,'#111c23');
+   dungeonBox(x-34,228,68,12,palette[2]);
+   g.fillStyle='#ddc899';g.font='bold 10px Arial';g.textAlign='center';
+   g.fillText(worldX<100?'ENTRANCE':(raid?'RAID EXIT':'STAIRS ↓'),x,223);
+  }
+ }
+ // Filter on the selected floor before painting and collecting touch targets.
+ for(const m of s.dungeon.monsters){
+  if(m.floor!==floor||m.hp<=0)continue;
+  const x=m.x-cameraX;
+  if(x<-100||x>900)continue;
+  g.save();g.translate(x,356);g.scale(m.boss?3:2.2,m.boss?3:2.2);
+  drawMonster(0,0,m.kind,t,m.hp,m.maxHp);g.restore();
+  if(m.boss){
+   dungeonBox(x-80,207,160,11,'#2a131a');
+   dungeonBox(x-78,209,156*m.hp/m.maxHp,7,'#da7384');
+   g.textAlign='center';g.font='bold 14px Arial';g.fillStyle='#ffb3be';
+   g.fillText('☠ RAID BOSS ☠',x,195);
+  }
+  dungeonHit.push({x,y:m.boss?305:325,type:'monster',ref:m});
+ }
+ for(const a of s.dungeon.adventurers){
+  if(a.floor!==floor||a.status==='recovering')continue;
+  const x=a.x-cameraX;
+  if(x<-80||x>880)continue;
+  const clsIndex=classes.indexOf(a.cls);
+  g.save();g.translate(x,355);g.scale(2.1,2.1);
+  drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
+  g.restore();
+  dungeonBox(x-21,267,42,6,'#322827');
+  dungeonBox(x-20,268,40*Math.max(0,a.hp)/a.maxHp,4,'#9ac293');
+  if((a.swing||0)>0){dungeonBox(x+16,307,27,4,'#f4d4a2');dungeonBox(x+33,298,5,25,'#ffffffaa')}
+  g.textAlign='center';g.fillStyle='#f2e0c2';g.font='bold 12px Arial';
+  g.fillText(a.name,x,260);
+  g.font='bold 10px Arial';
+  if(a.partyId){g.fillStyle='#a9ced2';g.fillText('◆ '+a.partyId,x,280)}
+  else{g.fillStyle='#e1bd8c';g.fillText('SOLO',x,280)}
+  if(followId===a.id)stroke(x-29,276,58,82,'#e7cf91');
+  dungeonHit.push({x,y:315,type:'adventurer',ref:a});
+ }
+ const heroes=s.dungeon.adventurers.filter(a=>a.floor===floor&&a.status!=='recovering');
+ const partyCount=new Set(heroes.filter(a=>a.partyId).map(a=>a.partyId)).size;
+ const solos=heroes.filter(a=>!a.partyId).length;
+ dungeonBox(0,0,800,42,'#091016ea');dungeonBox(0,41,800,2,palette[2]);
+ g.textAlign='left';g.fillStyle='#f0d4a1';g.font='bold 17px Georgia';
+ g.fillText('FLOOR '+floor+' / '+D.floorCount+'  •  '+D.floorNames[floor-1].toUpperCase(),14,25);
+ g.textAlign='right';g.font='bold 11px Arial';g.fillStyle='#b6c8c5';
+ g.fillText(partyCount+' PARTIES  /  '+solos+' SOLOS',785,25);
+ if(raid){
+  const boss=s.dungeon.monsters.find(m=>m.boss&&m.floor===floor);
+  dungeonBox(210,48,380,34,'#381922cc');
+  g.textAlign='center';g.fillStyle='#f4b4c0';g.font='bold 14px Arial';
+  g.fillText(boss&&boss.hp>0?'☠ RAID FLOOR • ABYSSAL SOVEREIGN ☠':'✦ RAID BOSS DEFEATED • RESPAWNING ✦',400,69);
+ }
+ g.textAlign='left';g.font='bold 10px Arial';g.fillStyle='#b4c9c2';
+ g.fillText('HORIZONTAL SWIPE TO EXPLORE • UP/DOWN FOR ANOTHER FLOOR',12,429);
+ g.textAlign='right';g.fillText(Math.floor(cameraX)+' / '+(D.worldWidth-800),790,429);
 }
 function inspectDungeon(x,y){
  let closest=null,best=Infinity;
