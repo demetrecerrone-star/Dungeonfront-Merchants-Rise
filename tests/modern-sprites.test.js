@@ -100,7 +100,7 @@ test('game loads v2 before scene and retains legacy image fallback and save key'
  const html=fs.readFileSync(path.join(folder,'index.html'),'utf8');
  assert.ok(html.indexOf('sprite-system.js')<html.indexOf('modern-sprites.js'));
  assert.ok(html.indexOf('modern-sprites.js')<html.indexOf('game.js'));
- assert.ok(game.includes('window.DFModernSprites.draw(g,a,t)'));
+ assert.ok(game.includes('window.DFModernSprites.draw(g,drawActorState,t)'));
  assert.ok(game.includes('if(!modern){'));
  assert.ok(game.includes('window.DFSprites.draw(g,a,t)'));
  assert.ok(game.includes("dungeonfront_merchants_rise_save_v1"));
