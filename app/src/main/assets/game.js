@@ -65,6 +65,11 @@ $('visitorChoices').addEventListener('click',e=>{
 function currentContractRun(){
  return C.ensure(s).runs.find(run=>run.id===contractRunId)||null;
 }
+function refreshContractBadge(){
+ const count=C.unclaimedCount(s);
+ $('contractAlert').classList.toggle('hidden',count===0);
+ $('contractsButton').setAttribute('aria-label',count?'Open the Contract Board, '+count+' contract'+(count===1?'':'s')+' ready to settle':'Open the Contract Board');
+}
 function contractStatusLine(run){
  const p=C.progress(run);
  return run.offer.kind==='reach'?'FLOOR '+p.value+' / '+p.target:run.offer.kind==='boss'?'RAID BOSS '+p.value+' / 1':'MONSTERS '+p.value+' / '+p.target;
@@ -75,11 +80,11 @@ function renderContractBoard(){
   const occupied=busy.has(a.id),selected=chosenHires.has(a.id);
   return '<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · '+(occupied?'ON EXPEDITION':'AVAILABLE')+'</p><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(occupied?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':selected?'✓ SELECTED':'SELECT')+'</button></div></article>';
  }).join('');
- const offers=c.offers.map(o=>'<article class="contract-entry"><small class="contract-rank">RANK '+esc(o.rank)+'</small><strong>'+esc(o.title)+'</strong><p>'+esc(o.desc)+'</p><small>REWARD '+o.reward+'G · +'+o.rep+' REP</small><div class="contract-entry-actions"><button data-contract-action="start" data-id="'+esc(o.id)+'" '+(!chosenHires.size?'disabled':'')+'>SEND SELECTED PARTY</button></div></article>').join('');
+ const offers=c.offers.map(o=>'<article class="contract-entry"><small class="contract-rank">RANK '+esc(o.rank)+'</small><strong>'+esc(o.title)+'</strong><p>'+esc(o.desc)+'</p><small>REWARD '+o.reward+'G · +'+o.rep+' REP · '+(o.minParty||1)+'–5 HEROES</small><div class="contract-entry-actions"><button data-contract-action="start" data-id="'+esc(o.id)+'" '+(!chosenHires.size?'disabled':'')+'>SEND SELECTED PARTY</button></div></article>').join('');
  const applicants=c.applicants.map(a=>'<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · HIRING FEE '+a.fee+'G</p><div class="contract-entry-actions"><button data-contract-action="hire" data-id="'+esc(a.id)+'" '+(s.gold<a.fee||c.staff.length>=C.maxHired?'disabled':'')+'>HIRE '+a.fee+'G</button></div></article>').join('');
  const runs=c.runs.slice(0,12).map(run=>{
   const done=run.status==='completed'||run.status==='failed',claimed=run.status==='claimed';
-  return '<article class="contract-entry"><small class="contract-rank">'+esc(run.offer.rank)+'</small><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' hired · '+esc(run.status.toUpperCase())+' · '+esc(contractStatusLine(run))+'</p><div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
+  return '<article class="contract-entry"><small class="contract-rank">'+esc(run.offer.rank)+'</small><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' remaining · '+esc(run.status.toUpperCase())+' · '+esc(contractStatusLine(run))+'</p>'+(run.fallen?.length?'<p class="contract-death">☠ '+run.fallen.length+' fallen permanently</p>':'')<div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
  }).join('');
  $('contractBody').innerHTML='<section class="contract-column"><h3>✉ AVAILABLE CONTRACTS</h3><p class="contract-sub">Select 1–5 available hires, then send them on a job.</p>'+(offers||'<p>No new postings today. Check tomorrow.</p>')+'</section>'+
  '<section class="contract-column"><h3>⚔ ADVENTURERS FOR HIRE</h3>'+(applicants||'<p>New applicants arrive tomorrow.</p>')+'<div class="contract-separator"></div><h3>YOUR ROSTER · '+c.staff.length+'/'+C.maxHired+'</h3>'+(roster||'<p>Hire an adventurer to start taking contracts.</p>')+'</section>'+
@@ -91,7 +96,7 @@ function openContractBoard(){
  $('npcCard').classList.add('hidden');
  $('contractBoard').classList.remove('hidden');
  $('contractNotice').textContent='';
- renderContractBoard();
+ renderContractBoard();refreshContractBadge();
 }
 function closeContractBoard(shop=false){
  contractBoardOpen=false;$('contractBoard').classList.add('hidden');
@@ -138,20 +143,20 @@ $('contractBody').addEventListener('click',e=>{
   const message=result.ok?action==='hire'?'Adventurer hired and ready.':action==='start'?'Expedition launched! Tap WATCH RUN to follow.':result.success?'Contract settled: +'+result.reward+'G and recovered salvage.':'Expedition settled without payment.':result.reason;
   contractNotice(message);
   if(result.ok){say(message);persist();hud();paintPanel();}
-  renderContractBoard();
+  renderContractBoard();refreshContractBadge();
  }
 });
 $('contractClaim').addEventListener('click',()=>{
  const run=currentContractRun();if(!run)return;
  const tx=C.claim(s,run.id);
  if(tx.ok){say(tx.success?'Contract paid: +'+tx.reward+'G, salvage recovered.':'Failed contract settled.');persist();}
- openContractBoard();renderContractBoard();
+ openContractBoard();renderContractBoard();refreshContractBadge();
 });
 function paintContractReport(){
  const run=currentContractRun(),panel=$('contractReport');
  if(view!=='contract'||!run||run.status==='active'||run.status==='claimed'){panel.classList.add('hidden');return;}
  panel.classList.remove('hidden');
- $('contractReportText').textContent=run.offer.title+' — '+(run.status==='completed'?'COMPLETE! '+run.offer.reward+'G reward, +'+run.offer.rep+' reputation and salvage.':'FAILED. No reward.');
+ $('contractReportText').textContent=run.offer.title+' — '+(run.status==='completed'?'COMPLETE! '+run.offer.reward+'G reward, +'+run.offer.rep+' reputation and salvage.':'FAILED. No reward.')+(run.fallen?.length?' ☠ '+run.fallen.length+' adventurer(s) lost permanently.':'');
  $('contractClaim').textContent=run.status==='completed'?'CLAIM PAYMENT':'CLOSE REPORT';
 }
 function hud(){
@@ -189,12 +194,13 @@ if(tab!==lastPanelTab||html!==lastPanelHTML){
  lastPanelHTML=html;lastPanelTab=tab;
 }
 panelDirty=false}
-function spawn(){if(guests.length>=(s.upgrades.shelf?5:4))return;const i=Math.floor(r(0,classes.length));guests.push({id:++guestId,name:names[Math.floor(r(0,names.length))],cls:classes[i],color:colors[i],level:1+Math.floor(r(0,7+s.depth*3)),need:needs[Math.floor(r(0,needs.length))],budget:Math.floor(r(30,160)+s.depth*16),returning:Math.random()<.3,x:-25,y:346+Math.floor(r(-3,17)),stage:0,hold:0,line:''})}
+function spawn(){if(guests.length>=(s.upgrades.shelf?5:4))return;const i=Math.floor(r(0,classes.length));guests.push({id:++guestId,name:names[Math.floor(r(0,names.length))],cls:classes[i],color:colors[i],level:1+Math.floor(r(0,7+s.depth*3)),need:needs[Math.floor(r(0,needs.length))],budget:Math.floor(r(30,160)+s.depth*16),returning:Math.random()<.62,x:-25,y:346+Math.floor(r(-3,17)),stage:0,hold:0,line:''})}
 function transact(c){if(c.returning){const mat=Math.random()<.5?'iron':'herb',count=1+Math.floor(r(0,3)),cost=count*(mat==='iron'?8:5);const tx=E.buyLoot(s,mat,count,cost);c.line=tx.ok?'Loot sold':'No deal';if(tx.ok)feedback('⚒ Salvage acquired: '+count+' '+mat);say(tx.ok?c.name+' returned from the dungeon. Bought '+count+' '+mat+' for '+cost+'G.':c.name+' offered salvage, but the treasury was empty.')}else{let tx=E.attemptSale(s,c.need,c.budget,Math.random());c.line=tx.ok?'Thank you!':tx.reason==='out-of-stock'?'Out of stock!':'No sale';if(tx.ok){D.enter(s,c,E.items[c.need].name);feedback('◆ +'+tx.earned+'G • '+c.name+' made a purchase');}say(tx.ok?c.name+' the '+c.cls+' bought '+E.items[c.need].name+' for '+tx.earned+'G.':c.name+' the '+c.cls+' left without a purchase.')}persist()}
 function tick(dt){
  if(!active||paused||visitorOpen)return;
  const dungeonReports=D.advance(s,dt);for(const report of dungeonReports)say('DUNGEON REPORT: '+report);
  const contractReports=C.advance(s,dt);for(const report of contractReports)say(report);
+ if(contractReports.length){refreshContractBadge();persist();if(contractBoardOpen)renderContractBoard();}
  s.clock+=dt;visitorCountdown-=dt;
  $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
  // Queue one visitor in the background; never pause or cover the dungeon.
@@ -536,7 +542,7 @@ function frame(now){
   $('pauseOverlay').classList.remove('hidden');
  }
 }requestAnimationFrame(frame);
-function start(){D.ensure(s);C.ensure(s);closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
+function start(){D.ensure(s);C.ensure(s);refreshContractBadge();closeDungeon();$('title').classList.add('hidden');$('intro').classList.add('hidden');$('game').classList.remove('hidden');active=true;paused=false;paintPanel();hud();if(s.pendingEncounter)presentVisitor();say('The bell rings. Adventurers are approaching the shop.')}
 function title(){closeContractBoard();closeDungeon();active=false;paused=false;visitorOpen=false;$('visitorOverlay').classList.add('hidden');$('pauseOverlay').classList.add('hidden');$('game').classList.add('hidden');$('title').classList.remove('hidden');persist()}
 function leaveIntro(){const v=$('introVideo');try{v.pause()}catch(e){}$('intro').classList.add('hidden');$('title').classList.remove('hidden')}
 const introVideo=$('introVideo');
