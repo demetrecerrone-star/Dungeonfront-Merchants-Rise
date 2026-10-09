@@ -196,5 +196,30 @@ test('actual rendering mirrors left-moving Knight and keeps retreat frame uprigh
  assert.equal(renderer.draw(left,departing,.2),true);
  assert.ok(left.operations.some(op=>op[0]==='scale'&&op[1]===-1),'shop departure faces left');
 });
+test('combat facing selects actual left or right target for Knight in public and contract dungeons',()=>{
+ const a={cls:'Knight',hp:100,floor:3,x:200,status:'fighting'};
+ assert.equal(S.combatFacing(a,[{floor:3,hp:100,x:164}]),-1,'enemy behind hero means face left');
+ assert.equal(S.combatFacing(a,[{floor:3,hp:100,x:231}]),1,'enemy ahead means face right');
+ assert.equal(S.combatFacing({...a,status:'exploring',swing:.12},[{floor:3,hp:100,x:175}]),-1,'finishing blow remains aimed at enemy behind');
+ assert.equal(S.combatFacing({...a,status:'retreating',hp:0},[{floor:3,hp:100,x:231}]),-1,'retreat exit direction wins over target');
+ assert.equal(S.combatFacing(a,[{floor:2,hp:100,x:164}]),1,'other floor monsters are ignored');
+ assert.equal(S.combatFacing(a,[{floor:3,hp:0,deathFX:.3,x:167}]),-1,'hit frame still faces dying target');
+ assert.equal(S.combatFacing(a,[{floor:3,hp:100,x:100}]),1,'out-of-reach monster ignored');
+});
+test('walk, idle, attack and retreat art are genuine directional profiles, never front-pose flips',()=>{
+ const Art=require('../app/src/main/assets/modern-knight-art.js');
+ for(const action of ['idle','walk','attack','hurt','special']){
+  const svg=Art.svg(action);
+  assert.ok(svg.includes('Motion always faces RIGHT'),'consistent right-facing side pose for '+action);
+  assert.ok(svg.includes('unmistakable knight helmet PROFILE'),'profile helmet for '+action);
+  assert.ok(svg.includes('trailing layered blue cape'),'cape trails behind forward movement for '+action);
+  assert.ok(svg.includes('shoulder / sword arm point towards destination'),'sword points toward target for '+action);
+ }
+ const program=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/modern-knight-art.js'),'utf8');
+ assert.ok(program.includes("if(action!=='death')return sideFrame(action,n)"));
+ const gameplay=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
+ assert.ok(gameplay.includes('DFModernSprites.combatFacing(a,ds.dungeon.monsters)'), 'dungeon/contract both pass target positions');
+ assert.equal(S.combatFacing({cls:'Knight',floor:3,x:200,status:'fighting'},[{floor:3,hp:20,x:170}]),-1);
+});
 delete global.Image;
 console.log('All '+checks+' modern actor renderer / save safety tests passed.');
