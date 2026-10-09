@@ -540,7 +540,8 @@ function draw(t){
   if(c.cls==='Knight'&&window.DFModernSprites){
    g.save();g.translate(c.x,c.y);
    modernShop=window.DFModernSprites.draw(g,{
-    cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking'
+    cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking',
+    facing:c.stage===2?-1:1
    },t);
    g.restore();
   }
