@@ -100,18 +100,21 @@ console.log('PASS fantasy shop layout, themed inventory and preserved portal hit
 
 const recorded=[];
 win.DFModernSprites={
+ classes:['Knight','Ranger','Mage','Cleric','Rogue','Mercenary'],
+ approvedClasses:new Set(['Knight','Ranger','Mage','Cleric','Rogue','Mercenary']),
  enabled:false,
  isEnabled(){return this.enabled},
  setEnabled(v){this.enabled=v===true;return this.enabled},
- preloadClass(cls,actions){assert.equal(cls,'Knight');assert.deepEqual(Array.from(actions),['idle','walk','attack']);return 3},
+ preloadClass(cls,actions){assert.ok(this.approvedClasses.has(cls));assert.deepEqual(Array.from(actions),['idle','walk','attack']);return 3},
  draw(g,a,t){
-  if(!this.enabled||a.cls!=='Knight')return false;
+  if(!this.enabled||!this.approvedClasses.has(a.cls))return false;
   recorded.push(a.status);return true;
  }
 };
 element('knightArtToggle').click();
 assert.equal(win.DFModernSprites.isEnabled(),true,'shop / dungeon toggle enables Knight preview');
-assert.ok(element('knightArtToggle').textContent.includes('ON'),'toggle visibly acknowledges enabled state');
+assert.ok(element('knightArtToggle').textContent.includes('SIX CLASSES V2: ON'),'toggle visibly acknowledges six-class preview');
+for(const cls of win.DFModernSprites.classes)assert.equal(win.DFModernSprites.draw(graphics,{cls,hp:1,status:'waiting'},3),true,'shop '+cls+' v2 preview');
 // Exercise both character poses without altering live game mechanics or
 // depending on randomized arrival timings in the browser-lite test.
 assert.equal(win.DFModernSprites.draw(graphics,{cls:'Knight',hp:1,status:'walking'},3),true);
