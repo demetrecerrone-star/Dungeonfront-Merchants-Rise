@@ -6,7 +6,7 @@ const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
 let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
-let view='shop',cameraX=0,floorOffset=0,drag=null,dungeonHit=[];
+let view='shop',cameraX=0,floorOffset=1,drag=null,dungeonHit=[],followId=null,focusId=null;
 const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowan','Mira','Dain','Iris','Sable','Thorne'],classes=['Knight','Rogue','Mage','Ranger','Cleric','Mercenary'],colors=['#b9a4a0','#8795a8','#b093bd','#9ab49d','#d1af73','#a48d87'],needs=['potion','potion','torch','bandage','blade','torch','bandage','forged'];
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
@@ -66,7 +66,7 @@ function hud(){
  $('goldValue').textContent=Math.floor(s.gold).toLocaleString();
  $('repValue').textContent=s.reputation;
  $('dayValue').textContent=s.day;
- $('depthValue').textContent='FLOOR '+s.depth;
+ $('depthValue').textContent='FLOOR '+(view==='dungeon'?floorOffset:s.depth);
  $('visitorsValue').textContent=s.visitors;
  $('liveStatus').textContent=paused?'SHOP CLOSED':visitorOpen?'VISITOR AT DOOR':s.clock<24?'DAWN TRADE':s.clock<69?'MARKET OPEN':'DUSK WATCH';
  $('safetyNote').textContent=s.upgrades.guard?'⚔ THREAT: GUARDED':'⚔ THREAT: UNEASY';
@@ -174,17 +174,17 @@ const shade=g.createLinearGradient(0,0,0,440);shade.addColorStop(0,'#00000088');
 /* The dungeon is a second camera onto the same persistent merchant world. */
 function cameraClamp(v){return Math.max(0,Math.min(D.worldWidth-800,v))}
 function openDungeon(){
- D.ensure(s);view='dungeon';cameraX=0;floorOffset=0;drag=null;
+ D.ensure(s);view='dungeon';cameraX=0;floorOffset=1;drag=null;followId=null;focusId=null;updateFollowButton();
  $('npcCard').classList.add('hidden');$('dungeonControls').classList.remove('hidden');
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • EXPEDITION WATCH';
- $('sceneHint').textContent='◈ SWIPE SIDEWAYS · TAP A FIGHTER OR MONSTER';
+ $('sceneHint').textContent='◈ ONE FLOOR PER VIEW · TAP A HERO TO FOLLOW';
  $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
  // Clear any toast started in the shop before entering the dungeon.
  clearTimeout(toastTimer);$('feedbackToast').classList.add('hidden');
  persist();
 }
 function closeDungeon(showDeferred=false){
- view='shop';drag=null;
+ view='shop';drag=null;followId=null;focusId=null;
  $('dungeonControls').classList.add('hidden');
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET';
  $('sceneHint').textContent='◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER';
@@ -193,8 +193,20 @@ function closeDungeon(showDeferred=false){
  // The waiting customer is seen at the shop only after choosing to return.
  if(showDeferred&&active&&!paused&&s.pendingEncounter)presentVisitor();
 }
-function dungeonFloor(delta){floorOffset=Math.max(0,Math.min(D.floorCount-4,floorOffset+delta));$('npcCard').classList.add('hidden')}
-function dungeonCamera(delta){cameraX=cameraClamp(cameraX+delta);$('npcCard').classList.add('hidden')}
+function updateFollowButton(){
+ const chosen=s.dungeon?.adventurers.find(a=>a.id===followId);
+ $('dungeonFollow').textContent=chosen?'◉ '+chosen.name.toUpperCase():'◎ FOLLOW';
+ $('dungeonFollow').classList.toggle('tracking',!!chosen);
+}
+function dungeonFloor(delta){
+ followId=null;cameraX=0;
+ floorOffset=Math.max(1,Math.min(D.floorCount,floorOffset+delta));
+ updateFollowButton();$('npcCard').classList.add('hidden');
+}
+function dungeonCamera(delta){
+ followId=null;cameraX=cameraClamp(cameraX+delta);
+ updateFollowButton();$('npcCard').classList.add('hidden');
+}
 function dungeonBox(x,y,w,h,fill){box(x,y,w,h,fill)}
 function drawMonster(x,y,kind,t,hp,maxHp){
  const m=D.monsterKinds[kind],wig=Math.round(Math.sin(t*4+x*.03)*2),px=Math.round(x),py=Math.round(y+wig);
@@ -269,12 +281,13 @@ function inspectDungeon(x,y){
  if(closest.type==='adventurer'){
   $('npcName').textContent=o.name+' the '+o.cls;
   $('npcMeta').textContent='FLOOR '+o.floor+' · LV '+o.level+' · HP '+o.hp+'/'+o.maxHp;
-  $('npcText').textContent='Status: '+o.status+'. Equipment: '+o.gear+'. Monsters defeated: '+(o.wins||0)+'.';
+  $('npcText').textContent=(o.partyId?'Party '+o.partyId+'. ':'Solo delver. ')+'Status: '+o.status+'. Equipment: '+o.gear+'. Monsters defeated: '+(o.wins||0)+'.';
+  focusId=o.id;followId=o.id;updateFollowButton();
  }else{
   const spec=D.monsterKinds[o.kind];
   $('npcName').textContent=spec.name;
   $('npcMeta').textContent='FLOOR '+o.floor+' · HP '+o.hp+'/'+o.maxHp;
-  $('npcText').textContent='Hostile dungeon creature. Damage: '+spec.damage+'. Watch adventurers fight it in real time.';
+  $('npcText').textContent=(o.boss?'RAID BOSS. Strong teams recommended. ':'Hostile dungeon creature. ')+'Damage: '+spec.damage+'.';
  }
  $('npcCard').classList.remove('hidden');
 }
@@ -282,6 +295,7 @@ function scenePoint(e){const b=canvas.getBoundingClientRect();return{x:(e.client
 $('dungeonBack').addEventListener('click',()=>closeDungeon(true));
 $('dungeonLeft').addEventListener('click',()=>dungeonCamera(-200));
 $('dungeonRight').addEventListener('click',()=>dungeonCamera(200));
+$('dungeonFollow').addEventListener('click',()=>{if(followId){followId=null}else if(focusId){const target=s.dungeon.adventurers.find(a=>a.id===focusId);if(target)followId=target.id}updateFollowButton()});
 $('dungeonUp').addEventListener('click',()=>dungeonFloor(-1));
 $('dungeonDown').addEventListener('click',()=>dungeonFloor(1));
 
@@ -335,7 +349,7 @@ canvas.addEventListener('pointerdown',e=>{
 canvas.addEventListener('pointermove',e=>{
  if(!drag||drag.id!==e.pointerId||view!=='dungeon')return;
  const p=scenePoint(e),dx=p.x-drag.start.x;
- if(Math.abs(dx)>7){drag.moved=true;cameraX=cameraClamp(drag.cam-dx)}
+ if(Math.abs(dx)>7){drag.moved=true;followId=null;cameraX=cameraClamp(drag.cam-dx);updateFollowButton()}
 });
 canvas.addEventListener('pointerup',e=>{
  if(!drag||drag.id!==e.pointerId)return;
