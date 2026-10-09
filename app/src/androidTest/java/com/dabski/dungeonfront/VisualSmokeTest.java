@@ -157,4 +157,21 @@ public final class VisualSmokeTest {
         assertEquals("true",eval("Boolean(window.__qaFrames>4)"));
         screenshot("dungeon");
     }
+    @Test public void modernRendererDefaultsOffAndLegacyFallbackSurvivesMissingAtlas() {
+        // Modern character art must NEVER switch on or request assets by itself.
+        assertEquals("true", eval("Boolean(window.DFModernSprites && window.DFModernSprites.isEnabled()===false)"));
+        assertEquals("true", eval("Boolean(window.DFModernSprites.status().loaded===0 && window.DFModernSprites.status().failed===0)"));
+        assertEquals("true", eval("Boolean(window.DFSprites.status().ready>=18)"));
+
+        // Simulate future opt-in before art production. The missing v2 sheet
+        // must fail safely and v1 actor art must remain ready and drawable.
+        eval("window.DFModernSprites.setEnabled(true);true");
+        assertEquals("false", eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'exploring',swing:0},0)"));
+        waitFor("Boolean(window.DFModernSprites.status().failed>=1)",8000);
+        assertEquals("true", eval("Boolean(window.DFSprites.status().ready>=18 && window.DFModernSprites.status().loaded===0)"));
+        eval("window.DFModernSprites.setEnabled(false);true");
+        assertEquals("true", eval("Boolean(window.DFModernSprites.isEnabled()===false && !document.getElementById('tickerText').textContent.includes('interface error'))"));
+        screenshot("modern-safe-fallback");
+    }
+
 }
