@@ -5,6 +5,7 @@
  * Concept approval is still required before enabling these in an APK.
  */
 'use strict';
+const animeDetails=require('./anime-style-details.js');
 
 const counts=Object.freeze({idle:8,walk:10,attack:12,hurt:5,death:12,special:12});
 const characters=Object.freeze({
@@ -150,6 +151,8 @@ function characterFrame(name,action,index){
  out+=shape('M26 -102 L34 -91 L30 -81 L21 -91Z',c.skin,c.trim,2);
  if(name==='Mercenary')out+=shape('M-22 -117 L-32 -104 L-23 -92 L-9 -110Z','url(#metal)',c.trim,2.5);
  if(name==='Rogue')out+=shape('M-20 -119 L-32 -105 L-23 -94 L-7 -110Z','#41414c',c.trim,2);
+ // Costume, face and metallic engraving overlay follows the same per-frame rig.
+ out+=animeDetails.detail(name,c,action,index,n);
  out+=weapon(c,action,p,leg,0);
  if(hit)out+=shape('M-40 -138 Q-28 -155 -19 -151','none','#fff6d4',3,{opacity:fmt(Math.sin(p*Math.PI))});
  if(dying)out+=ellipse(0,-39,31,9,c.dark,{opacity:.4});
