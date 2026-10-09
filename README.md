@@ -1,6 +1,10 @@
-# Dungeonfront: Merchant's Rise — Android v0.8.0
+# Dungeonfront: Merchant's Rise — Android v0.8.1
 
 A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
+
+## v0.8.1 — Treasure chest interaction fix
+
+Adventurers physically stop at treasure chests to open them for 0.8 seconds, with progress and a persistent opened-chest appearance. Treasure is added exactly once per adventurer in each dungeon instance; hired contract parties still hold recovered loot until extraction and claim. Save migration preserves existing discovered chest states. No reinstallation required when upgrading signed v0.8.0.
 
 ## v0.8 release — animated dungeon discoveries, guild roster, and class combat
 
@@ -43,7 +47,7 @@ Development tests: `node tests/v08.test.js` and all previous JavaScript regressi
 - Mixed solo adventurers and persistent named parties explore eight floors with multiple roaming enemies. Floor eight features the Abyssal Sovereign raid boss with 480 HP, raid-victory rewards and a respawn timer. Hero victories grant XP, level-ups and crafting materials. Older dungeon saves migrate forward without clearing merchant progress.
 - Landscape orientation and Android system navigation safe areas.
 - Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
-- Version **0.8.0** (Android versionCode **13**).
+- Version **0.8.1** (Android versionCode **14**).
 
 ## Build APK
 
