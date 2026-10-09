@@ -86,6 +86,21 @@ function sideFrame(action,n){
   <path d="M18 -143 L36 -141 L31 -137 L19 -139Z" fill="#13283c" stroke="#e5ba75" stroke-width="1.8"/>
   <path d="M26 -135 L30 -129 L18 -126" fill="none" stroke="#e7c98f" stroke-width="2"/>
   <path d="M-4 -142 L8 -144" stroke="#fff1d4" stroke-width="2"/>
+  <!-- Anime-fantasy polish: engraved shoulder, raised shield crest, cape seams,
+       armor rivets and a clean luminous visor rim; no character pose changes. -->
+  <path d="M-21 -118 Q-24 -127 -11 -122 M-17 -113 L-7 -114" stroke="#e8c98c" stroke-width="1.6" fill="none"/>
+  <path d="M11 -119 L22 -112 L16 -106 M10 -116 L18 -110" stroke="#f3dca0" stroke-width="1.5" fill="none"/>
+  <path d="M-13 -105 Q3 -111 12 -100" fill="none" stroke="#d4bb88" stroke-width="1.7"/>
+  <path d="M-12 -100 L-4 -94 L3 -100 L10 -94" fill="none" stroke="#86b6d6" stroke-width="1.2"/>
+  <path d="M-15 -84 L8 -82" fill="none" stroke="#f5d59a" stroke-width="1.1"/>
+  <path d="M-33 -100 L-16 -97 M-35 -85 L-16 -82 M-30 -62 L-22 -53" fill="none" stroke="#f5ca80" stroke-width="1.5"/>
+  <path d="M-31 -105 L-24 -97 L-20 -105 L-16 -97" fill="none" stroke="#ffe1a8" stroke-width="1.2"/>
+  <path d="M-48 -92 Q-44 -80 -49 -62 Q-52 -47 -57 -40" fill="none" stroke="#97bce4" stroke-width="1.6" opacity=".85"/>
+  <path d="M-46 -90 Q-48 -59 -54 -51" fill="none" stroke="#e9c37f" stroke-width="1" opacity=".7"/>
+  <path d="M4 -158 Q16 -164 24 -148 M20 -143 L33 -140" fill="none" stroke="#fff6cf" stroke-width="1.4"/>
+  <path d="M23 -147 L30 -144" fill="none" stroke="#9bd8fb" stroke-width="2.1"/>
+  <circle cx="-14" cy="-115" r="2" fill="#f8dda3"/><circle cx="15" cy="-111" r="2" fill="#f8dda3"/>
+  <circle cx="-24" cy="-99" r="2" fill="#97d7ed" stroke="#f5d299" stroke-width="1"/>
   ${slash?`<path d="M35 -157 Q65 -123 51 -77" fill="none" stroke="#80d7ff" stroke-width="6" opacity=".85"/>
      <path d="M39 -156 Q62 -117 50 -78" fill="none" stroke="#f3cb85" stroke-width="2"/>`:''}
   ${guard&&p>.22&&p<.86?`<path d="M-47 -134 Q-67 -78 -45 -33" fill="none" stroke="#a0d5ff" stroke-width="5" opacity=".72"/>`:''}
