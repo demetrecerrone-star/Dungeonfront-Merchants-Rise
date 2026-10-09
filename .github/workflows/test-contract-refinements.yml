@@ -22,6 +22,7 @@ jobs:
         run: |
           node --check app/src/main/assets/contracts.js
           node --check app/src/main/assets/game.js
+          node --check app/src/main/assets/modern-sprites.js
           node --check app/src/main/assets/dungeon.js
           node --check app/src/main/assets/economy.js
       - name: Run regression and contract balance tests (no Android build)

@@ -157,4 +157,38 @@ public final class VisualSmokeTest {
         assertEquals("true",eval("Boolean(window.__qaFrames>4)"));
         screenshot("dungeon");
     }
+    @Test public void modernKnightPreviewLoadsAndFallsBackSafelyInShopAndDungeon() {
+        assertEquals("true",eval("Boolean(window.DFModernSprites && window.DFModernSprites.isEnabled()===false)"));
+        assertEquals("true",eval("Boolean(window.DFModernSprites.status().loaded===0 && window.DFSprites.status().ready>=18)"));
+        assertEquals("true",eval("Boolean(window.DFModernKnightArt && window.DFModernKnightArt.counts.attack===12)"));
+
+        // Load all three first-stage sheets inside the real Android WebView.
+        assertEquals("3",eval("(window.DFModernSprites.setEnabled(true),window.DFModernSprites.preloadClass('Knight',['idle','walk','attack']))"));
+        waitFor("Boolean(window.DFModernSprites.status().loaded===3)",12000);
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'waiting'},2))"));
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'walking'},2))"));
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'fighting',swing:.23},2))"));
+        // Regression: 0 HP while retreating is still MOVING toward the exit.
+        // The renderer must not show a prone death pose, and direction must
+        // come from actual stage / movement, including shop departure.
+        assertEquals("\"walk\"",eval("window.DFModernSprites.selectAction({cls:'Knight',hp:0,status:'retreating'})"));
+        assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:0,status:'retreating'})"));
+        assertEquals("-1",eval("window.DFModernSprites.combatFacing({cls:'Knight',hp:30,floor:3,x:200,status:'fighting'},[{floor:3,hp:30,x:171}])"));
+        assertEquals("1",eval("window.DFModernSprites.combatFacing({cls:'Knight',hp:30,floor:3,x:200,status:'fighting'},[{floor:3,hp:30,x:231}])"));
+        assertEquals("true",eval("Boolean(window.DFModernKnightArt.svg('walk').includes('unmistakable knight helmet PROFILE'))"));
+        assertEquals("true",eval("Boolean(window.DFModernKnightArt.svg('attack').includes('shoulder / sword arm point towards destination'))"));
+        assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:-1})"));
+        assertEquals("1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:1})"));
+        assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:0,status:'retreating'},2))"));
+        assertEquals("false",eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Mage',hp:100,status:'waiting'},2)"));
+        screenshot("knight-v2-loaded");
+
+        // Both public and contracted adventurers share the game.js dungeon draw.
+        assertEquals("true",eval("Boolean(window.DFModernSprites.isEnabled() && window.DFSprites.status().ready>=18)"));
+        eval("window.DFModernSprites.setEnabled(false);true");
+        assertEquals("false",eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:100,status:'walking'},2)"));
+        assertEquals("true",eval("Boolean(window.DFSprites.status().ready>=18 && !document.getElementById('tickerText').textContent.includes('interface error'))"));
+        screenshot("modern-safe-fallback");
+    }
+
 }

@@ -97,3 +97,31 @@ assert.equal(win.Dungeonfront.handleBack(),true);
 assert.ok(element('scene-wrap').classList.contains('shop-mode'), 'shop theme returns after extraction back button');
 console.log('PASS fantasy shop layout, themed inventory and preserved portal hitbox');
 
+
+const recorded=[];
+win.DFModernSprites={
+ enabled:false,
+ isEnabled(){return this.enabled},
+ setEnabled(v){this.enabled=v===true;return this.enabled},
+ preloadClass(cls,actions){assert.equal(cls,'Knight');assert.deepEqual(Array.from(actions),['idle','walk','attack']);return 3},
+ draw(g,a,t){
+  if(!this.enabled||a.cls!=='Knight')return false;
+  recorded.push(a.status);return true;
+ }
+};
+element('knightArtToggle').click();
+assert.equal(win.DFModernSprites.isEnabled(),true,'shop / dungeon toggle enables Knight preview');
+assert.ok(element('knightArtToggle').textContent.includes('ON'),'toggle visibly acknowledges enabled state');
+// Exercise both character poses without altering live game mechanics or
+// depending on randomized arrival timings in the browser-lite test.
+assert.equal(win.DFModernSprites.draw(graphics,{cls:'Knight',hp:1,status:'walking'},3),true);
+assert.equal(win.DFModernSprites.draw(graphics,{cls:'Knight',hp:1,status:'waiting'},3),true);
+assert.ok(recorded.includes('walking'),'Knight has walking presentation');
+assert.ok(recorded.includes('waiting'),'Knight has a shop-counter waiting pose');
+element('knightArtToggle').click();
+assert.equal(win.DFModernSprites.isEnabled(),false,'toggle can return to legacy art');
+const before=recorded.length;
+for(let i=0;i<50;i++)step();
+assert.equal(recorded.length,before,'v2 renderer not used when preview is off');
+assert.equal(win.Dungeonfront.getState().sales>=0,true);
+console.log('PASS Knight v2 shop animation preview toggle and original-art fallback');

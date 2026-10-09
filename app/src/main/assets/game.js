@@ -3,6 +3,8 @@
 const E=window.DFEconomy,D=window.DFDungeon,C=window.DFContracts,$=id=>document.getElementById(id),key='dungeonfront_merchants_rise_save_v1';
 let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.valid(old))s=Object.assign(E.initialState(),old)}catch(e){}
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
+// Strict preview opt-in; standard APK and ordinary game launches stay on v1 art.
+if(window.DFModernSprites)window.DFModernSprites.setEnabled(new URLSearchParams(location.search).get('knightPreview')==='1');
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
 let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
@@ -13,6 +15,20 @@ const names=['Elara','Bram','Seren','Torr','Nyx','Aldric','Veda','Kestrel','Rowa
 const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
 function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerText').textContent=msg;panelDirty=true}
+function updateKnightToggle(){
+ const b=$('knightArtToggle');if(!b)return;
+ const on=!!(window.DFModernSprites&&window.DFModernSprites.isEnabled());
+ b.textContent=on?'⚔ KNIGHT V2: ON':'⚔ KNIGHT V2: OFF';
+ b.setAttribute('aria-pressed',String(on));
+ b.classList.toggle('active',on);
+}
+$('knightArtToggle').onclick=()=>{
+ if(!window.DFModernSprites)return;
+ window.DFModernSprites.setEnabled(!window.DFModernSprites.isEnabled());
+ if(window.DFModernSprites.isEnabled())window.DFModernSprites.preloadClass('Knight',['idle','walk','attack']);
+ updateKnightToggle();
+};
+updateKnightToggle();
 function feedback(msg){
  // Shop transactions continue while watching the dungeon, but only the shop
  // may interrupt play with commerce notifications.
@@ -518,13 +534,26 @@ function draw(t){
  drawShopRoom(t);
  // Shoppers appear in front of the shopfront and may still be tapped.
  for(const c of guests){
-  drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);
+  // The same Knight art is used in the shop, public dungeon and contract runs.
+  // Shop stage 0/2 means walking, stage 1 means waiting at the trade counter.
+  let modernShop=false;
+  if(c.cls==='Knight'&&window.DFModernSprites){
+   g.save();g.translate(c.x,c.y);
+   modernShop=window.DFModernSprites.draw(g,{
+    cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking',
+    facing:c.stage===2?-1:1
+   },t);
+   g.restore();
+  }
+  if(!modernShop)drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);
   g.textAlign='center';
-  box(c.x-31,c.y-59,62,14,'#1e2424');
-  g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,c.y-49);
+  const labelY=c.y-(modernShop?116:59);
+  box(c.x-31,labelY,62,14,'#1e2424');
+  g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,labelY+10);
   if(c.stage===1&&c.line){
-   box(c.x-50,c.y-89,100,19,'#e4d3b3');
-   g.fillStyle='#332822';g.fillText(c.line,c.x,c.y-75);
+   const bubbleY=c.y-(modernShop?149:89);
+   box(c.x-50,bubbleY,100,19,'#e4d3b3');
+   g.fillStyle='#332822';g.fillText(c.line,c.x,bubbleY+14);
   }
  }
  // Time-of-day tint and soft vignette stop short of obscuring shop text.
@@ -766,8 +795,22 @@ function drawDungeon(t){
   const x=a.x-cameraX;
   if(x<-80||x>880)continue;
   const clsIndex=classes.indexOf(a.cls);
-  g.save();g.translate(x,355);g.scale(2.1,2.1);
-  if(!(window.DFSprites&&window.DFSprites.draw(g,a,t)))drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
+  g.save();g.translate(x,355);
+  // V2 draws smooth high-resolution art only when explicitly enabled and
+  // a matching action sheet is ready. Default/offline behavior stays v1.
+  // Choose facing from the ACTIVE combat target, not the hero's last
+  // walking direction. Monsters can stand on either side of an adventurer.
+  // Only the transient render copy changes; saves/combat logic are untouched.
+  let drawActorState=a;
+  if(a.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled()){
+   const face=window.DFModernSprites.combatFacing(a,ds.dungeon.monsters);
+   drawActorState=Object.assign({},a,{facing:face});
+  }
+  const modern=window.DFModernSprites&&window.DFModernSprites.draw(g,drawActorState,t);
+  if(!modern){
+   g.scale(2.1,2.1);
+   if(!(window.DFSprites&&window.DFSprites.draw(g,a,t)))drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
+  }
   g.restore();
   dungeonBox(x-21,267,42,6,'#322827');
   dungeonBox(x-20,268,40*Math.max(0,a.hp)/a.maxHp,4,'#9ac293');
@@ -960,7 +1003,10 @@ canvas.addEventListener('pointerup',e=>{
   return;
  }
  if(Math.pow((p.x-145)/82,2)+Math.pow((p.y-267)/99,2)<1&&p.y>175&&p.y<367){openDungeon();return}
- const customer=guests.find(c=>Math.abs(c.x-p.x)<35&&Math.abs(c.y-25-p.y)<50);
+ const customer=guests.find(c=>{
+  const modern=c.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled();
+  return Math.abs(c.x-p.x)<(modern?43:35)&&Math.abs(c.y-(modern?55:25)-p.y)<(modern?63:50);
+ });
  if(customer){
   selected=customer;$('partyRoster').classList.add('hidden');$('npcCard').classList.remove('party-open');$('npcName').textContent=customer.name+' the '+customer.cls;
   $('npcMeta').textContent='LEVEL '+customer.level+' · '+customer.budget+'G PURSE · FLOOR '+s.depth;

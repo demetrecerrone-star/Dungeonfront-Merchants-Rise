@@ -5,6 +5,7 @@ on:
       - 'work/contract-refinements-v0.7.1'
       - 'work/v0.8-roster-combat-treasure'
       - 'work/v0.9-shop-layout'
+      - 'work/v0.9-character-art-v2'
     paths:
       - 'app/src/main/assets/**'
       - 'tests/**'
@@ -24,6 +25,7 @@ jobs:
         run: |
           python3 -m py_compile tools/generate_monster_art.py tools/generate_event_art.py
           node --check app/src/main/assets/sprite-system.js
+          node --check app/src/main/assets/modern-sprites.js
           node --check app/src/main/assets/game.js
           node --check app/src/main/assets/dungeon.js
       - name: Run JavaScript regression suites — no Android APK build
@@ -37,6 +39,7 @@ jobs:
           node tests/contracts.test.js
           node tests/v08.test.js
           node tests/sprites.test.js
+          node tests/modern-sprites.test.js
           node tests/visual-combat.test.js
           node tests/events-art.test.js
       - name: Bundle 18 PNG sheets for art review (no APK)

@@ -301,6 +301,13 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 @media(max-width:850px){.contract-entry .guild-status{font-size:8px}.class-icon{width:16px;height:16px}.roster-entry .guild-status{font-size:7px}.contract-type{font-size:8px}}
 @media(max-height:420px){.contract-return-track{height:6px;margin:4px 0}.guild-status{padding:2px 4px}.contract-entry .guild-identity{margin-bottom:3px}}
 
+/* Knight v2 preview button: usable in shop and dungeon, not part of saved state. */
+.knight-art-toggle{flex-shrink:0;background:#23384a;border:1px solid #b99559;color:#f3dfaa;font:bold 9px Arial,sans-serif;letter-spacing:.2px;min-height:24px;padding:3px 7px;cursor:pointer}
+.knight-art-toggle.active{background:#37534e;border-color:#a6c9a6;color:#e7f8d6}
+.knight-art-toggle:focus-visible{outline:2px solid #f4d9a0;outline-offset:1px}
+@media(max-width:850px){.knight-art-toggle{font-size:7px;padding:2px 4px;min-height:22px}}
+@media(max-height:420px){.knight-art-toggle{min-height:19px;font-size:7px}}
+
 /* Shop layout pass A: deliberately scoped to the shop view, leaving the
    dungeon camera/controls and full-screen contract/roster interfaces intact. */
 .scene-wrap.shop-mode{
