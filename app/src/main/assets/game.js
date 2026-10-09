@@ -4,7 +4,7 @@ const E=window.DFEconomy,D=window.DFDungeon,C=window.DFContracts,$=id=>document.
 let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.valid(old))s=Object.assign(E.initialState(),old)}catch(e){}
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
 // Strict preview opt-in; standard APK and ordinary game launches stay on v1 art.
-if(window.DFModernSprites)window.DFModernSprites.setEnabled(new URLSearchParams(location.search).get('knightPreview')==='1');
+if(window.DFModernSprites)window.DFModernSprites.setEnabled((new URLSearchParams(location.search).get('actorPreview')==='1'||new URLSearchParams(location.search).get('knightPreview')==='1'));
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
 let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
@@ -18,14 +18,14 @@ function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerT
 function updateKnightToggle(){
  const b=$('knightArtToggle');if(!b)return;
  const on=!!(window.DFModernSprites&&window.DFModernSprites.isEnabled());
- b.textContent=on?'⚔ KNIGHT V2: ON':'⚔ KNIGHT V2: OFF';
+ b.textContent=on?'⚔ SIX CLASSES V2: ON':'⚔ SIX CLASSES V2: OFF';
  b.setAttribute('aria-pressed',String(on));
  b.classList.toggle('active',on);
 }
 $('knightArtToggle').onclick=()=>{
  if(!window.DFModernSprites)return;
  window.DFModernSprites.setEnabled(!window.DFModernSprites.isEnabled());
- if(window.DFModernSprites.isEnabled())window.DFModernSprites.preloadClass('Knight',['idle','walk','attack']);
+ if(window.DFModernSprites.isEnabled())for(const cls of window.DFModernSprites.classes)window.DFModernSprites.preloadClass(cls,['idle','walk','attack']);
  updateKnightToggle();
 };
 updateKnightToggle();
@@ -534,10 +534,10 @@ function draw(t){
  drawShopRoom(t);
  // Shoppers appear in front of the shopfront and may still be tapped.
  for(const c of guests){
-  // The same Knight art is used in the shop, public dungeon and contract runs.
+  // Every v2-approved class uses the same art in shop, public dungeon and contract runs.
   // Shop stage 0/2 means walking, stage 1 means waiting at the trade counter.
   let modernShop=false;
-  if(c.cls==='Knight'&&window.DFModernSprites){
+  if(window.DFModernSprites&&window.DFModernSprites.approvedClasses.has(c.cls)){
    g.save();g.translate(c.x,c.y);
    modernShop=window.DFModernSprites.draw(g,{
     cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking',
@@ -802,7 +802,7 @@ function drawDungeon(t){
   // walking direction. Monsters can stand on either side of an adventurer.
   // Only the transient render copy changes; saves/combat logic are untouched.
   let drawActorState=a;
-  if(a.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled()){
+  if(window.DFModernSprites&&window.DFModernSprites.isEnabled()&&window.DFModernSprites.approvedClasses.has(a.cls)){
    const face=window.DFModernSprites.combatFacing(a,ds.dungeon.monsters);
    drawActorState=Object.assign({},a,{facing:face});
   }
@@ -1004,7 +1004,7 @@ canvas.addEventListener('pointerup',e=>{
  }
  if(Math.pow((p.x-145)/82,2)+Math.pow((p.y-267)/99,2)<1&&p.y>175&&p.y<367){openDungeon();return}
  const customer=guests.find(c=>{
-  const modern=c.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled();
+  const modern=window.DFModernSprites&&window.DFModernSprites.isEnabled()&&window.DFModernSprites.approvedClasses.has(c.cls);
   return Math.abs(c.x-p.x)<(modern?43:35)&&Math.abs(c.y-(modern?55:25)-p.y)<(modern?63:50);
  });
  if(customer){
