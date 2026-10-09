@@ -76,6 +76,7 @@ function contractStatusLine(run){
 }
 function renderContractBoard(){
  const c=C.ensure(s),busy=C.busyIds(c);
+ for(const id of Array.from(chosenHires))if(!c.staff.some(a=>a.id===id)||busy.has(id))chosenHires.delete(id);
  const roster=c.staff.map(a=>{
   const occupied=busy.has(a.id),selected=chosenHires.has(a.id);
   return '<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · '+(occupied?'ON EXPEDITION':'AVAILABLE')+'</p><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(occupied?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':selected?'✓ SELECTED':'SELECT')+'</button></div></article>';
@@ -200,7 +201,14 @@ function tick(dt){
  if(!active||paused||visitorOpen)return;
  const dungeonReports=D.advance(s,dt);for(const report of dungeonReports)say('DUNGEON REPORT: '+report);
  const contractReports=C.advance(s,dt);for(const report of contractReports)say(report);
- if(contractReports.length){refreshContractBadge();persist();if(contractBoardOpen)renderContractBoard();}
+ if(contractReports.length){
+  refreshContractBadge();persist();
+  if(contractBoardOpen)renderContractBoard();
+  if(view==='contract'&&contractReports.some(r=>r.includes('FALLEN IN ACTION'))){
+   $('npcCard').classList.add('hidden');$('partyRoster').classList.add('hidden');
+   focusId=null;followId=currentContractRun()?.instance?.dungeon?.adventurers?.[0]?.id||null;
+  }
+ }
  s.clock+=dt;visitorCountdown-=dt;
  $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
  // Queue one visitor in the background; never pause or cover the dungeon.
