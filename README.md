@@ -4,6 +4,9 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 
 ## Next development phase: v0.8 (unreleased)
 
+**Pixel-art production plan:** [Asset directory layout, frame counts, file naming and implementation checklist](docs/SPRITE_PRODUCTION_PLAN.md).
+
+
 This work is available on branch `work/v0.8-roster-combat-treasure`. It has **not** been packaged as an APK.
 
 - **Adventurer Roster:** Open the ⚔ icon by the parchment Contract Board emblem or the ROSTER button on the board. Inspect persistent levels, experience, traits, weapon/armor/shield/supply slots, fatigue and wounds. Stage up to five hires for contracts and issue gear from shop stock.
