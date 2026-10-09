@@ -36,6 +36,17 @@ Valid frame sizes: **128 × 192, 256 × 384, or 512 × 768**, with transparent R
 
 Use `python3 tools/pack_anime_illustrated_frames.py --class Ranger` for the first finished 59-frame illustrated character. The validator outputs review-only assets under `art-previews/anime-painted-source`, **never** overwrites Android assets.
 
+## First V3 render integration completed (2026-10-09)
+
+- Added `app/src/main/assets/illustrated-sprites.js`, a separate artwork pipeline consuming `sprites/actors_v3/<class>/<action>.png`. The loader starts **OFF**, with **zero classes approved** and no background image requests.
+- Added the optional `?illustratedPreview=1` query switch for future testing. It does not affect the normal in-game `SIX CLASSES V2` toggle or persist in saves.
+- In `game.js`, shop customers and dungeon combat now attempt **painted V3 → proven animated V2 → original V1** in that order; missing or invalid painted sheets are harmless and cannot replace the fallback.
+- The new loader borrows existing `selectAction`, `frameIndex` and `facing` logic, so it preserves shop arrival/exit direction, ranged enemies to either side, and upright zero-HP retreat.
+- Automated `tests/illustrated-sprites.test.js` now checks opt-in gating, PNG dimensions, left/right facing, failed images, no silent file shipment and fallbacks. The review workflow also runs the current shop and modern sprite suites.
+- The Android package and source version remain **0.9.0-classes-preview.1 (versionCode 20)**. No new APK, release or painted frame is claimed.
+
+**Outstanding:** no complete 59-frame painted Ranger asset sequence exists yet. The generated anime poster is a design reference, not a transparent animatable source. Before any v3 art can be enabled, create and verify the actual 59 matching transparent Ranger frames with the validation tool.
+
 ## Integration gates
 1. User approval of a **real game-scale idle + walk + attack** example from the final illustrated source art.
 2. Validate full 59-frame source set, pivot registration, no background alpha, and neighboring frames against movement direction.
