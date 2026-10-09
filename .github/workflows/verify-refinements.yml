@@ -4,6 +4,7 @@ on:
     branches:
       - 'work/contract-refinements-v0.7.1'
       - 'work/v0.8-roster-combat-treasure'
+      - 'work/v0.9-shop-layout'
     paths:
       - 'app/src/main/assets/**'
       - 'tests/**'
