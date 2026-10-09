@@ -125,7 +125,8 @@ test('approved Knight prototype provides six offline animation strips with match
 test('all six approved preview classes render independently and shop action mapping has no gameplay side-effects',()=>{
  S.setEnabled(true);
  assert.equal(S.draw(ctx(),{cls:'Mage',hp:20,status:'idle'},1),false);
- assert.equal(S.preloadClass('Mage',['idle']),1);
+ assert.equal(S.preloadClass('Mage',['idle']),0,'first Mage draw already queued the atlas');
+ assert.equal(S.preloadClass('Mage',['walk']),1,'next Mage action queues once');
  assert.ok(S.approvedClasses.has('Mage'));
  assert.equal(S.preloadClass('UnlistedClass'),0);
  assert.equal(S.selectAction({cls:'Knight',hp:1,status:'waiting'}),'idle');
