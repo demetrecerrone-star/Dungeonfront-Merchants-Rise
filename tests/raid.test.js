@@ -16,7 +16,7 @@ test('existing merchant and dungeon progress survives upgrade to raid schema',()
  assert.equal(s.gold,1087);assert.equal(s.stock.potion,5);assert.equal(s.mats.iron,19);
  const hero=d.adventurers.find(x=>x.id===9);
  assert.equal(hero.hp,22);assert.equal(hero.x,620);assert.equal(hero.floor,4);
- assert.equal(d.schema,6);assert.equal(d.monsters.length,33);
+ assert.equal(d.schema,7);assert.equal(d.monsters.length,65);
  assert.ok(d.adventurers.some(x=>x.partyId));assert.ok(d.adventurers.some(x=>!x.partyId));
  const countBefore=d.adventurers.length;
  D.ensure(s);assert.equal(d.adventurers.length,countBefore);
@@ -34,7 +34,7 @@ test('parties and solos both enter dungeon and live on specific floors',()=>{
  assert.ok(entrants.some(x=>x.partyId===null));
  assert.ok(entrants.some(x=>x.partyId!==null));
  assert.ok(entrants.every(x=>x.floor===1));
- const a=entrants[0];a.floor=4;a.x=D.worldWidth-45;
+ const a=entrants[0];a.floor=4;a.x=D.worldWidth-45;a.clearedFloor=4;
  d.monsters.filter(m=>m.floor===4).forEach(m=>{m.hp=0;m.respawn=1000});
  D.advance(s,.05,()=>.2);
  assert.equal(a.floor,5,'hero transitions to only the next floor');
