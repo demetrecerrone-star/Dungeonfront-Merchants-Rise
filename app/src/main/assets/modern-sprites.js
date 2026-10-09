@@ -58,6 +58,10 @@ function preloadClass(cls,requested=['idle','walk','attack']){
 }
 function selectAction(a){
  if(!a||typeof a!=='object')return 'idle';
+ // An HP-zero adventurer may still be ALIVE and actively retreating.
+ // The simulation deliberately sends wounded Knights to the entrance at 0 HP.
+ // Never draw the prone death pose while their world position is moving.
+ if(['retreating','returning'].includes(a.status))return 'walk';
  if((a.hp||0)<=0)return 'death';
  if(a.fxType==='hit_flash'&&(a.fxTime||0)>0)return 'hurt';
  if(a.cls==='Cleric'&&a.fxType==='healing_pulse'&&(a.fxTime||0)>0)return 'special';
@@ -81,7 +85,11 @@ function frameIndex(a,action,t){
   return Math.min(def.frames-1,Math.floor((1-remains/.5)*def.frames));
  }
  // Do not store visual animation clocks in game saves.
- const position=Math.max(0,Number(t)||0)*def.fps;
+ // Retreat/return stride should match the faster travel speed, rather than
+ // appearing to slide between the old exploration-speed walking frames.
+ const walkFps=action==='walk'&&a.status==='retreating'?18:
+  action==='walk'&&a.status==='returning'?16:def.fps;
+ const position=Math.max(0,Number(t)||0)*walkFps;
  return def.loop?Math.floor(position)%def.frames:Math.min(def.frames-1,Math.floor(position));
 }
 function draw(g,a,t){
