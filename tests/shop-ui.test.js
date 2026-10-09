@@ -97,3 +97,30 @@ assert.equal(win.Dungeonfront.handleBack(),true);
 assert.ok(element('scene-wrap').classList.contains('shop-mode'), 'shop theme returns after extraction back button');
 console.log('PASS fantasy shop layout, themed inventory and preserved portal hitbox');
 
+
+const recorded=[];
+win.DFModernSprites={
+ enabled:false,
+ isEnabled(){return this.enabled},
+ setEnabled(v){this.enabled=v===true;return this.enabled},
+ preloadClass(cls,actions){assert.equal(cls,'Knight');assert.deepEqual(Array.from(actions),['idle','walk','attack']);return 3},
+ draw(g,a,t){
+  if(!this.enabled||a.cls!=='Knight')return false;
+  recorded.push(a.status);return true;
+ }
+};
+element('knightArtToggle').click();
+assert.equal(win.DFModernSprites.isEnabled(),true,'shop / dungeon toggle enables Knight preview');
+assert.ok(element('knightArtToggle').textContent.includes('ON'),'toggle visibly acknowledges enabled state');
+// Induce a deterministic Knight shopper without changing persistent game data.
+ctx.Math=Object.create(Math);ctx.Math.random=()=>0;
+for(let i=0;i<1150;i++)step();
+assert.ok(recorded.includes('walking'),'modern Knight walks into and out of the shop');
+assert.ok(recorded.includes('waiting'),'modern Knight idles at the shop counter');
+element('knightArtToggle').click();
+assert.equal(win.DFModernSprites.isEnabled(),false,'toggle can return to legacy art');
+const before=recorded.length;
+for(let i=0;i<50;i++)step();
+assert.equal(recorded.length,before,'v2 renderer not used when preview is off');
+assert.equal(win.Dungeonfront.getState().sales>=0,true);
+console.log('PASS Knight v2 shop animation preview toggle and original-art fallback');
