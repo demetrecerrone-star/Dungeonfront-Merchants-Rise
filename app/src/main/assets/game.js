@@ -355,39 +355,184 @@ function drawActor(x,y,color,t,role,cls,stage){
 }
 function stonework(x,y,w,h){box(x,y,w,h,'#343b3b');for(let yy=y;yy<y+h;yy+=26){for(let xx=x+((yy/26|0)%2)*18;xx<x+w;xx+=49){box(xx,yy,45,21,'#3f4240');box(xx,yy,45,3,'#56534b');box(xx+42,yy+3,3,18,'#222829')}}}
 function torch(x,y,t){box(x-2,y,4,27,'#7b5434');let flicker=Math.sin(t*9+x)*3;box(x-5,y-13+flicker,10,16,'#a34b25');box(x-3,y-9+flicker,6,13,'#e7a45a');box(x-1,y-7+flicker,3,9,'#ffe4a0')}
-function draw(t){if(view==='dungeon'||view==='contract'){drawDungeon(t);return}g.imageSmoothingEnabled=false;box(0,0,800,440,'#0c171e');
- for(let i=0;i<34;i++){let xx=(i*113+31)%800,yy=(i*47+11)%185;box(xx,yy,(i%3===0?2:1),2,'#8ca3a766')}
- for(let i=0;i<14;i++){let ridge=130+(i*19)%80;box(i*63,ridge,70,235,'#172226');box(i*63,ridge,65,4,'#283033')}
- for(let i=0;i<5;i++){let xx=((i*190+t*5)%1150)-200;box(xx,116+i*17,125,9,'#778e8e13')}
-
-box(0,365,800,75,'#242c2b');
- for(let y=378;y<445;y+=16){box(0,y,800,2,'#343a37');for(let x=((y/16|0)%2)*22;x<800;x+=51){box(x+3,y+3,43,10,'#2e3431');box(x+3,y+3,38,2,'#3c4039')}}
-
-// Dungeon, glowing portal and ancient gate.
-stonework(15,150,260,215);box(56,206,180,160,'#0a151b');g.fillStyle='#071019';g.beginPath();g.arc(146,220,89,Math.PI,0);g.fill();const alpha=.3+.1*Math.sin(t*2);g.fillStyle='rgba(81,178,166,'+alpha+')';g.beginPath();g.ellipse(145,271,62,92,0,0,Math.PI*2);g.fill();for(let i=0;i<12;i++){const xx=145+Math.sin(t+i*2)*50,yy=185+((i*29+t*16)%170);box(xx,yy,3,3,'#83aaa0')}for(let i=0;i<12;i++){let a=Math.PI+i*Math.PI/11;box(146+99*Math.cos(a)-13,219-103*Math.sin(a)-9,28,19,'#61605a')}box(21,139,250,16,'#6e6659');box(49,140,20,223,'#4f4f49');box(231,140,20,223,'#4f4f49');g.fillStyle='#e4c48c';g.textAlign='center';g.font='bold 17px Georgia';g.fillText('THE HOLLOW',145,94);g.font='11px Georgia';g.fillText('D E S C E N T',145,110);torch(49,205,t);torch(241,205,t);g.font='bold 11px Arial';g.textAlign='center';g.fillStyle='#c6e8d8';g.fillText('TAP TO ENTER',145,337);
-// Shop and sign.
-stonework(297,82,470,269);box(288,72,488,19,'#241e1a');box(293,86,474,8,'#856447');
- for(let i=0;i<24;i++){box(293+i*20,70+(i%3),17,6,'#594334');box(300+i*20,78,14,5,'#8e6342')}
- box(690,114,47,55,'#58412d');box(696,122,35,43,'#765436');box(706,129,16,21,'#be9a64');box(712,133,5,13,'#3a3529');
-box(300,339,469,64,'#3d3125');for(let yy=354;yy<408;yy+=12)box(303,yy,465,2,'#67513a');box(432,99,201,36,'#2a241e');stroke(432,99,201,36,'#a27a4a');g.fillStyle='#edd1a5';g.font='bold 13px Georgia';g.fillText('LAST LIGHT',532,114);g.font='9px Georgia';g.fillText('P R O V I S I O N S',532,125);
-// Shelves and counter.
-for(let j=0;j<2;j++){let x=330+j*115;box(x,163,92,12,'#62492f');box(x,233,92,12,'#62492f');box(x,164,6,95,'#4d3c2b');box(x+85,164,6,95,'#4d3c2b')}
-for(let i=0;i<Math.min(7,s.stock.potion);i++){let x=345+i*10;box(x,143,11,18,'#6e3b3f');box(x+2,145,7,12,'#a9554f');box(x+3,138,4,5,'#c9b495')}
-for(let i=0;i<Math.min(7,s.stock.torch);i++){box(335+i*11,212,4,22,'#926744')}
-for(let i=0;i<Math.min(7,s.stock.bandage);i++)box(455+i*12,149,9,10,'#c2b7a0');
-for(let i=0;i<Math.min(4,s.stock.blade);i++){box(479+i*17,210,3,27,'#b2b5b4');box(474+i*17,232,13,3,'#9d7550')}
-box(432,285,203,70,'#58402b');box(425,278,218,15,'#97704a');box(439,350,188,6,'#241c18');drawActor(590,288,'#75604b',t,'merchant');
-if(s.upgrades.forge){box(687,269,65,55,'#544039');box(705,279,35,10,'#e39c56');torch(722,269,t)}
-if(s.upgrades.shelf){box(319,260,82,10,'#86633b');for(let i=0;i<5;i++)box(326+i*14,245,8,16,'#675c4f')}
-if(s.upgrades.guard)drawActor(310,349,'#7e999b',t,'guard');
-if(s.upgrades.lantern)torch(660,162,t);
-torch(317,142,t);torch(648,142,t);
-for(const c of guests){drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);g.textAlign='center';box(c.x-31,c.y-59,62,14,'#1e2424');g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,c.y-49);if(c.stage===1&&c.line){box(c.x-50,c.y-89,100,19,'#e4d3b3');g.fillStyle='#332822';g.fillText(c.line,c.x,c.y-75)}}
-for(let i=0;i<20;i++){let x=(i*67+t*(i%2?17:-13)+8000)%800,y=(i*37+t*16)%440;box(x,y,2,8,'#8fa8ae30')}
-// Dusk gently changes the color of the marketplace over the day.
-const dusk=Math.max(0,Math.min(1,(s.clock-50)/45));
-if(dusk){g.fillStyle='rgba(6,13,29,'+(dusk*.23)+')';g.fillRect(0,0,800,440)}
-const shade=g.createLinearGradient(0,0,0,440);shade.addColorStop(0,'#00000088');shade.addColorStop(.4,'#00000000');shade.addColorStop(1,'#05070999');g.fillStyle=shade;g.fillRect(0,0,800,440);g.strokeStyle='#090c0d';g.lineWidth=9;g.strokeRect(0,0,800,440);
+/* Shop layout pass: warm interior + side-by-side gate, with unchanged
+   portal/customer hit targets and room dimensions (800 by 440). */
+function shopLamp(x,y,t){
+ const flick=Math.sin(t*5+x*.09)*2,heat=Math.max(0,Math.round(flick));
+ box(x-17,y-9,34,38,'#b9772a13');
+ box(x-11,y-3,22,26,'#e0a24d20');
+ box(x-3,y-30,6,15,'#483b2e');
+ box(x-11,y-13,22,3,'#9b7444');
+ box(x-8,y-10,16,22,'#3d3028');
+ box(x-6,y-7,12,16,'#bb723b');
+ box(x-4,y-5,8,12,'#eac07c');
+ box(x-2,y-5+heat,4,7,'#ffebad');
+ box(x-11,y+11,22,4,'#93714a');
+ box(x-4,y+15,8,3,'#53402d');
+}
+function shopStockShelf(x,y,wide){
+ box(x-5,y-4,wide+10,91,'#382c27');
+ box(x,y,wide,82,'#2a2925');
+ box(x,y,wide,4,'#a17b50');
+ box(x,y+38,wide,6,'#805c3b');
+ box(x,y+79,wide,6,'#805c3b');
+ box(x-6,y-7,8,98,'#65503c');box(x+wide-2,y-7,8,98,'#65503c');
+ box(x+5,y+47,wide-10,3,'#171e1f');
+}
+function drawShopRoom(t){
+ // Tall timber storefront creates clear shelving / counter / waiting zones.
+ stonework(292,96,479,262);
+ box(296,100,471,250,'#38352f');
+ for(let x=302;x<767;x+=69){
+  box(x,99,6,246,'#4e3a2c');box(x+7,103,2,240,'#72503a');
+ }
+ for(let y=115;y<344;y+=41)box(308,y,449,2,'#574535');
+ box(296,97,471,12,'#201c1a');
+ box(293,84,479,20,'#59412d');
+ box(300,88,462,5,'#986c42');
+ for(let x=292;x<772;x+=24){
+  box(x,77+(x%3),21,10,'#433327');box(x+4,83,14,4,'#735035');
+ }
+ box(292,69,480,9,'#201c1a');box(301,72,464,4,'#986e43');
+ // Framed shop crest can be read at native 800x440 and narrow landscape sizes.
+ box(434,102,198,43,'#171e20');
+ stroke(433,101,200,44,'#c69b60');
+ box(441,109,184,2,'#7c5738');
+ g.textAlign='center';g.fillStyle='#ffe6b0';
+ g.font='bold 16px Georgia';g.fillText('LAST LIGHT',533,125);
+ g.font='bold 9px Arial';g.fillStyle='#d8b989';g.fillText('P R O V I S I O N S',533,139);
+ // Deep shelves are the shop's focal point, not simply rectangles on a wall.
+ shopStockShelf(328,159,89);
+ shopStockShelf(448,159,90);
+ for(let i=0;i<Math.min(7,s.stock.potion||0);i++){
+  const x=338+i*11;
+  box(x,139,8,20,'#623937');box(x+1,143,6,14,'#bb645b');
+  box(x+2,135,4,5,'#d2b58c');box(x+2,150,4,2,'#e7aaa0');
+ }
+ for(let i=0;i<Math.min(7,s.stock.torch||0);i++){
+  const x=338+i*11;box(x,209,4,26,'#8e6a45');
+  box(x-1,206,6,5,'#de9a52');
+ }
+ for(let i=0;i<Math.min(7,s.stock.bandage||0);i++){
+  const x=458+i*11;box(x,146,9,11,'#ded0ae');
+  box(x+1,148,7,2,'#9c8b73');
+ }
+ for(let i=0;i<Math.min(4,s.stock.blade||0);i++){
+  const x=465+i*17;box(x+4,207,3,29,'#c9cfcd');
+  box(x+1,231,9,3,'#a97b4d');box(x+4,235,3,7,'#73543d');
+ }
+ if(s.upgrades.shelf){
+  shopStockShelf(331,264,91);
+  for(let i=0;i<5;i++){
+   box(341+i*15,258,9,11,'#806d55');
+   box(343+i*15,255,5,4,'#c1a17c');
+  }
+ }
+ // Glowing windows, crate stacks and forge upgrades frame the shopping stage.
+ box(681,144,70,113,'#211e1b');stroke(680,143,72,114,'#8f6943');
+ box(687,149,58,99,'#6b4b32');box(715,149,4,99,'#2a211d');
+ box(687,196,58,4,'#2a211d');
+ box(690,154,22,35,'#bc8e5c');box(722,154,20,35,'#bc8e5c');
+ for(let i=0;i<4;i++){box(704+i*9,172+(i%2)*3,2,3,'#fae6a2')}
+ box(708,251,26,11,'#7f5135');
+ box(686,290,51,49,'#47392e');box(691,295,41,39,'#674c36');
+ stroke(691,295,41,39,'#ad8153');
+ box(705,299,13,31,'#4b3428');box(696,309,31,9,'#4b3428');
+ if(s.upgrades.forge){
+  box(691,267,54,54,'#393334');box(697,274,42,13,'#c16e37');
+  box(701,276,34,5,'#f2bd63');torch(722,268,t);
+ }
+ // Merchant has a dedicated position BEHIND the counter. Later sprite art
+ // will use the same 590,299 anchor and cannot affect scene interactions.
+ box(559,251,63,54,'#342b24');
+ box(563,255,55,41,'#67492f');
+ drawActor(590,299,'#75604b',t,'merchant');
+ box(425,297,229,72,'#4f3322');
+ box(429,307,221,55,'#65452d');
+ for(let x=439;x<650;x+=33)box(x,310,3,48,'#87603d');
+ for(let y=317;y<353;y+=18)box(431,y,217,3,'#966f49');
+ box(419,290,242,18,'#b18a58');
+ box(425,289,231,5,'#e2bc7b');
+ box(425,363,229,6,'#291e18');
+ box(546,331,87,20,'#382c22');
+ stroke(546,331,87,20,'#b79056');
+ g.fillStyle='#ebcd90';g.font='bold 9px Arial';g.fillText('TRADE COUNTER',590,344);
+ // Lamps are fixed to the shop walls and cast a subtle animated warm glow.
+ shopLamp(316,152,t);shopLamp(647,150,t);
+ if(s.upgrades.lantern)shopLamp(660,213,t);
+ // Warm queue lane remains open to the customer click targets.
+ box(311,371,442,4,'#7d6245');box(308,375,448,6,'#272521');
+ box(309,343,5,31,'#9a784f');box(751,343,5,31,'#9a784f');
+ box(310,341,26,8,'#b38a55');box(729,341,26,8,'#b38a55');
+ if(s.upgrades.guard)drawActor(311,347,'#7e999b',t,'guard');
+}
+function draw(t){
+ if(view==='dungeon'||view==='contract'){drawDungeon(t);return}
+ g.imageSmoothingEnabled=false;
+ const sky=g.createLinearGradient(0,0,0,440);
+ sky.addColorStop(0,'#172a30');sky.addColorStop(1,'#0b151a');
+ g.fillStyle=sky;g.fillRect(0,0,800,440);
+ // Dungeon-side exterior; keep the legacy x=145 entrance hit area.
+ for(let i=0;i<16;i++){
+  const x=i*47,roof=114+(i*37)%75;
+  box(x,roof,50,248,'#18272a');box(x,roof,46,4,'#293738');
+ }
+ for(let i=0;i<20;i++){
+  const x=(i*83+17)%800,y=(i*41+19)%145;
+  box(x,y,2,2,'#c2b88d44');
+ }
+ // Street cobbles and timber threshold tie both buildings together.
+ box(0,362,800,78,'#302d27');
+ for(let y=373;y<446;y+=18){
+  box(0,y,800,2,'#514437');
+  for(let x=((Math.floor(y/18)%2)*24);x<800;x+=52){
+   box(x+2,y+4,45,10,(x+y)%3===0?'#3e3930':'#36342e');
+   box(x+3,y+4,39,2,'#5c4d3b');
+  }
+ }
+ // The dungeon entrance is the left-side destination, never the shop.
+ stonework(13,150,264,214);
+ box(46,201,203,162,'#0c1519');
+ g.fillStyle='#071217';g.beginPath();g.arc(145,221,92,Math.PI,0);g.fill();
+ const glow=.30+.08*Math.sin(t*2);
+ g.fillStyle='rgba(67,189,167,'+glow+')';g.beginPath();g.ellipse(145,267,63,95,0,0,Math.PI*2);g.fill();
+ for(let i=0;i<13;i++){
+  const x=145+Math.sin(t+i*2)*48,y=183+((i*29+t*18)%165);
+  box(x,y,3,3,i%3===0?'#a9fff0':'#76b9a9');
+ }
+ for(let i=0;i<12;i++){
+  const a=Math.PI+i*Math.PI/11;
+  box(146+101*Math.cos(a)-13,219-103*Math.sin(a)-9,28,19,'#676157');
+ }
+ box(15,143,259,13,'#78634a');
+ box(27,156,14,208,'#4e4840');box(253,156,14,208,'#4e4840');
+ box(22,137,247,9,'#aa8257');
+ shopLamp(33,198,t);shopLamp(254,198,t);
+ g.textAlign='center';g.fillStyle='#f5daa8';
+ g.font='bold 17px Georgia';g.fillText('THE HOLLOW',145,94);
+ g.font='bold 10px Arial';g.fillText('D E S C E N T',145,111);
+ box(80,335,131,20,'#172923');
+ stroke(80,335,131,20,'#78ad8d');
+ g.font='bold 11px Arial';g.fillStyle='#b9f0d1';g.fillText('TAP TO ENTER',145,349);
+ drawShopRoom(t);
+ // Shoppers appear in front of the shopfront and may still be tapped.
+ for(const c of guests){
+  drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);
+  g.textAlign='center';
+  box(c.x-31,c.y-59,62,14,'#1e2424');
+  g.font='bold 10px Arial';g.fillStyle='#ebd4aa';g.fillText(c.name,c.x,c.y-49);
+  if(c.stage===1&&c.line){
+   box(c.x-50,c.y-89,100,19,'#e4d3b3');
+   g.fillStyle='#332822';g.fillText(c.line,c.x,c.y-75);
+  }
+ }
+ // Time-of-day tint and soft vignette stop short of obscuring shop text.
+ const dusk=Math.max(0,Math.min(1,(s.clock-50)/45));
+ if(dusk){g.fillStyle='rgba(6,13,29,'+(dusk*.17)+')';g.fillRect(0,0,800,440)}
+ const shade=g.createLinearGradient(0,0,0,440);
+ shade.addColorStop(0,'#00000055');shade.addColorStop(.5,'#00000000');shade.addColorStop(1,'#05070988');
+ g.fillStyle=shade;g.fillRect(0,0,800,440);
+ g.strokeStyle='#090c0d';g.lineWidth=7;g.strokeRect(0,0,800,440);
 }
 
 /* The dungeon is a second camera onto the same persistent merchant world. */
