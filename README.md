@@ -1,4 +1,4 @@
-# Dungeonfront: Merchant's Rise — Android v0.4
+# Dungeonfront: Merchant's Rise — Android v0.5
 
 A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
 
@@ -10,9 +10,10 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 - Daily guild supply orders: fulfill requests from existing stock for extra gold and reputation. Existing saves remain compatible.
 - Dynamic, streamlined HUD with live stock warnings, a market-day progress bar, cleaner panels, tab icons, and transaction feedback.
 - Four special visitor encounters (herbalist, wounded ranger, scrap trader, pilgrim) with resource and reputation decisions; automatic save and one encounter per game day.
+- Clickable shop portal opens a side-scrolling, eight-floor dungeon watch: inspect adventurers and monsters, swipe horizontally, use floor controls, and watch simple combat and salvage progress. Shop sales send equipped adventurers into the dungeon; dungeon data saves with the existing local merchant save.
 - Landscape orientation and Android system navigation safe areas.
 - Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
-- Version **0.4** (Android versionCode **5**).
+- Version **0.5** (Android versionCode **6**).
 
 ## Build APK
 
@@ -38,7 +39,8 @@ If a previous APK used another signing key, uninstalling it before the first per
 ## Project architecture
 - `MainActivity.java`: Android WebView wrapper, system insets and offline loading.
 - `app/src/main/assets/index.html` / `styles.css`: responsive landscape interface and skippable intro.
-- `app/src/main/assets/game.js`: canvas scene, customer movement, auto-save and game events.
+- `app/src/main/assets/game.js`: shop and side-on dungeon canvas, camera and floor controls, customer movement, auto-save and game events.
+- `app/src/main/assets/dungeon.js`: persistent bounded dungeon expeditions, monster encounters and salvage rewards.
 - `app/src/main/assets/economy.js`: inventory, pricing, recipes, upgrades, expedition salvage.
 - `.github/workflows/build-android.yml`: APK build with reusable release signing when configured.
 
