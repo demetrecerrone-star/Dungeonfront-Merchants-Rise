@@ -31,6 +31,7 @@ jobs:
           node tests/v08.test.js
           node tests/sprites.test.js
           node tests/visual-combat.test.js
+          node tests/events-art.test.js
       - name: Bundle 18 PNG sheets for art review (no APK)
         uses: actions/upload-artifact@v4
         with:
@@ -46,6 +47,17 @@ jobs:
           path: |
             app/src/main/assets/sprites/monsters/**/*.png
             app/src/main/assets/sprites/effects/*.png
+            app/src/main/assets/sprites/manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Bundle animated dungeon events and guild icons (no APK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dungeonfront-Dungeon-Events-and-Guild-Icons
+          path: |
+            app/src/main/assets/sprites/events/**/*.png
+            app/src/main/assets/sprites/ui/**/*.png
             app/src/main/assets/sprites/manifest.json
           if-no-files-found: error
           retention-days: 30
