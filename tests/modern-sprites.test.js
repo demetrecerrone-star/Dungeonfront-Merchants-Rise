@@ -147,5 +147,54 @@ test('shop, dungeon, and contract dungeon use the same v2 renderer without modif
  assert.ok(html.indexOf('modern-knight-art.js')<html.indexOf('modern-sprites.js'));
  assert.ok(html.indexOf('modern-sprites.js')<html.indexOf('game.js'));
 });
+test('retreating with zero HP runs upright toward exit instead of sliding in death pose',()=>{
+ const wounded={cls:'Knight',hp:0,status:'retreating'};
+ assert.equal(S.selectAction(wounded),'walk','retreat has priority over zero HP');
+ assert.equal(S.facing(wounded),-1,'retreat faces the entrance at left');
+ assert.equal(S.selectAction({cls:'Knight',hp:0,status:'returning'}),'walk');
+ assert.equal(S.facing({status:'returning'}),-1);
+ assert.equal(S.selectAction({cls:'Knight',hp:0,status:'dead'}),'death','actual death still lies down');
+ assert.notEqual(S.frameIndex(wounded,'walk',.3),S.frameIndex({...wounded,status:'exploring'},'walk',.3),'retreat strides quicker');
+});
+test('shop and dungeon movement face actual travel direction (never backpedal)',()=>{
+ assert.equal(S.facing({cls:'Knight',hp:5,status:'walking',facing:1}),1,'shop arrival faces right');
+ assert.equal(S.facing({cls:'Knight',hp:5,status:'walking',facing:-1}),-1,'shop departure faces left');
+ assert.equal(S.facing({cls:'Knight',hp:5,status:'exploring'}),1,'exploration goes right');
+ assert.equal(S.facing({cls:'Knight',hp:5,status:'retreating'}),-1,'retreat goes left');
+ assert.equal(S.facing({cls:'Knight',hp:5,status:'walking',dx:-12}),-1);
+ assert.equal(S.facing({cls:'Knight',hp:5,status:'walking',dx:12}),1);
+ const game=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
+ assert.ok(game.includes('facing:c.stage===2?-1:1'),'shop departing Knights explicitly face left');
+ const spriteArt=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/modern-knight-art.js'),'utf8');
+ assert.ok(spriteArt.includes('walking?7:0'),'walking frames deliberately lean forward');
+});
+test('actual rendering mirrors left-moving Knight and keeps retreat frame upright',()=>{
+ const vm=require('node:vm');
+ const source=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/modern-sprites.js'),'utf8');
+ const world={};
+ world.globalThis=world;
+ world.Image=class {
+  constructor(){this.naturalWidth=0;this.naturalHeight=0}
+  set src(v){
+   this.url=v;this.naturalWidth=1280;this.naturalHeight=192;
+   if(this.onload)this.onload();
+  }
+ };
+ vm.runInNewContext(source,world);
+ const renderer=world.DFModernSprites;
+ renderer.setEnabled(true);
+ const a={cls:'Knight',hp:0,status:'retreating'};
+ const g=ctx();
+ assert.equal(renderer.draw(g,a,.2),false,'initial frame lazily loads');
+ assert.equal(renderer.draw(g,a,.2),true,'walk frame draws even at zero HP');
+ assert.ok(g.operations.some(op=>op[0]==='scale'&&op[1]===-1&&op[2]===1),'draw mirrored left');
+ const shop={cls:'Knight',hp:1,status:'walking',facing:1};
+ const h=ctx();
+ assert.equal(renderer.draw(h,shop,.2),true);
+ assert.ok(!h.operations.some(op=>op[0]==='scale'&&op[1]===-1),'shop arrival faces right');
+ const departing={...shop,facing:-1},left=ctx();
+ assert.equal(renderer.draw(left,departing,.2),true);
+ assert.ok(left.operations.some(op=>op[0]==='scale'&&op[1]===-1),'shop departure faces left');
+});
 delete global.Image;
 console.log('All '+checks+' modern actor renderer / save safety tests passed.');
