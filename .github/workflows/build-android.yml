@@ -51,7 +51,7 @@ jobs:
         run: |
           grep -q "applicationId 'com.dabski.dungeonfront'" app/build.gradle
           grep -q 'versionCode 17' app/build.gradle
-          grep -q "versionName '0.9.0-knight-preview.1'" app/build.gradle
+          grep -q "versionName '0.9.0-knight-preview.2'" app/build.gradle
       - name: Verify original uploaded Dabski cinematic
         run: |
           test -f app/src/main/assets/dabski_intro.mp4
@@ -92,7 +92,7 @@ jobs:
           "$APKSIGNER" verify --verbose "$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
           APK="$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.dabski.dungeonfront' versionCode='17' versionName='0.9.0-knight-preview.1'"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.dabski.dungeonfront' versionCode='17' versionName='0.9.0-knight-preview.2'"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.apk_label }}
