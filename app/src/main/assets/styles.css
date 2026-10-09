@@ -217,3 +217,42 @@ button{font-family:inherit;cursor:pointer;color:inherit}button:focus-visible{out
 .contract-letter .contract-alert{position:absolute;top:-5px;right:-6px;width:12px;height:12px;border-radius:50%;background:#d73739;border:2px solid #f8dab6;box-shadow:0 0 0 1px #341b20,0 0 8px #ec3a4188;z-index:2;pointer-events:none}
 .contract-letter .contract-alert.hidden{display:none}
 .contract-board .contract-death{color:#f1a7a2}
+
+/* v0.8 — concise guild roster with treatment and loadout controls. */
+.roster-shortcut{flex-shrink:0;width:31px;height:34px;background:linear-gradient(125deg,#47594f,#242f2d);color:#f5d8a1;border:1px solid #a18c62;border-radius:3px;font:700 20px Georgia,serif}
+.roster-shortcut:active{background:#796348}
+.roster-screen{position:absolute;inset:0;z-index:17;padding:10px 14px;background:radial-gradient(ellipse at 50% 15%,#303c36,#0a1517 85%);border:3px solid #816743;box-shadow:inset 0 0 0 4px #101b1d;display:flex;flex-direction:column;gap:7px}
+.roster-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #806b48;padding-bottom:6px}
+.roster-heading small{font:9px Arial,sans-serif;color:#c2a47e}
+.roster-heading h2{margin:2px 0;font:700 24px Georgia;color:#f2d59c;letter-spacing:1px}
+.roster-heading p{margin:0;font:11px Arial,sans-serif;color:#adbbb5}
+.roster-heading button,.roster-body button{border:1px solid #9d8056;background:#43362a;color:#f4dbad;border-radius:3px;padding:6px;font:bold 10px Arial,sans-serif;cursor:pointer}
+.roster-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(190px,42%) 1fr;gap:9px;overflow:hidden}
+.roster-list,.roster-detail{background:#101b1cec;border:1px solid #62543a;padding:8px;overflow:auto;min-height:0}
+.roster-list>h3,.roster-detail>h3{margin:-8px -8px 7px;padding:9px;background:#2c332f;color:#e7c588;font:700 12px Georgia}
+.roster-entry{width:100%;margin:0 0 5px;padding:9px 8px!important;text-align:left!important;background:#25312f!important;border:1px solid #536451!important;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.roster-entry.focused{border-color:#d8b271!important;background:#394237!important}
+.roster-entry strong{display:block;font:700 12px Georgia}
+.roster-entry small{display:block;color:#a5beb3;font:10px Arial,sans-serif;margin-top:3px}
+.roster-condition{font:bold 9px Arial,sans-serif;color:#a9d2a4;white-space:nowrap}
+.roster-condition.injured,.roster-condition.tired{color:#e8a277}
+.roster-condition.working{color:#85b1c9}
+.roster-selected{color:#e9be6a;font:700 17px Arial}
+.roster-detail-header{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.roster-detail-header small{color:#aaa697;font:9px Arial,sans-serif}
+.roster-detail-header h3{margin:5px 0;font:700 20px Georgia;color:#e9ca90}
+.roster-detail-header p{font:11px Arial,sans-serif;color:#c6d4c6;margin:2px 0}
+.roster-meters{display:grid;grid-template-columns:1fr 1fr;gap:9px;background:#1b2828;border:1px solid #4c594d;padding:8px;margin:10px 0}
+.roster-meters small{font:10px Arial,sans-serif;color:#d8bfa0}
+.roster-bar{margin-top:5px;height:7px;background:#493d35;border:1px solid #6d5b47}
+.roster-bar span{height:100%;display:block;background:#cc8a67}
+.roster-kit{color:#c7c8b6;font:11px/1.45 Arial,sans-serif}
+.roster-actions{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.roster-actions>button{align-self:flex-start}
+.roster-input-row{display:flex;align-items:center;gap:7px}
+.roster-input-row select{flex:1;min-width:0;min-height:30px;font:11px Arial,sans-serif;background:#1f2e2e;color:#f2dbb7;border:1px solid #806b4a;padding:5px}
+.roster-input-row button{min-width:85px}
+.roster-body button.selected{background:#48624d!important;color:#f9e9bb!important;border-color:#a1c39b!important}
+.roster-body button:disabled{opacity:.4!important;cursor:default}
+@media(max-width:850px){.roster-screen{padding:6px}.roster-heading h2{font-size:18px}.roster-heading p{font-size:9px}.roster-entry{padding:6px!important}.roster-entry small{font-size:9px}.roster-body{grid-template-columns:minmax(160px,41%) 1fr}}
+@media(max-height:420px){.roster-screen{gap:3px}.roster-heading h2{font-size:16px}.roster-meters{margin:4px 0}.roster-kit{margin:5px 0}.roster-actions{gap:4px;margin-top:5px}.roster-detail-header h3{font-size:16px}}
