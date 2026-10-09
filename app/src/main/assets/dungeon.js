@@ -191,10 +191,11 @@ function award(s,d,a,m,random,reports){
  const qty=m.boss?6:1;
  // Ancient relics are a secondary, rarer source of merchant profit.
  if(m.boss||Number(random())<.26){
-  const found=m.boss?3:1;
+  const found=m.boss?1:1;
+  const rarity=m.boss?'gem':Number(random())<.17?'essence':'relic';
   d.relicsFound+=found;
-  s.loot.relic=(s.loot.relic||0)+found;
-  reports.push(a.name+' recovered '+found+' dungeon relic'+(found===1?'':'s')+'.');
+  s.loot[rarity]=(s.loot[rarity]||0)+found;
+  reports.push(a.name+' recovered '+found+' '+rarity+' ('+(m.boss?'epic':rarity==='essence'?'rare':'uncommon')+').');
  }
  if(s.mats&&Number.isFinite(s.mats[mat])){
   s.mats[mat]+=qty;d.lootFound+=qty;
@@ -253,7 +254,7 @@ function advance(s,seconds,rng){
    a.status='fighting';
    if(a.cooldown<=0){
     const gear=String(a.gear||'').toLowerCase();
-    const attack=7+Math.floor(a.level/3)+(a.cls==='Mage'?4:0)+(gear.includes('blade')||gear.includes('sword')?3:0);
+    const attack=7+Math.floor(a.level/3)+(a.cls==='Mage'?4:0)+(gear.includes('blade')||gear.includes('sword')?3:0)+(a.trait==='Fierce'?3:0)+(a.trait==='Keen'?2:0);
     target.hp=Math.max(0,target.hp-attack);
     a.cooldown=.65;a.swing=.23;target.flash=.18;
     if(target.hp===0){target.respawn=target.boss?90:3+Math.max(0,Math.min(2,Number(random())*2));award(s,d,a,target,random,reports);a.status='exploring'}
