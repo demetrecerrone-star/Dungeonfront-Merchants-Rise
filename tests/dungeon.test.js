@@ -40,6 +40,20 @@ test('expedition roster stays bounded and survives round-trip save',()=>{
  assert.ok(restored.dungeon.nextId>=49);
 });
 
+test('defeating the actual raid boss leads to a one-way portal extraction',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ const boss=d.monsters.find(m=>m.boss);
+ const raider=D.enter(s,{name:'Boss Slayer',cls:'Knight',level:40},'Iron Shortsword');
+ raider.floor=D.bossFloor;raider.x=boss.x;raider.cooldown=0;
+ boss.hp=1;boss.cooldown=5;
+ D.advance(s,.05,()=>.3);
+ assert.equal(d.bossDefeats,1,'raid victory registered');
+ assert.equal(raider.bossClearedFloor,D.bossFloor,'winning hero earned exit');
+ for(let i=0;i<130&&d.adventurers.some(a=>a.id===raider.id);i++)D.advance(s,.05,()=>.3);
+ assert.equal(d.adventurers.some(a=>a.id===raider.id),false,'boss slayer exited the raid');
+ assert.ok(d.raidReturns.some(a=>a.name==='Boss Slayer'),'extraction is recorded');
+ assert.equal(d.bossDefeats,1,'boss did not get farmed again during extraction');
+});
 test('raid victors pass through the exit once instead of resetting to fight the boss again',()=>{
  const s=E.initialState(),d=D.ensure(s);
  const hero=D.enter(s,{name:'Raider',cls:'Knight',level:18},'Iron Shortsword');
