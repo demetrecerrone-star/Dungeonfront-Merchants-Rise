@@ -260,13 +260,18 @@ function advance(s,seconds,rng){
  const d=ensure(s),dt=Math.min(.1,Math.max(0,Number(seconds)||0)),random=typeof rng==='function'?rng:Math.random,reports=[];
  if(!dt)return reports;
  for(const m of d.monsters){
-  if(m.hp<=0){m.respawn-=dt;if(m.respawn<=0){m.hp=m.maxHp;m.respawn=0;m.cooldown=0;m.x=m.homeX}continue}
+  // Effect clocks drive sprites without changing the combat RNG or damage.
+  m.flash=Math.max(0,(m.flash||0)-dt);
+  m.attackFX=Math.max(0,(m.attackFX||0)-dt);
+  m.deathFX=Math.max(0,(m.deathFX||0)-dt);
+  if(m.hp<=0){m.respawn-=dt;if(m.respawn<=0){m.hp=m.maxHp;m.respawn=0;m.cooldown=0;m.x=m.homeX;m.deathFX=0}continue}
   m.cooldown=Math.max(0,(m.cooldown||0)-dt);
   m.phase=(m.phase||0)+dt;
   if(!m.boss){m.x=Math.max(m.homeX-32,Math.min(m.homeX+32,m.homeX+Math.sin(m.phase*.9)*32))}
  }
  for(const a of d.adventurers){
   a.cooldown=Math.max(0,(a.cooldown||0)-dt);
+  a.fxTime=Math.max(0,(a.fxTime||0)-dt);
   // All floors have an exit portal at their START (x=65).
   // Returning parties move toward it without starting new fights.
   if(a.status==='extracted')continue;
@@ -304,7 +309,7 @@ function advance(s,seconds,rng){
    if(wounded){
     const heal=11+Math.ceil(a.level/2);
     wounded.hp=Math.min(wounded.maxHp,wounded.hp+heal);
-    a.healCharges--;a.cooldown=1.4;a.status='healing';a.special='heal';
+    a.healCharges--;a.cooldown=1.4;a.status='healing';a.special='heal';a.fxType='healing_pulse';a.fxTime=.5;
     reports.push(a.name+' healed '+wounded.name+' for '+heal+' HP.');
     continue;
    }
@@ -334,10 +339,16 @@ function advance(s,seconds,rng){
     const base=7+Math.floor(a.level/3)+(a.cls==='Mage'?5:0)+(gear.includes('blade')||gear.includes('sword')?3:0)+(a.trait==='Fierce'?3:0)+(a.trait==='Keen'?2:0);
     const boost=(weapon==='staff'&&a.cls==='Mage'?6:0)+(weapon==='bow'&&a.cls==='Ranger'?5:0)+(weapon==='forged'?7:0)+(weapon==='blade'?3:0);
     const attack=(base+boost)*(crit?2:1);
-    if(crit)a.special='critical';else if(a.cls==='Mage')a.special='spell';else if(a.cls==='Ranger')a.special='arrow';
+    if(crit)a.special='critical';else if(a.cls==='Mage')a.special='spell';else if(a.cls==='Ranger')a.special='arrow';else a.special='slash';
+    a.fxType=crit?'critical':a.cls==='Mage'?'magic_bolt':a.cls==='Ranger'?'arrow':a.cls==='Mercenary'?'heavy_slash':'slash';
+    a.fxTime=.34;
     target.hp=Math.max(0,target.hp-attack);
     a.cooldown=a.cls==='Rogue'?.4:a.cls==='Mage'?.9:a.cls==='Ranger'?.72:.65;a.swing=.23;target.flash=.18;
-    if(target.hp===0){target.respawn=target.boss?90:3+Math.max(0,Math.min(2,Number(random())*2));award(s,d,a,target,random,reports);a.status='exploring'}
+    if(target.hp===0){
+     target.deathFX=target.boss?.85:.65;target.deathDuration=target.deathFX;
+     target.respawn=target.boss?90:3+Math.max(0,Math.min(2,Number(random())*2));
+     award(s,d,a,target,random,reports);a.status='exploring';
+    }
    }
    if(target.hp>0&&target.cooldown<=0){
     const tank=party.find(x=>x.cls==='Knight'&&x.hp>0&&Math.abs(x.x-target.x)<98);
@@ -346,7 +357,8 @@ function advance(s,seconds,rng){
     const shield=defender.equipment?.offhand==='shield'?2:0;
     const hit=Math.max(1,monsterKinds[target.kind].damage-(defender.trait==='Steadfast'?2:0)-armour-shield);
     defender.hp=Math.max(0,defender.hp-hit);
-    if(defender!==a)defender.special='block';
+    if(defender!==a){defender.special='block';defender.fxType='hit_flash';defender.fxTime=.22;}
+    target.attackFX=.5;
     target.cooldown=target.boss?.8:1.2;
     if(defender.hp===0){defender.status='retreating';reports.push(defender.name+' was wounded defending the party on floor '+defender.floor+'.')}
    }
