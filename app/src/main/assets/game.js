@@ -5,6 +5,9 @@ let s=E.initialState();try{const old=JSON.parse(localStorage.getItem(key));if(E.
 const canvas=$('scene'),g=canvas.getContext('2d',{alpha:false});
 // Strict preview opt-in; standard APK and ordinary game launches stay on v1 art.
 if(window.DFModernSprites)window.DFModernSprites.setEnabled((new URLSearchParams(location.search).get('actorPreview')==='1'||new URLSearchParams(location.search).get('knightPreview')==='1'));
+// Painted v3 is a separate, explicitly opted-in experimental layer. With no
+// approved v3 packs, every draw still takes the tested v2/v1 pathway.
+if(window.DFIllustratedSprites)window.DFIllustratedSprites.setEnabled(new URLSearchParams(location.search).get('illustratedPreview')==='1');
 let active=false,paused=false,tab='stock',guests=[],next=2,clock=0,uiClock=0,last=performance.now(),selected=null,renderDue=0,guestId=0;
 let panelDirty=true,lastPanelHTML=null,lastPanelTab=null;
 let visitorCountdown=22,visitorOpen=false,toastTimer=0,shownGold=null,shownRep=null;
@@ -539,10 +542,10 @@ function draw(t){
   let modernShop=false;
   if(window.DFModernSprites&&window.DFModernSprites.approvedClasses.has(c.cls)){
    g.save();g.translate(c.x,c.y);
-   modernShop=window.DFModernSprites.draw(g,{
-    cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking',
-    facing:c.stage===2?-1:1
-   },t);
+   const actor={cls:c.cls,hp:1,status:c.stage===1?'waiting':'walking',
+    facing:c.stage===2?-1:1};
+   modernShop=!!(window.DFIllustratedSprites&&window.DFIllustratedSprites.draw(g,actor,t))||
+    window.DFModernSprites.draw(g,actor,t);
    g.restore();
   }
   if(!modernShop)drawActor(c.x,c.y,c.color,t,'customer',c.cls,c.stage);
@@ -806,8 +809,9 @@ function drawDungeon(t){
    const face=window.DFModernSprites.combatFacing(a,ds.dungeon.monsters);
    drawActorState=Object.assign({},a,{facing:face});
   }
-  const modern=window.DFModernSprites&&window.DFModernSprites.draw(g,drawActorState,t);
-  if(!modern){
+  const illustrated=window.DFIllustratedSprites&&window.DFIllustratedSprites.draw(g,drawActorState,t);
+  const modern=!illustrated&&window.DFModernSprites&&window.DFModernSprites.draw(g,drawActorState,t);
+  if(!illustrated&&!modern){
    g.scale(2.1,2.1);
    if(!(window.DFSprites&&window.DFSprites.draw(g,a,t)))drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
   }
