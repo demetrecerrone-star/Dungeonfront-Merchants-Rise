@@ -116,7 +116,7 @@ test('party inspection retains all members across separate floors',()=>{
  members[1].floor=4;
  assert.equal(D.partyMembers(s,'P1').length,3,'moving a member does not hide them from party roster');
  const src=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
- assert.ok(src.includes('D.partyMembers(s,o.partyId)'),'party screen must enumerate every member');
+ assert.ok(src.includes('D.partyMembers(ds,o.partyId)'),'party screen must enumerate every member');
  assert.ok(src.includes('data-member-id'),'party screen must offer a distinct button per member');
  assert.ok(src.includes("$('partyRoster').addEventListener('click'"),'member buttons must be selectable');
 });
