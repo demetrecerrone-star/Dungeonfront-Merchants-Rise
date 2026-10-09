@@ -803,11 +803,7 @@ function drawDungeon(t){
   // Only the transient render copy changes; saves/combat logic are untouched.
   let drawActorState=a;
   if(a.cls==='Knight'&&window.DFModernSprites&&window.DFModernSprites.isEnabled()){
-   const movingOut=a.status==='retreating'||a.status==='returning';
-   const inCombat=a.status==='fighting'||(a.swing||0)>0;
-   const enemy=inCombat?ds.dungeon.monsters.find(m=>
-    m.floor===a.floor&&(m.hp>0||(m.deathFX||0)>0)&&Math.abs(m.x-a.x)<48):null;
-   const face=movingOut?-1:enemy?(enemy.x<a.x?-1:1):1;
+   const face=window.DFModernSprites.combatFacing(a,ds.dungeon.monsters);
    drawActorState=Object.assign({},a,{facing:face});
   }
   const modern=window.DFModernSprites&&window.DFModernSprites.draw(g,drawActorState,t);
