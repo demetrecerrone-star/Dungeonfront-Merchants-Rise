@@ -173,6 +173,10 @@ public final class VisualSmokeTest {
         // come from actual stage / movement, including shop departure.
         assertEquals("\"walk\"",eval("window.DFModernSprites.selectAction({cls:'Knight',hp:0,status:'retreating'})"));
         assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:0,status:'retreating'})"));
+        assertEquals("-1",eval("window.DFModernSprites.combatFacing({cls:'Knight',hp:30,floor:3,x:200,status:'fighting'},[{floor:3,hp:30,x:171}])"));
+        assertEquals("1",eval("window.DFModernSprites.combatFacing({cls:'Knight',hp:30,floor:3,x:200,status:'fighting'},[{floor:3,hp:30,x:231}])"));
+        assertEquals("true",eval("Boolean(window.DFModernKnightArt.svg('walk').includes('unmistakable knight helmet PROFILE'))"));
+        assertEquals("true",eval("Boolean(window.DFModernKnightArt.svg('attack').includes('shoulder / sword arm point towards destination'))"));
         assertEquals("-1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:-1})"));
         assertEquals("1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:1})"));
         assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:0,status:'retreating'},2))"));
