@@ -2,6 +2,9 @@ package com.dabski.dungeonfront;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.content.ContentValues;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.os.SystemClock;
 import android.webkit.WebView;
 import android.view.View;
@@ -16,8 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,7 +28,7 @@ import static org.junit.Assert.*;
 
 /**
  * Real Android WebView smoke tests (API 35, landscape).
- * Screenshots: /sdcard/Android/data/com.dabski.dungeonfront/files/qa-*.png
+ * Screenshots: MediaStore Pictures/DungeonfrontQA/qa-*.png (survive test APK uninstall)
  * No network permissions, no signing keys, no APK release and no save-key changes.
  */
 @RunWith(AndroidJUnit4.class)
@@ -88,17 +90,24 @@ public final class VisualSmokeTest {
     private void screenshot(String tag) {
         Bitmap bitmap=InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
         assertNotNull("No emulator framebuffer",bitmap);
+        Uri mediaUri=null;
         try {
-            File base=activity.getExternalFilesDir(null);
-            assertNotNull(base);
-            File dest=new File(base,"qa-"+tag+".png");
-            try(FileOutputStream out=new FileOutputStream(dest)){
+            ContentValues props=new ContentValues();
+            props.put(MediaStore.MediaColumns.DISPLAY_NAME,"qa-"+tag+".png");
+            props.put(MediaStore.MediaColumns.MIME_TYPE,"image/png");
+            props.put(MediaStore.MediaColumns.RELATIVE_PATH,"Pictures/DungeonfrontQA");
+            mediaUri=activity.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,props);
+            assertNotNull("Cannot reserve screenshot in shared Pictures folder",mediaUri);
+            try(OutputStream out=activity.getContentResolver().openOutputStream(mediaUri)){
+                assertNotNull("Cannot write screenshot file",out);
                 assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,out));
             }
-            android.util.Log.i("DungeonfrontQA","Captured: "+dest.getAbsolutePath()
+            android.util.Log.i("DungeonfrontQA","Captured MediaStore: "+mediaUri
                 +" size="+bitmap.getWidth()+"x"+bitmap.getHeight());
-        }catch(Exception e){throw new AssertionError("Could not save "+tag+" screenshot",e);}
-        finally{bitmap.recycle();}
+        }catch(Exception e){
+            if(mediaUri!=null)activity.getContentResolver().delete(mediaUri,null,null);
+            throw new AssertionError("Could not save "+tag+" screenshot",e);
+        }finally{bitmap.recycle();}
     }
 
     @Test public void shopLoadsWithAssetsAndLandscapeGeometry() {
