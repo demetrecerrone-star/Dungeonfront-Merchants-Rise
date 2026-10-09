@@ -223,6 +223,8 @@ function discover(s,d,a,event,random,reports){
  if(!a.seenEvents)a.seenEvents=[];
  if(a.seenEvents.includes(event.id))return;
  a.seenEvents.push(event.id);
+ // This brief visual-only timer does not affect discovery, treasure or payout.
+ event.visualPulse=.65;
  const n=event.floor;
  switch(event.type){
  case 'chest':{
@@ -259,6 +261,7 @@ function discover(s,d,a,event,random,reports){
 function advance(s,seconds,rng){
  const d=ensure(s),dt=Math.min(.1,Math.max(0,Number(seconds)||0)),random=typeof rng==='function'?rng:Math.random,reports=[];
  if(!dt)return reports;
+ for(const event of d.events||[])if(event.visualPulse>0)event.visualPulse=Math.max(0,event.visualPulse-dt);
  for(const m of d.monsters){
   // Effect clocks drive sprites without changing the combat RNG or damage.
   m.flash=Math.max(0,(m.flash||0)-dt);
