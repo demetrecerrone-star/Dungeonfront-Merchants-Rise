@@ -46,16 +46,13 @@ jobs:
             adb shell wm density 425
             adb shell wm size
             adb shell wm density
-            set +e
-            gradle --no-daemon :app:connectedDebugAndroidTest > android-emulator-qa.log 2>&1
-            result=$?
-            tail -n 90 android-emulator-qa.log
+            gradle --no-daemon :app:connectedDebugAndroidTest > android-emulator-qa.log 2>&1 || { tail -n 110 android-emulator-qa.log; exit 1; }
+            tail -n 60 android-emulator-qa.log
             mkdir -p qa-screenshots
-            adb pull /sdcard/Android/data/com.dabski.dungeonfront/files/. qa-screenshots/ || true
+            adb pull /sdcard/Pictures/DungeonfrontQA/. qa-screenshots/ || true
             adb logcat -d -s DungeonfrontQA:I chromium:E WebViewFactory:E > qa-screenshots/emulator-logcat.txt || true
             adb shell wm size > qa-screenshots/display-size.txt || true
             adb shell wm density >> qa-screenshots/display-size.txt || true
-            exit "$result"
       - name: Upload emulator screenshots, performance log and test reports
         if: always()
         uses: actions/upload-artifact@v4
