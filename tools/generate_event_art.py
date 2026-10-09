@@ -85,7 +85,8 @@ def event_sprite(kind,action):
     top=25-extended
     if extended>2:
      L(x,25,x,top+2,5,2);L(x-2,top+5,x,top,3,2);L(x+2,top+5,x,top,3,2)
-    else:R(x,23,2,2,3)
+    else:R(x,23-(1 if pulse==2 and not anim else 0),2,2,3)
+   if not anim and pulse==2:R(17,20,2,2,6)
   elif kind=="shrine":
    B(10,13,12,15,2);R(12,14,8,11,3);R(8,27,16,3,4)
    B(8,11,16,4,4);R(12,7,8,5,3)
