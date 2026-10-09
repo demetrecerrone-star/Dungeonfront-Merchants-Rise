@@ -9,6 +9,11 @@ on:
       - 'tools/generate_remaining_actor_art.js'
       - 'tools/build_anime_style_preview.py'
       - 'tools/pack_anime_illustrated_frames.py'
+      - 'app/src/main/assets/illustrated-sprites.js'
+      - 'app/src/main/assets/game.js'
+      - 'app/src/main/assets/index.html'
+      - 'tests/illustrated-sprites.test.js'
+      - 'tests/modern-sprites.test.js'
       - 'tests/test_anime_frame_pack.py'
       - 'app/src/main/assets/modern-knight-art.js'
       - 'tests/anime-style-polish.test.js'
@@ -35,6 +40,10 @@ jobs:
           node --check tools/generate_remaining_actor_art.js
           node --check app/src/main/assets/modern-knight-art.js
           node tests/anime-style-polish.test.js
+          node --check app/src/main/assets/illustrated-sprites.js
+          node tests/illustrated-sprites.test.js
+          node tests/modern-sprites.test.js
+          node tests/shop-ui.test.js
           node tests/remaining-actors-v2.test.js
           grep -q 'dungeonfront_merchants_rise_save_v1' app/src/main/assets/game.js
           grep -q 'versionCode 20' app/build.gradle
