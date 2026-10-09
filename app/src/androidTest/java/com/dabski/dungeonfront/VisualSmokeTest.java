@@ -181,6 +181,11 @@ public final class VisualSmokeTest {
         assertEquals("1",eval("window.DFModernSprites.facing({cls:'Knight',hp:100,status:'walking',facing:1})"));
         assertEquals("true",eval("Boolean(window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Knight',hp:0,status:'retreating'},2))"));
         assertEquals("false",eval("window.DFModernSprites.draw(document.getElementById('scene').getContext('2d'),{cls:'Mage',hp:100,status:'waiting'},2)"));
+        // Capture an actual on-screen sprite preview, not just a Boolean
+        // rendering assertion. This makes forward-facing silhouette reviewable.
+        eval("(function(){const c=document.createElement('canvas');c.id='qaKnightFacing';c.width=800;c.height=290;c.style.cssText='position:fixed;left:9vw;top:25vh;width:75vw;height:43vh;z-index:99999;background:#17222c;border:3px solid #b88b54';document.body.appendChild(c);const g=c.getContext('2d');const arr=[{cls:'Knight',hp:100,status:'walking',facing:1},{cls:'Knight',hp:100,status:'walking',facing:-1},{cls:'Knight',hp:100,status:'fighting',swing:.18,facing:-1}];for(let i=0;i<arr.length;i++){g.save();g.translate(150+i*248,244);window.DFModernSprites.draw(g,arr[i],.24);g.restore();g.fillStyle='#fff0c0';g.font='bold 20px Arial';g.textAlign='center';g.fillText(['WALK RIGHT','WALK LEFT','ATTACK LEFT'][i],150+i*248,75)}return true})()");
+        screenshot("knight-directional-poses");
+        eval("document.getElementById('qaKnightFacing').remove();true");
         screenshot("knight-v2-loaded");
 
         // Both public and contracted adventurers share the game.js dungeon draw.
