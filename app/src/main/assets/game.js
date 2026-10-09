@@ -11,6 +11,9 @@ const r=(a,b)=>a+Math.random()*(b-a),esc=t=>String(t).replace(/[&<>"']/g,c=>({'&
 function persist(){try{localStorage.setItem(key,JSON.stringify(s))}catch(e){}}
 function say(msg){s.events.unshift(msg);s.events=s.events.slice(0,45);$('tickerText').textContent=msg;paintPanel()}
 function feedback(msg){
+ // Shop transactions continue while watching the dungeon, but only the shop
+ // may interrupt play with commerce notifications.
+ if(view!=='shop')return;
  const el=$('feedbackToast');
  el.textContent=msg;el.classList.remove('hidden');clearTimeout(toastTimer);
  toastTimer=setTimeout(()=>el.classList.add('hidden'),3300);
@@ -32,7 +35,9 @@ function visitorChoicesMarkup(enc){
  }).join('');
 }
 function presentVisitor(){
- const id=s.pendingEncounter,enc=E.visitorEncounters[id];if(!enc||!active)return;
+ const id=s.pendingEncounter,enc=E.visitorEncounters[id];
+ // Defer shop-only encounters until the player returns from the dungeon.
+ if(!enc||!active||view!=='shop')return;
  visitorOpen=true;$('npcCard').classList.add('hidden');
  $('visitorIcon').textContent=enc.icon;$('visitorTitle').textContent=enc.title;
  $('visitorWho').textContent=enc.who;$('visitorStory').textContent=enc.story;
@@ -86,12 +91,13 @@ function tick(dt){
  const dungeonReports=D.advance(s,dt);for(const report of dungeonReports)say('DUNGEON REPORT: '+report);
  s.clock+=dt;visitorCountdown-=dt;
  $('dayProgressFill').style.width=Math.max(0,Math.min(100,s.clock/95*100))+'%';
- if(s.pendingEncounter){presentVisitor();return}
- if(visitorCountdown<=0&&s.lastVisitorDay!==s.day){
+ // Queue one visitor in the background; never pause or cover the dungeon.
+ if(!s.pendingEncounter&&visitorCountdown<=0&&s.lastVisitorDay!==s.day){
   const ids=Object.keys(E.visitorEncounters);
   s.pendingEncounter=ids[Math.floor(Math.random()*ids.length)];
-  presentVisitor();return;
+  persist();
  }
+ if(s.pendingEncounter&&view==='shop'){presentVisitor();return}
  next-=dt;if(next<=0){spawn();next=r(s.upgrades.lantern?2.7:3.8,s.upgrades.lantern?5.2:7.1)}for(const c of guests){if(c.stage===0){c.x+=dt*70;if(c.x>=520){c.x=520;c.stage=1;c.hold=1.2;transact(c)}}else if(c.stage===1){c.hold-=dt;if(c.hold<=0)c.stage=2}else c.x-=dt*94}guests=guests.filter(c=>c.x>-70||c.stage===0);
 if(s.clock>=95){s.clock-=95;s.day++;visitorCountdown=r(14,29);const raid=E.raid(s,Math.random());say(raid.happened?'NIGHT RAID: Bandits stole '+raid.loss+'G.':'Dawn breaks over the dungeon. Day '+s.day+' begins.');persist()}clock+=dt;if(clock>=3){clock=0;persist();paintPanel()}}
 function box(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),Math.ceil(w),Math.ceil(h))}
@@ -160,16 +166,19 @@ function openDungeon(){
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • EXPEDITION WATCH';
  $('sceneHint').textContent='◈ SWIPE SIDEWAYS · TAP A FIGHTER OR MONSTER';
  $('scene').closest('.scene-wrap').classList.add('dungeon-mode');
- feedback('✥ Dungeon watch opened · 8 floors · monsters active');
+ // Clear any toast started in the shop before entering the dungeon.
+ clearTimeout(toastTimer);$('feedbackToast').classList.add('hidden');
  persist();
 }
-function closeDungeon(){
+function closeDungeon(showDeferred=false){
  view='shop';drag=null;
  $('dungeonControls').classList.add('hidden');
  $('sceneHeading').innerHTML='<i class="pulse"></i> THE HOLLOW DESCENT • GATE MARKET';
  $('sceneHint').textContent='◈ TAP AN ADVENTURER TO INSPECT · TAP PORTAL TO ENTER';
  $('scene').closest('.scene-wrap').classList.remove('dungeon-mode');
  $('npcCard').classList.add('hidden');
+ // The waiting customer is seen at the shop only after choosing to return.
+ if(showDeferred&&active&&!paused&&s.pendingEncounter)presentVisitor();
 }
 function dungeonFloor(delta){floorOffset=Math.max(0,Math.min(D.floorCount-4,floorOffset+delta));$('npcCard').classList.add('hidden')}
 function dungeonCamera(delta){cameraX=cameraClamp(cameraX+delta);$('npcCard').classList.add('hidden')}
@@ -257,7 +266,7 @@ function inspectDungeon(x,y){
  $('npcCard').classList.remove('hidden');
 }
 function scenePoint(e){const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)*800/b.width,y:(e.clientY-b.top)*440/b.height}}
-$('dungeonBack').addEventListener('click',closeDungeon);
+$('dungeonBack').addEventListener('click',()=>closeDungeon(true));
 $('dungeonLeft').addEventListener('click',()=>dungeonCamera(-200));
 $('dungeonRight').addEventListener('click',()=>dungeonCamera(200));
 $('dungeonUp').addEventListener('click',()=>dungeonFloor(-1));
@@ -330,7 +339,7 @@ window.Dungeonfront={handleBack(){if(!$('intro').classList.contains('hidden')){l
  if(enc)chooseVisitor(enc.choices[enc.choices.length-1].id);
  return true;
  }
- if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(view==='dungeon'){closeDungeon();return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
+ if(!$('npcCard').classList.contains('hidden')){$('npcCard').classList.add('hidden');return true}if(view==='dungeon'){closeDungeon(true);return true}if(!$('pauseOverlay').classList.contains('hidden')){$('resumeBtn').click();return true}if(active){$('pauseBtn').click();return true}return false},getState(){return JSON.parse(JSON.stringify(s))},skipIntro:leaveIntro,start,showTitle:title};
 if(new URLSearchParams(location.search).has('skipIntro'))leaveIntro();
 if(new URLSearchParams(location.search).has('debugGame'))start();
 })();
