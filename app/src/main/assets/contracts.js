@@ -15,12 +15,12 @@ const candidates=[
 function listings(day,depth){
  const rank=Math.max(0,Math.min(2,Math.floor((Number(depth)||1)/4)));
  const defs=[
-  {code:'salvage',title:'Clear the Gate Crypt',rank:'E',kind:'defeat',target:2,reward:95,rep:1,desc:'Defeat 2 monsters on Floor 1.'},
-  {code:'patrol',title:'Hollow Descent Patrol',rank:'D',kind:'defeat',target:4,reward:155,rep:2,desc:'Defeat 4 dungeon monsters.'},
-  {code:'scout',title:'Scout Mossbound Passage',rank:'C',kind:'reach',target:2,reward:215,rep:3,desc:'Reach Floor 2 and report back.'}
+  {code:'salvage',title:'Clear the Gate Crypt',rank:'E',kind:'defeat',target:2,reward:95,rep:1,minParty:1,limit:360,desc:'Defeat 2 monsters on Floor 1.'},
+  {code:'patrol',title:'Hollow Descent Patrol',rank:'D',kind:'defeat',target:4,reward:155,rep:2,minParty:1,limit:480,desc:'Defeat 4 dungeon monsters.'},
+  {code:'scout',title:'Scout Mossbound Passage',rank:'C',kind:'reach',target:2,reward:215,rep:3,minParty:2,limit:720,desc:'Reach Floor 2 and report back.'}
  ];
- if(rank>=1)defs[1]={code:'deep',title:'Deep Warrens Bounty',rank:'B',kind:'defeat',target:7,reward:300,rep:4,desc:'Defeat 7 dungeon monsters.'};
- if(rank>=2)defs[2]={code:'raid',title:'Abyssal Sovereign Raid',rank:'S',kind:'boss',target:1,reward:950,rep:10,desc:'Defeat the raid boss on Floor 8.'};
+ if(rank>=1)defs[1]={code:'deep',title:'Deep Warrens Bounty',rank:'B',kind:'defeat',target:7,reward:340,rep:4,minParty:3,limit:1200,desc:'Defeat 7 dungeon monsters.'};
+ if(rank>=2)defs[2]={code:'raid',title:'Abyssal Sovereign Raid',rank:'S',kind:'boss',target:1,reward:1100,rep:10,minParty:4,limit:3000,desc:'Defeat the raid boss on Floor 8.'};
  return defs.map(job=>Object.assign({id:job.code+'-'+day},job));
 }
 function applicants(day){
@@ -28,18 +28,31 @@ function applicants(day){
   const n=(day*3+i*5)%candidates.length;
   const [name,cls,level]=candidates[n];
   return {id:'a'+day+'-'+i,name,cls,level:level+Math.floor(Math.max(0,day-1)/4),
-   fee:24+level*6};
+   fee:20+level*5};
  });
 }
 function ensure(s){
  if(!s.contracts||typeof s.contracts!=='object'||!Array.isArray(s.contracts.runs)){
-  s.contracts={schema:1,boardDay:0,offers:[],applicants:[],staff:[],runs:[],nextRun:1};
+  s.contracts={schema:2,boardDay:0,offers:[],applicants:[],staff:[],runs:[],nextRun:1,nextRecruit:1};
  }
  const c=s.contracts;
  if(!Array.isArray(c.staff))c.staff=[];
  if(!Array.isArray(c.offers))c.offers=[];
  if(!Array.isArray(c.applicants))c.applicants=[];
  if(!Number.isInteger(c.nextRun)||c.nextRun<1)c.nextRun=1;
+ if(!Number.isInteger(c.nextRecruit)||c.nextRecruit<1)c.nextRecruit=1;
+ for(const a of c.staff)if(!Number.isFinite(a.xp))a.xp=0;
+ for(const run of c.runs){
+  if(!Array.isArray(run.fallen))run.fallen=[];
+  if(!Number.isFinite(run.fallenWins))run.fallenWins=0;
+  if(!Number.isFinite(run.elapsed))run.elapsed=0;
+  if(run.status==='active'&&run.instance?.dungeon?.adventurers){
+   for(let i=0;i<run.instance.dungeon.adventurers.length;i++){
+    const a=run.instance.dungeon.adventurers[i];
+    if(!a.hireId)a.hireId=run.memberIds[i]||null;
+   }
+  }
+ }
  if(c.boardDay!==s.day){
   c.boardDay=s.day;
   c.offers=listings(s.day,s.depth);
@@ -64,8 +77,9 @@ function hire(s,id){
 function start(s,offerId,memberIds){
  const c=ensure(s),offer=c.offers.find(x=>x.id===offerId);
  if(!offer)return{ok:false,reason:'That contract is no longer posted.'};
- if(!Array.isArray(memberIds)||memberIds.length<1||memberIds.length>maxParty||new Set(memberIds).size!==memberIds.length)
-  return{ok:false,reason:'Select between one and five unique adventurers.'};
+ const minParty=offer.minParty||1;
+ if(!Array.isArray(memberIds)||memberIds.length<minParty||memberIds.length>maxParty||new Set(memberIds).size!==memberIds.length)
+  return{ok:false,reason:'This '+offer.rank+'-rank contract needs '+minParty+'–5 unique hired adventurers.'};
  if(c.runs.filter(x=>x.status==='active').length>=maxActive)
   return{ok:false,reason:'Finish an active expedition first (maximum three).'};
  const busy=busyIds(c),members=memberIds.map(id=>c.staff.find(a=>a.id===id));
@@ -80,10 +94,12 @@ function start(s,offerId,memberIds){
   const a=D.enter(instance,member,'Contract Kit');
   a.partyId=members.length>1?'JOB-'+id:null;
   a.visitor=false;
+  a.hireId=member.id;
+  a.xp=Math.max(0,Number(member.xp)||0);
   a.x=72+(dungeon.adventurers.length-1)*20;
  }
  const run={id,offer:Object.assign({},offer),memberIds:memberIds.slice(),status:'active',
-  instance,elapsed:0,report:'',claimed:false};
+  instance,elapsed:0,report:'',claimed:false,fallen:[],fallenWins:0};
  c.runs.unshift(run);
  c.offers=c.offers.filter(x=>x.id!==offerId);
  return{ok:true,run};
@@ -92,7 +108,22 @@ function progress(run){
  const actors=run.instance?.dungeon?.adventurers||[];
  if(run.offer.kind==='reach')return{value:Math.max(1,...actors.map(a=>a.floor||1)),target:run.offer.target};
  if(run.offer.kind==='boss')return{value:run.instance?.dungeon?.bossDefeats||0,target:1};
- return{value:actors.reduce((n,a)=>n+(a.wins||0),0),target:run.offer.target};
+ return{value:(run.fallenWins||0)+actors.reduce((n,a)=>n+(a.wins||0),0),target:run.offer.target};
+}
+// A finished but unsettled expedition keeps its red notification until claimed.
+function unclaimedCount(s){
+ return ensure(s).runs.filter(run=>run.status==='completed'||run.status==='failed').length;
+}
+function replaceFallen(c,member){
+ // Every fallen contract adventurer is replaced by a fresh, *unhired* level-one
+ // applicant. Recruits never silently join an expedition or cost the player gold.
+ const n=c.nextRecruit++;
+ const rookieNames=['Pip','Wren','Iona','Tarin','Quill','Nell','Bex','Orrin'];
+ const rookieClasses=['Ranger','Knight','Cleric','Mage','Rogue','Mercenary'];
+ const applicant={id:'rookie-'+n,name:rookieNames[(n-1)%rookieNames.length]+' '+n,
+  cls:rookieClasses[(n-1)%rookieClasses.length],level:1,xp:0,fee:25};
+ c.applicants.push(applicant);
+ return applicant;
 }
 function advance(s,dt){
  const c=ensure(s),reports=[];
@@ -100,18 +131,40 @@ function advance(s,dt){
   if(run.status!=='active')continue;
   const events=D.advance(run.instance,dt);
   run.elapsed+=Math.max(0,Math.min(.1,Number(dt)||0));
+  const survivors=[];
+  for(const a of run.instance.dungeon.adventurers){
+   const member=c.staff.find(x=>x.id===a.hireId);
+   // Contract adventurers do not have the regular dungeon's automatic recovery.
+   // A zero-HP retreat is death, and must be removed before the next frame.
+   if(a.hp<=0){
+    run.fallen.push({id:a.hireId,name:a.name,level:a.level});
+    run.fallenWins+=(a.wins||0);
+    c.staff=c.staff.filter(x=>x.id!==a.hireId);
+    run.memberIds=run.memberIds.filter(id=>id!==a.hireId);
+    replaceFallen(c,member);
+    reports.push('FALLEN IN ACTION: '+a.name+'. A level-one recruit is available for hire.');
+   }else{
+    if(member){member.level=a.level;member.xp=a.xp;}
+    survivors.push(a);
+   }
+  }
+  run.instance.dungeon.adventurers=survivors;
   const p=progress(run);
-  if(p.value>=p.target){
-   run.status='completed';run.report='Contract completed. Return to the board to claim your payment and recovered materials.';
+  if(!survivors.length){
+   run.status='failed';run.report='Entire party lost. Your fallen adventurers have been removed permanently. Level-one applicants are available to hire.';
+   reports.push('CONTRACT FAILED: '+run.offer.title+'. The party was lost.');
+  }else if(p.value>=p.target){
+   run.status='completed';
+   run.report=run.fallen.length?'Objective complete, but '+run.fallen.length+' party member(s) fell permanently. Payment is ready.':'Contract completed. Return to the board to claim your payment and recovered materials.';
    reports.push('CONTRACT COMPLETE: '+run.offer.title+'. '+run.offer.reward+'G ready to claim.');
-  }else if(run.elapsed>360||run.instance.dungeon.adventurers.every(a=>a.status==='recovering')){
-   run.status='failed';run.report='The expedition could not complete its objective. Your adventurers are available for new contracts.';
-   reports.push('CONTRACT FAILED: '+run.offer.title+'.');
+  }else if(run.elapsed>(run.offer.limit||360)){
+   run.status='failed';run.report='Contract expired. Surviving adventurers return to the roster.';
+   reports.push('CONTRACT FAILED: '+run.offer.title+' exceeded its time limit.');
   }else if(events.some(x=>/reached floor|advanced to level|RAID VICTORY/.test(x))){
    reports.push('CONTRACT: '+events.find(x=>/reached floor|advanced to level|RAID VICTORY/.test(x)));
   }
  }
- return reports.slice(0,3);
+ return reports.slice(0,4);
 }
 function claim(s,id){
  const c=ensure(s),run=c.runs.find(x=>x.id===id);
@@ -127,5 +180,5 @@ function claim(s,id){
  run.status='claimed';run.claimed=true;
  return{ok:true,success,reward,mats:Object.assign({},mats),rep:success?run.offer.rep:0};
 }
-return{maxParty,maxActive,maxHired,ensure,hire,start,advance,progress,claim,busyIds};
+return{maxParty,maxActive,maxHired,ensure,hire,start,advance,progress,claim,busyIds,unclaimedCount};
 });
