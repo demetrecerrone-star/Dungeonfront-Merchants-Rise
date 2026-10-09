@@ -74,4 +74,50 @@ test('game canvas filters actors by current floor instead of stacking four rows'
  assert.ok(source.includes("tracked.floor!==floorOffset"));
  assert.ok(source.includes("m.boss?3:2.2"));
 });
+test('all eight floors have eight regularly spaced enemies, while raid boss remains unique',()=>{
+ const s=E.initialState(),d=D.ensure(s);
+ for(let floor=1;floor<=8;floor++){
+  const enemies=d.monsters.filter(m=>m.floor===floor&&!m.boss).sort((a,b)=>a.homeX-b.homeX);
+  assert.equal(enemies.length,8,'regular monster count on floor '+floor);
+  for(let i=1;i<enemies.length;i++)
+   assert.ok(enemies[i].homeX-enemies[i-1].homeX>=180,'regular patrol gaps on floor '+floor);
+ }
+ assert.equal(d.monsters.filter(m=>m.boss).length,1);
+});
+test('floor gates prevent bypassing unvisited encounters',()=>{
+ const s=E.initialState(),d=D.ensure(s),hero=d.adventurers.find(a=>a.name==='Ash');
+ for(const a of d.adventurers)if(a!==hero){a.status='recovering';a.recover=1000;}
+ for(const m of d.monsters.filter(m=>m.floor===1)){m.hp=0;m.respawn=1000;}
+ hero.floor=1;hero.x=D.worldWidth-46;hero.clearedFloor=0;hero.status='exploring';
+ D.advance(s,.1,()=>.5);
+ assert.equal(hero.floor,1,'hero must stay on floor without a victory');
+ assert.equal(hero.status,'waiting');
+ const guardian=d.monsters.find(m=>m.id==='m1-7');
+ assert.ok(guardian.respawn<=2,'guardian should respawn promptly at blocked exit');
+});
+test('normal monsters respawn promptly without losing their saved health during migration',()=>{
+ const s=E.initialState();D.ensure(s);
+ const m=s.dungeon.monsters.find(m=>m.id==='m3-0');
+ m.hp=0;m.respawn=3.1;
+ for(const a of s.dungeon.adventurers){a.status='recovering';a.recover=1000;}
+ for(let i=0;i<34;i++)D.advance(s,.1,()=>.5);
+ assert.equal(m.hp,m.maxHp,'monster should reappear in a few seconds');
+ const legacy=E.initialState();legacy.dungeon={nextId:9,lootFound:0,adventurers:[],monsters:[
+  {id:'m1-0',floor:1,x:999,homeX:999,kind:0,hp:7,maxHp:25,respawn:0,cooldown:0,boss:false}
+ ],schema:6};
+ const after=D.ensure(legacy).monsters.find(m=>m.id==='m1-0');
+ assert.equal(after.hp,7,'migration must preserve ongoing monster damage');
+ assert.notEqual(after.homeX,999,'old monster patrol position must be rebalanced');
+});
+test('party inspection retains all members across separate floors',()=>{
+ const s=E.initialState(),d=D.ensure(s),members=D.partyMembers(s,'P1');
+ assert.equal(members.length,3);
+ assert.ok(members.every(m=>m.partyId==='P1'));
+ members[1].floor=4;
+ assert.equal(D.partyMembers(s,'P1').length,3,'moving a member does not hide them from party roster');
+ const src=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
+ assert.ok(src.includes('D.partyMembers(s,o.partyId)'),'party screen must enumerate every member');
+ assert.ok(src.includes('data-member-id'),'party screen must offer a distinct button per member');
+ assert.ok(src.includes(\"$('partyRoster').addEventListener('click'\"),'member buttons must be selectable');
+});
 console.log('All '+count+' raid and full-floor tests passed.');
