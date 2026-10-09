@@ -11,6 +11,8 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 **Visual Batches C/D are now implemented:** nine distinct monster designs with 46 animated PNG sheets (including the Abyssal Sovereign's signature attack and death) and eight combat effect sheets. The dungeon uses these actual sprites and retains procedural fallback. [Preview monsters and effects](docs/MONSTER_SPRITE_PREVIEW.md). A [GitHub Actions run](https://github.com/demetrecerrone-star/Dungeonfront-Merchants-Rise/actions/runs/37921981641) contains the downloadable `Dungeonfront-Monster-Boss-Effects-Sprites` ZIP. Both sprite and combat regression suites passed; **no new APK yet**.
 
 
+**Visual Batch E is implemented:** five animated dungeon discovery types, six class emblems, four injury/readiness icons, and three rarity markers. Roster and contract cards now display condition, rank and extraction progress. [Preview the events and guild icons](docs/DUNGEON_EVENT_PREVIEW.md). The development branch contains **95 PNG sprites/icons** in total, with no new APK.
+
 This work is available on branch `work/v0.8-roster-combat-treasure`. It has **not** been packaged as an APK.
 
 - **Adventurer Roster:** Open the ⚔ icon by the parchment Contract Board emblem or the ROSTER button on the board. Inspect persistent levels, experience, traits, weapon/armor/shield/supply slots, fatigue and wounds. Stage up to five hires for contracts and issue gear from shop stock.
