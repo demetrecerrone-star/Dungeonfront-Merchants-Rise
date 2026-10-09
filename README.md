@@ -1,4 +1,4 @@
-# Dungeonfront: Merchant's Rise — Android v0.5.1
+# Dungeonfront: Merchant's Rise — Android v0.5.2
 
 A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**, a dangerous fantasy dungeon. Equip travelers, craft goods and expand Last Light Provisions.
 
@@ -10,11 +10,12 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 - Daily guild supply orders: fulfill requests from existing stock for extra gold and reputation. Existing saves remain compatible.
 - Dynamic, streamlined HUD with live stock warnings, a market-day progress bar, cleaner panels, tab icons, and transaction feedback.
 - Four special visitor encounters (herbalist, wounded ranger, scrap trader, pilgrim) with resource and reputation decisions; automatic save and one encounter per game day.
+- Stability improvements: rate-limited canvas drawing and batched shop-panel refreshes prevent unnecessary sidebar DOM replacement during tab navigation.
 - While watching the dungeon, shop transactions continue silently and roadside visitor events wait until the player returns to the shop. No commerce popups cover the dungeon camera.
 - Clickable shop portal opens a side-scrolling, eight-floor dungeon watch: inspect adventurers and monsters, swipe horizontally, use floor controls, and watch simple combat and salvage progress. Shop sales send equipped adventurers into the dungeon; dungeon data saves with the existing local merchant save.
 - Landscape orientation and Android system navigation safe areas.
 - Dabski intro: original uploaded 1920×1080 MP4, unchanged. Player-interface startup fix retained.
-- Version **0.5.1** (Android versionCode **7**).
+- Version **0.5.2** (Android versionCode **8**).
 
 ## Build APK
 
