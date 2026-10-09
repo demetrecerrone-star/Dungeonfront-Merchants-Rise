@@ -545,7 +545,10 @@ function drawDungeon(t){
   // Each hero remembers discovered rooms independently. A shrine, chest or
   // trap appears used only after all active adventurers on that floor saw it.
   const present=ds.dungeon.adventurers.filter(a=>a.floor===floor&&a.hp>0&&a.status!=='recovering'&&a.status!=='extracted');
-  const allDiscovered=present.length>0&&present.every(a=>(a.seenEvents||[]).includes(event.id));
+  // A chest that someone opened must not look sealed again merely because
+  // a new adventurer arrives who hasn't looted this location yet.
+  const allDiscovered=Boolean(event.type==='chest'&&event.opened)||(present.length>0&&present.every(a=>(a.seenEvents||[]).includes(event.id)));
+  const opener=event.type==='chest'?present.find(a=>a.chestAction&&a.chestAction.eventId===event.id):null;
   let drawn=false;
   if(window.DFSprites){
    g.save();g.translate(x,355);g.scale(event.type==='merchant'?1.28:1.65,event.type==='merchant'?1.28:1.65);
@@ -561,7 +564,15 @@ function drawDungeon(t){
    g.fillText(icons[event.type]||'?',x,341);
   }
   g.textAlign='center';g.font='bold 9px Arial';g.fillStyle=allDiscovered?'#92b9a4':'#e3ce9d';
-  g.fillText((allDiscovered?'EXPLORED · ':'')+event.type.toUpperCase(),x,event.type==='merchant'?282:306);
+  const title=opener?'OPENING CHEST...':allDiscovered&&event.type==='chest'?'OPENED CHEST':(allDiscovered?'EXPLORED · ':'')+event.type.toUpperCase();
+  g.fillText(title,x,event.type==='merchant'?282:306);
+  if(opener){
+   const progress=Math.max(0,Math.min(1,1-opener.chestAction.remaining/.8));
+   dungeonBox(x-26,310,52,6,'#1a1c1d');
+   dungeonBox(x-24,311,48*progress,4,'#edca74');
+   g.textAlign='center';g.font='bold 9px Arial';g.fillStyle='#f0d58b';
+   g.fillText(opener.name+' LOOTING',x,290);
+  }
   dungeonHit.push({x,y:event.type==='merchant'?317:332,type:'event',ref:event});
  }
  // Filter on the selected floor before painting and collecting touch targets.
