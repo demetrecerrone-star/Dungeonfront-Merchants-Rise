@@ -8,7 +8,7 @@ test('old v0.4 save grows a dungeon without resetting merchant progress',()=>{
  assert.equal(E.valid(save),true);
  const d=D.ensure(save);
  assert.equal(save.gold,874);assert.equal(save.stock.potion,9);assert.equal(save.day,12);
- assert.ok(d.adventurers.length>=24);assert.equal(d.monsters.length,33);
+ assert.ok(d.adventurers.length>=24);assert.equal(d.monsters.length,65);
  assert.equal(D.ensure(save),d);
  assert.equal(D.floorCount,8);
 });
