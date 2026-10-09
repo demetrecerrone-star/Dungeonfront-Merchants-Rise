@@ -190,7 +190,7 @@ function award(s,d,a,m,random,reports){
  const mat=Number(random())<.5?'iron':'herb';
  const qty=m.boss?6:1;
  // Ancient relics are a secondary, rarer source of merchant profit.
- if(m.boss||Number(random())<.26){
+ if(m.boss||Number(random())<.26+(a.trait==='Lucky'?.15:0)){
   const found=m.boss?1:1;
   const rarity=m.boss?'gem':Number(random())<.17?'essence':'relic';
   d.relicsFound+=found;
@@ -245,8 +245,8 @@ function advance(s,seconds,rng){
    continue;
   }
   if(a.status==='retreating'){
-   a.x=Math.max(50,a.x-dt*125);
-   if(a.x<=50){a.status='recovering';a.recover=8;a.hp=Math.max(1,Math.floor(a.maxHp*.3))}
+   a.x=Math.max(65,a.x-dt*125);
+   if(a.x<=65){a.status='recovering';a.recover=8;a.hp=Math.max(1,Math.floor(a.maxHp*.3))}
    continue;
   }
   const target=d.monsters.find(m=>m.floor===a.floor&&m.hp>0&&Math.abs(m.x-a.x)<43);
@@ -260,13 +260,13 @@ function advance(s,seconds,rng){
     if(target.hp===0){target.respawn=target.boss?90:3+Math.max(0,Math.min(2,Number(random())*2));award(s,d,a,target,random,reports);a.status='exploring'}
    }
    if(target.hp>0&&target.cooldown<=0){
-    a.hp=Math.max(0,a.hp-monsterKinds[target.kind].damage);
+    a.hp=Math.max(0,a.hp-Math.max(1,monsterKinds[target.kind].damage-(a.trait==='Steadfast'?2:0)));
     target.cooldown=target.boss?.8:1.2;
     if(a.hp===0){a.status='retreating';reports.push(a.name+' was wounded on floor '+a.floor+' and is retreating.')}
    }
   }else{
    a.status='exploring';
-   a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)));
+   a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)+(a.trait==='Swift'?10:0)));
    if(a.x>=worldWidth-45){
     const cleared=a.clearedFloor===a.floor&&(a.floor!==bossFloor||a.bossClearedFloor===bossFloor);
     if(!cleared){
