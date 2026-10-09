@@ -17,7 +17,8 @@ for(const name of names){
   assert.equal((svg.match(/<g transform=['"]translate\(\d+ 0\)['"]/g)||[]).length,
     frames,name+' '+action+' frame count');
   if(name==='Knight'){
-   assert.ok(svg.includes('Anime-fantasy polish'), 'approved Knight gets richer plates without changing poses');
+   if(action!=='death')assert.ok(svg.includes('Anime-fantasy polish'), 'Knight combat/movement gets richer plated detail');
+   else assert.ok(svg.includes('flowing royal-blue cape'), 'Knight death frames preserve the proven original pose');
   }else{
    assert.ok(svg.includes('class="'+name.toLowerCase()+'-detail"'),
      name+' still has its own distinctive anime visual layers');
