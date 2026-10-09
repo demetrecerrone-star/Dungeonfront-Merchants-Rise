@@ -78,6 +78,18 @@ function facing(a){
  if(a&&Number(a.dx)>0)return 1;
  return a&&(a.status==='returning'||a.status==='retreating')?-1:1;
 }
+// Render-only enemy choice follows the same first-in-range rule as dungeon combat.
+// Never mutate dungeon entities, status, or save data to turn an animation.
+function combatFacing(a,monsters){
+ if(!a||typeof a!=='object')return 1;
+ if(a.status==='retreating'||a.status==='returning')return -1;
+ if((a.status==='fighting'||(a.swing||0)>0)&&Array.isArray(monsters)){
+  const enemy=monsters.find(m=>m&&m.floor===a.floor&&
+   (m.hp>0||(m.deathFX||0)>0)&&Math.abs(m.x-a.x)<48);
+  if(enemy)return enemy.x<a.x?-1:1;
+ }
+ return facing(a);
+}
 function frameIndex(a,action,t){
  const def=actions[action];
  if(!def)return 0;
@@ -129,5 +141,5 @@ function status(){
   loading:values.filter(x=>x.state==='loading').length,
   failed:values.filter(x=>x.state==='missing'||x.state==='invalid').length};
 }
-return {classes,approvedClasses,actions,FRAME_W,FRAME_H,DRAW_W,DRAW_H,imagePath,isEnabled,setEnabled,preloadClass,selectAction,facing,frameIndex,draw,status};
+return {classes,approvedClasses,actions,FRAME_W,FRAME_H,DRAW_W,DRAW_H,imagePath,isEnabled,setEnabled,preloadClass,selectAction,facing,combatFacing,frameIndex,draw,status};
 });
