@@ -6,6 +6,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 const E=require('../app/src/main/assets/economy.js');
 const D=require('../app/src/main/assets/dungeon.js');
+const C=require('../app/src/main/assets/contracts.js');
 const code=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
 const blank=()=>{};
 const nodes=new Map();
@@ -43,7 +44,7 @@ function element(id){if(!nodes.has(id))nodes.set(id,new FakeElement(id));return 
 const tabs=['stock','craft','upgrade','ledger'].map(t=>{
  const el=new FakeElement('tab-'+t);el.dataset.tab=t;return el;
 });
-const win={DFEconomy:E,DFDungeon:D,addEventListener:blank};
+const win={DFEconomy:E,DFDungeon:D,DFContracts:C,addEventListener:blank};
 const ctx={
  window:win,
  document:{getElementById:element,querySelectorAll:s=>s==='.tabs button'?tabs:[],addEventListener:blank,hidden:false},
