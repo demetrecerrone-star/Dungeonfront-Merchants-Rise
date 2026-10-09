@@ -80,20 +80,46 @@ function contractStatusLine(run){
  const label={reach:'FLOOR',escort:'ESCORT FLOOR',boss:'RAID BOSS',defeat:'MONSTERS',gather:'SALVAGE',treasure:'RELICS'}[run.offer.kind]||'PROGRESS';
  return label+' '+p.value+' / '+p.target;
 }
+function classEmblem(cls){
+ const id=classes.includes(cls)?cls.toLowerCase():null;
+ return id?'<img class="class-icon" src="sprites/ui/classes/'+id+'.png" alt="" aria-hidden="true" loading="lazy">':'';
+}
+function conditionBadge(a,occupied){
+ const state=occupied?'busy':a.injury>0?'injured':a.fatigue>=70?'exhausted':'ready';
+ const label=occupied?'ON CONTRACT':state==='injured'?'INJURED':state==='exhausted'?'EXHAUSTED':'READY';
+ return '<span class="guild-status guild-'+state+'"><img src="sprites/ui/condition/'+state+'.png" alt="" aria-hidden="true">'+label+'</span>';
+}
+function rankBadge(rank){
+ const tier=/^[EDS CBR]$/.test(rank)?rank:'E';
+ return '<span class="contract-rank rank-'+esc(tier)+'">RANK '+esc(tier)+'</span>';
+}
+function runBadge(status){
+ const kind=['completed','failed','claimed','returning','active'].includes(status)?status:'active';
+ const label={completed:'PAYMENT READY',failed:'SETTLE FAILURE',claimed:'SETTLED',returning:'EXTRACTING · LOCKED',active:'IN PROGRESS'}[kind];
+ return '<span class="guild-status run-'+kind+'">'+label+'</span>';
+}
+function returnProgress(run){
+ if(run.status!=='returning')return '';
+ const party=run.instance?.dungeon?.adventurers||[];
+ const finished=party.filter(a=>a.status==='extracted').length;
+ const pct=party.length?Math.round(finished/party.length*100):0;
+ return '<div class="contract-return-track" role="progressbar" aria-label="Adventurers extracted" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><span style="width:'+pct+'%"></span></div><small>Payment unlocks only after all surviving adventurers use the entrance portal.</small>';
+}
 function renderContractBoard(){
  const c=C.ensure(s),busy=C.busyIds(c);
  for(const id of Array.from(chosenHires))if(!c.staff.some(a=>a.id===id)||busy.has(id))chosenHires.delete(id);
  const roster=c.staff.map(a=>{
   const occupied=busy.has(a.id),selected=chosenHires.has(a.id);
-  return '<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LV '+a.level+' · XP '+(a.xp||0)+' · '+esc(a.trait||'Steadfast')+'</p><small>'+esc(a.gear||'Contract Kit')+' · '+(occupied?'ON EXPEDITION':'AVAILABLE')+'</small><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(occupied?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':selected?'✓ SELECTED':'SELECT')+'</button>'+(!occupied?'<button data-contract-action="equip" data-id="'+esc(a.id)+'" data-item="blade" '+(!s.stock.blade?'disabled':'')+'>⚔ GEAR</button><button data-contract-action="equip" data-id="'+esc(a.id)+'" data-item="potion" '+(!s.stock.potion?'disabled':'')+'>✚ POTION</button>':'')+'</div></article>';
+  const ready=!occupied&&a.injury<=0&&a.fatigue<70;
+  return '<article class="contract-entry contract-hire-card"><div class="guild-identity">'+classEmblem(a.cls)+'<strong>'+esc(a.name)+'</strong>'+conditionBadge(a,occupied)+'</div><p>'+esc(a.cls)+' · LV '+a.level+' · XP '+(a.xp||0)+' · '+esc(a.trait||'Steadfast')+'</p><small>'+esc(a.gear||'Contract Kit')+' · FATIGUE '+Math.round(a.fatigue||0)+'% · INJURY '+(a.injury||0)+'</small><div class="contract-entry-actions"><button data-contract-action="select" data-id="'+esc(a.id)+'" '+(!ready?'disabled':'')+' class="'+(selected?'selected':'')+'">'+(occupied?'BUSY':!ready?'RECOVER FIRST':selected?'✓ SELECTED':'SELECT')+'</button>'+(!occupied?'<button data-contract-action="equip" data-id="'+esc(a.id)+'" data-item="blade" '+(!s.stock.blade?'disabled':'')+'>⚔ GEAR</button><button data-contract-action="equip" data-id="'+esc(a.id)+'" data-item="potion" '+(!s.stock.potion?'disabled':'')+'>✚ POTION</button>':'')+'</div></article>';
  }).join('');
- const offers=c.offers.map(o=>'<article class="contract-entry"><small class="contract-rank">RANK '+esc(o.rank)+'</small><strong>'+esc(o.title)+'</strong><p>'+esc(o.desc)+'</p><small>REWARD '+o.reward+'G · +'+o.rep+' REP · '+(o.minParty||1)+'–'+(o.maxParty||5)+' HEROES</small><div class="contract-entry-actions"><button data-contract-action="start" data-id="'+esc(o.id)+'" '+(!chosenHires.size?'disabled':'')+'>SEND SELECTED PARTY</button></div></article>').join('');
- const applicants=c.applicants.map(a=>'<article class="contract-entry"><strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong><p>LEVEL '+a.level+' · HIRING FEE '+a.fee+'G</p><div class="contract-entry-actions"><button data-contract-action="hire" data-id="'+esc(a.id)+'" '+(s.gold<a.fee||c.staff.length>=C.maxHired?'disabled':'')+'>HIRE '+a.fee+'G</button></div></article>').join('');
+ const offers=c.offers.map(o=>'<article class="contract-entry contract-offer"><div class="guild-identity">'+rankBadge(o.rank)+'<span class="contract-type">'+esc(({defeat:'⚔ EXTERMINATION',gather:'▣ SALVAGE',escort:'♧ ESCORT',treasure:'✦ TREASURE',boss:'☠ RAID',reach:'⇧ EXPLORATION'}[o.kind]||'◈ EXPEDITION'))+'</span></div><strong>'+esc(o.title)+'</strong><p>'+esc(o.desc)+'</p><small>REWARD '+o.reward+'G · +'+o.rep+' REP · '+(o.minParty||1)+'–'+(o.maxParty||5)+' HEROES</small><div class="contract-entry-actions"><button data-contract-action="start" data-id="'+esc(o.id)+'" '+(chosenHires.size<(o.minParty||1)||chosenHires.size>(o.maxParty||5)?'disabled':'')+'>SEND SELECTED PARTY</button></div></article>').join('');
+ const applicants=c.applicants.map(a=>'<article class="contract-entry"><div class="guild-identity">'+classEmblem(a.cls)+'<strong>'+esc(a.name)+' · '+esc(a.cls)+'</strong></div><p>LEVEL '+a.level+' · '+esc(a.trait||'')+'</p><small>HIRING FEE '+a.fee+'G</small><div class="contract-entry-actions"><button data-contract-action="hire" data-id="'+esc(a.id)+'" '+(s.gold<a.fee||c.staff.length>=C.maxHired?'disabled':'')+'>HIRE '+a.fee+'G</button></div></article>').join('');
  const runs=c.runs.slice(0,12).map(run=>{
   const done=run.status==='completed'||run.status==='failed',claimed=run.status==='claimed';
-  return '<article class="contract-entry"><small class="contract-rank">'+esc(run.offer.rank)+'</small><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' remaining · '+esc(run.status==='returning'?'EXTRACTING':run.status.toUpperCase())+' · '+esc(contractStatusLine(run))+'</p>'+(run.fallen?.length?'<p class="contract-death">☠ '+run.fallen.length+' fallen permanently</p>':'')+'<div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
+  return '<article class="contract-entry contract-run run-'+esc(run.status)+'"><div class="guild-identity">'+rankBadge(run.offer.rank)+runBadge(run.status)+'</div><strong>'+esc(run.offer.title)+'</strong><p>'+run.memberIds.length+' remaining · '+esc(contractStatusLine(run))+'</p>'+returnProgress(run)+(run.fallen?.length?'<p class="contract-death">☠ '+run.fallen.length+' fallen permanently</p>':'')+'<div class="contract-entry-actions">'+(!claimed?'<button data-contract-action="watch" data-id="'+esc(run.id)+'">WATCH RUN</button>':'')+(done?'<button data-contract-action="claim" data-id="'+esc(run.id)+'">'+(run.status==='failed'?'SETTLE FAILED RUN':'CLAIM '+run.offer.reward+'G')+'</button>':'')+'</div></article>';
  }).join('');
- $('contractBody').innerHTML='<section class="contract-column"><h3>✉ AVAILABLE CONTRACTS</h3><p class="contract-sub">Select 1–5 available hires, then send them on a job.</p>'+(offers||'<p>No new postings today. Check tomorrow.</p>')+'</section>'+
+ $('contractBody').innerHTML='<section class="contract-column"><h3>✉ AVAILABLE CONTRACTS</h3><p class="contract-sub">PARTY '+chosenHires.size+'/5 · Select healthy hires from the roster, then dispatch.</p>'+(offers||'<p>No new postings today. Check tomorrow.</p>')+'</section>'+
  '<section class="contract-column"><h3>⚔ ADVENTURERS FOR HIRE</h3>'+(applicants||'<p>New applicants arrive tomorrow.</p>')+'<div class="contract-separator"></div><h3>YOUR ROSTER · '+c.staff.length+'/'+C.maxHired+'</h3>'+(roster||'<p>Hire an adventurer to start taking contracts.</p>')+'</section>'+
  '<section class="contract-column"><h3>◈ ACTIVE & FINISHED RUNS</h3>'+(runs||'<p>No expeditions yet.</p>')+'</section>';
 }
