@@ -2,6 +2,8 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.DFDungeon=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
 const floorCount=8,worldWidth=2100,maxAdventurers=40,bossFloor=8;
+const patrolPositions=[160,405,650,895,1140,1385,1630,1930];
+const gateX=worldWidth-185;
 const floorNames=['The Gate Crypt','Mossbound Passage','Ember Chambers','The Forsaken Keep','Sunken Archives','Ashen Hollows','The Deep Warrens','Abyssal Threshold'];
 const monsterKinds=[
  {name:'Cave Slime',color:'#668f79',hp:25,damage:3},
@@ -39,6 +41,10 @@ function monster(f,k,x,kind,isBoss){
  const spec=monsterKinds[kind];
  return{id:isBoss?'m8-boss':'m'+f+'-'+k,floor:f,x,homeX:x,
   kind,hp:spec.hp,maxHp:spec.hp,respawn:0,cooldown:0,boss:!!isBoss,phase:k*2};
+}
+function partyMembers(s,partyId){
+ if(!partyId)return [];
+ return ensure(s).adventurers.filter(a=>a.partyId===partyId).sort((a,b)=>a.id-b.id);
 }
 function ensure(s){
  if(!s.dungeon||!Array.isArray(s.dungeon.adventurers)||!Array.isArray(s.dungeon.monsters)){
@@ -83,11 +89,24 @@ function ensure(s){
   if(!d.monsters.some(m=>m.id==='m8-boss'))d.monsters.push(monster(8,4,1920,8,true));
   d.schema=6;
  }
+ // Grow existing saves to eight regular encounters per floor without resetting HP or progress.
+ if(d.schema<7){
+  for(let f=1;f<=floorCount;f++){
+   for(let k=0;k<patrolPositions.length;k++){
+    const id='m'+f+'-'+k;
+    if(!d.monsters.some(m=>m.id===id))
+     d.monsters.push(monster(f,k,patrolPositions[k]+(f%3)*12,f-1,false));
+   }
+  }
+  d.schema=7;
+ }
  for(const a of d.adventurers){
   if(!Number.isFinite(a.x))a.x=65;
   if(!Number.isFinite(a.floor)||a.floor<1||a.floor>floorCount)a.floor=1;
   if(!Number.isFinite(a.xp))a.xp=0;
   if(!('partyId' in a))a.partyId=null;
+  if(!Number.isFinite(a.clearedFloor))a.clearedFloor=0;
+  if(!Number.isFinite(a.bossClearedFloor))a.bossClearedFloor=0;
  }
  for(const m of d.monsters){
   if(!Number.isFinite(m.homeX))m.homeX=m.x;
@@ -122,7 +141,15 @@ function enter(s,customer,gear){
  d.adventurers.push(a);
  return a;
 }
+function markClear(d,a,isBoss){
+ const team=a.partyId?d.adventurers.filter(x=>x.partyId===a.partyId&&x.floor===a.floor):[a];
+ for(const member of team){
+  member.clearedFloor=a.floor;
+  if(isBoss)member.bossClearedFloor=a.floor;
+ }
+}
 function award(s,d,a,m,random,reports){
+ markClear(d,a,m.boss);
  a.wins=(a.wins||0)+1;a.xp=(a.xp||0)+1;
  if(a.xp>=Math.max(3,Math.ceil(a.level/2)+2)){
   a.xp=0;a.level++;a.maxHp+=5;a.hp=Math.min(a.maxHp,a.hp+15);
@@ -154,7 +181,7 @@ function advance(s,seconds,rng){
   a.cooldown=Math.max(0,(a.cooldown||0)-dt);
   if(a.status==='recovering'){
    a.recover-=dt;
-   if(a.recover<=0){a.recover=0;a.status='exploring';a.hp=a.maxHp;a.floor=1;a.x=62}
+   if(a.recover<=0){a.recover=0;a.status='exploring';a.hp=a.maxHp;a.floor=1;a.x=62;a.clearedFloor=0;a.bossClearedFloor=0}
    continue;
   }
   if(a.status==='retreating'){
@@ -170,7 +197,7 @@ function advance(s,seconds,rng){
     const attack=7+Math.floor(a.level/3)+(a.cls==='Mage'?4:0)+(gear.includes('blade')||gear.includes('sword')?3:0);
     target.hp=Math.max(0,target.hp-attack);
     a.cooldown=.65;a.swing=.23;target.flash=.18;
-    if(target.hp===0){target.respawn=target.boss?90:12+Math.max(0,Math.min(6,Number(random())*6));award(s,d,a,target,random,reports);a.status='exploring'}
+    if(target.hp===0){target.respawn=target.boss?90:3+Math.max(0,Math.min(2,Number(random())*2));award(s,d,a,target,random,reports);a.status='exploring'}
    }
    if(target.hp>0&&target.cooldown<=0){
     a.hp=Math.max(0,a.hp-monsterKinds[target.kind].damage);
@@ -181,8 +208,21 @@ function advance(s,seconds,rng){
    a.status='exploring';
    a.x=Math.min(worldWidth-45,a.x+dt*(25+Math.min(22,a.level*1.2)));
    if(a.x>=worldWidth-45){
-    if(a.floor<floorCount){a.floor++;a.x=65;a.hp=Math.min(a.maxHp,a.hp+Math.floor(a.maxHp*.22));reports.push(a.name+' reached floor '+a.floor+' of the Hollow Descent.')}
-    else{a.status='recovering';a.recover=12;reports.push(a.name+' completed a deep dungeon expedition and is returning.')}
+    const cleared=a.clearedFloor===a.floor&&(a.floor!==bossFloor||a.bossClearedFloor===bossFloor);
+    if(!cleared){
+     // Dungeon floors need an actual fight before their exit opens.
+     // The gate guardian returns quickly instead of leaving a cleared floor empty.
+     a.x=gateX;a.status='waiting';
+     const sentinel=d.monsters.find(m=>m.id==='m'+a.floor+'-7');
+     if(sentinel){
+      if(sentinel.hp<=0)sentinel.respawn=Math.min(sentinel.respawn||2,2);
+      sentinel.x=gateX+12;sentinel.homeX=gateX+12;
+     }
+    }else if(a.floor<floorCount){
+     a.floor++;a.x=65;a.clearedFloor=0;a.bossClearedFloor=0;
+     a.hp=Math.min(a.maxHp,a.hp+Math.floor(a.maxHp*.22));
+     reports.push(a.name+' reached floor '+a.floor+' of the Hollow Descent.');
+    }else{a.status='recovering';a.recover=12;reports.push(a.name+' completed a deep dungeon expedition and is returning.')}
    }
   }
   a.swing=Math.max(0,(a.swing||0)-dt);
@@ -190,5 +230,5 @@ function advance(s,seconds,rng){
  return reports.slice(0,4);
 }
 function snapshot(s){return ensure(s)}
-return{floorCount,worldWidth,bossFloor,floorNames,monsterKinds,ensure,enter,advance,snapshot};
+return{floorCount,worldWidth,bossFloor,floorNames,monsterKinds,ensure,enter,advance,snapshot,partyMembers};
 });
