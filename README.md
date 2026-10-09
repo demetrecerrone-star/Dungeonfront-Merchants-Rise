@@ -6,6 +6,8 @@ A gritty landscape pixel-art shopkeeping game set beside **The Hollow Descent**,
 
 **Pixel-art production plan:** [Asset directory layout, frame counts, file naming and implementation checklist](docs/SPRITE_PRODUCTION_PLAN.md).
 
+**Visual Batch A is in the repo:** 18 original class animation PNG sheets (idle/walk/attack, six classes), fallback-aware sprite renderer, and PNG validation tests. [Preview all 18 animation sheets](docs/SPRITE_PREVIEW.md). **No Android APK has been built for this art pass.**
+
 
 This work is available on branch `work/v0.8-roster-combat-treasure`. It has **not** been packaged as an APK.
 
