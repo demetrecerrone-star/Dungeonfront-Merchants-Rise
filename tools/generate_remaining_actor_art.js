@@ -156,14 +156,14 @@ function characterFrame(name,action,index){
  if(casting&&p>.3&&p<.85&&c.type!=='bow')out+=ellipse(5,-85,30,51,'url(#magic)',{opacity:.4});
  // Slump down on the spot: keep every death frame inside its 128px cell.
  // A large sideways rotation previously clipped heads/capes and weapons.
- const transform='translate(64 190) translate('+forward+' '+bob+') rotate('+fall+' 0 -10) scale(1 '+collapse+')';
+ const transform='translate(64 190) scale(.63 1) translate('+forward+' '+bob+') rotate('+fall+' 0 -10) scale(1 '+collapse+')';
  return tag('g',{transform,opacity:dying?fmt(Math.max(.55,1-.35*p)):1},out);
 }
 function svg(name,action){
  const c=characters[name],num=counts[action];
  if(!c||!num)throw new Error('Unsupported '+name+' '+action);
  let frames='';
- for(let k=0;k<num;k++)frames+=tag('g',{transform:'translate('+(128*k)+' 0)'},characterFrame(name,action,k));
- return '<svg xmlns="http://www.w3.org/2000/svg" width="'+(128*num)+'" height="192" viewBox="0 0 '+(128*num)+' 192">'+definitions(c)+frames+'</svg>';
+ for(let k=0;k<num;k++)frames+=tag('g',{transform:'translate('+(128*k)+' 0)','clip-path':'url(#frameClip)'},characterFrame(name,action,k));
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="'+(128*num)+'" height="192" viewBox="0 0 '+(128*num)+' 192">'+definitions(c)+"<defs><clipPath id='frameClip'><rect x='0' y='0' width='128' height='192'/></clipPath></defs>"+frames+'</svg>';
 }
 module.exports={counts,characters,classNames,svg,characterFrame};
