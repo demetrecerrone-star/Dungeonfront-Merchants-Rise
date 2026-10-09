@@ -19,9 +19,11 @@ const actions={
 };
 const cache=Object.create(null);
 let enabled=false;
+// Preview art is limited to Knight. Other classes always use v1 until approved.
+const approvedClasses=new Set(['Knight']);
 function isEnabled(){return enabled}
 function setEnabled(value){enabled=value===true;return enabled}
-function validClass(cls){return typeof cls==='string'&&classes.includes(cls)}
+function validClass(cls){return typeof cls==='string'&&approvedClasses.has(cls)}
 function key(cls,action){return cls.toLowerCase()+'/'+action}
 function imagePath(cls,action){return 'sprites/actors_v2/'+key(cls,action)+'.png'}
 function queue(cls,action){
@@ -34,7 +36,12 @@ function queue(cls,action){
   record.state=record.img.naturalWidth===FRAME_W*record.frames&&record.img.naturalHeight===FRAME_H?'ready':'invalid';
  };
  record.img.onerror=function(){record.state='missing'};
- try{record.img.src=imagePath(cls,action)}
+ try{
+  // SVG strip is real, transparent, offline animation for the Knight prototype.
+  // Final high-resolution art can replace it with the regular PNG atlas path.
+  const preview=cls==='Knight'&&root.DFModernKnightArt&&root.DFModernKnightArt.sheet(action);
+  record.img.src=preview||imagePath(cls,action);
+ }
  catch(e){record.state='missing'}
  return false;
 }
@@ -55,7 +62,7 @@ function selectAction(a){
  if(a.fxType==='hit_flash'&&(a.fxTime||0)>0)return 'hurt';
  if(a.cls==='Cleric'&&a.fxType==='healing_pulse'&&(a.fxTime||0)>0)return 'special';
  if((a.swing||0)>0&&(a.status==='fighting'||a.status==='exploring'))return 'attack';
- if(['exploring','escorting','returning','retreating'].includes(a.status))return 'walk';
+ if(['exploring','escorting','returning','retreating','walking','moving'].includes(a.status))return 'walk';
  return 'idle';
 }
 function frameIndex(a,action,t){
@@ -104,5 +111,5 @@ function status(){
   loading:values.filter(x=>x.state==='loading').length,
   failed:values.filter(x=>x.state==='missing'||x.state==='invalid').length};
 }
-return {classes,actions,FRAME_W,FRAME_H,DRAW_W,DRAW_H,imagePath,isEnabled,setEnabled,preloadClass,selectAction,frameIndex,draw,status};
+return {classes,approvedClasses,actions,FRAME_W,FRAME_H,DRAW_W,DRAW_H,imagePath,isEnabled,setEnabled,preloadClass,selectAction,frameIndex,draw,status};
 });
