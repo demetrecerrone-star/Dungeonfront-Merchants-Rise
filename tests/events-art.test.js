@@ -44,18 +44,22 @@ test('discovery animation begins only on a legitimate one-time event',()=>{
  actor.x=chest.x;actor.cooldown=90;
  assert.equal(S.eventAnimation(chest,false),'idle');
  D.advance(s,.05,()=>.8);
+ assert.equal(actor.status,'opening');
+ assert.equal(S.eventAnimation(chest,false),'idle');
+ assert.equal(chest.visualPulse||0,0);
+ for(let i=0;i<16;i++)D.advance(s,.05,()=>.8);
  assert.equal(S.eventAnimation(chest,false),'activate');
  assert.ok(chest.visualPulse>0);
+ assert.equal(chest.opened,true);
  assert.equal(S.eventFrame(chest,'activate',0,false),0);
  const first=chest.visualPulse,loot=s.loot.relic;
  D.advance(s,.05,()=>.8);
- assert.ok(chest.visualPulse<first,'animation clock decreases');
- assert.equal(s.loot.relic,loot,'discovery does not duplicate loot');
+ assert.ok(chest.visualPulse<first);
+ assert.equal(s.loot.relic,loot);
  for(let i=0;i<15;i++)D.advance(s,.05,()=>.8);
- assert.equal(chest.visualPulse,0,'animation ends');
- assert.equal(S.eventAnimation(chest,false),'idle');
+ assert.equal(chest.visualPulse,0);
  assert.equal(S.eventAnimation(chest,true),'activate');
- assert.equal(S.eventFrame(chest,'activate',0,true),5,'fully discovered location stays visibly used');
+ assert.equal(S.eventFrame(chest,'activate',0,true),5);
 });
 test('contract instance event art state stays isolated from public dungeon',()=>{
  const publicState=E.initialState(),privateState={mats:{iron:0,herb:0},loot:{},contractExpedition:true};
