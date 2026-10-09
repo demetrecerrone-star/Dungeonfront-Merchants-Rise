@@ -118,6 +118,6 @@ test('party inspection retains all members across separate floors',()=>{
  const src=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
  assert.ok(src.includes('D.partyMembers(s,o.partyId)'),'party screen must enumerate every member');
  assert.ok(src.includes('data-member-id'),'party screen must offer a distinct button per member');
- assert.ok(src.includes(\"$('partyRoster').addEventListener('click'\"),'member buttons must be selectable');
+ assert.ok(src.includes("$('partyRoster').addEventListener('click'"),'member buttons must be selectable');
 });
 console.log('All '+count+' raid and full-floor tests passed.');
