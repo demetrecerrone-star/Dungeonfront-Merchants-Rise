@@ -68,7 +68,7 @@ test('raid boss defeat awards persistent loot and reputation once',()=>{
 test('game canvas filters actors by current floor instead of stacking four rows',()=>{
  const source=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
  assert.doesNotThrow(()=>new vm.Script(source));
- assert.ok(source.includes("if(a.floor!==floor||a.status==='recovering')continue;"));
+ assert.ok(source.includes("if(a.floor!==floor||a.status==='recovering'||a.status==='extracted')continue;"));
  assert.ok(source.includes("if(m.floor!==floor||m.hp<=0)continue;"));
  assert.ok(source.includes("Math.min(D.floorCount,floorOffset+delta)"));
  assert.ok(source.includes("tracked.floor!==floorOffset"));
