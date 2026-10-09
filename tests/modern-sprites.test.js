@@ -122,21 +122,24 @@ test('approved Knight prototype provides six offline animation strips with match
  }
  assert.equal(Art.sheet('not_an_action'),null);
 });
-test('only Knight can opt into new art and shop action mapping has no gameplay side-effects',()=>{
+test('all six approved preview classes render independently and shop action mapping has no gameplay side-effects',()=>{
  S.setEnabled(true);
  assert.equal(S.draw(ctx(),{cls:'Mage',hp:20,status:'idle'},1),false);
- assert.equal(S.preloadClass('Mage'),0);
+ assert.equal(S.preloadClass('Mage',['idle']),1);
+ assert.ok(S.approvedClasses.has('Mage'));
+ assert.equal(S.preloadClass('UnlistedClass'),0);
  assert.equal(S.selectAction({cls:'Knight',hp:1,status:'waiting'}),'idle');
  assert.equal(S.selectAction({cls:'Knight',hp:1,status:'walking'}),'walk');
  assert.equal(S.selectAction({cls:'Knight',hp:1,status:'moving'}),'walk');
  assert.equal(S.selectAction({cls:'Knight',hp:1,status:'returning'}),'walk');
  assert.equal(S.approvedClasses.has('Knight'),true);
- assert.equal(S.approvedClasses.has('Ranger'),false);
+ assert.equal(S.approvedClasses.has('Ranger'),true);
+ assert.equal(S.approvedClasses.size,6);
  S.setEnabled(false);
 });
 test('shop, dungeon, and contract dungeon use the same v2 renderer without modifying save data',()=>{
  const game=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
- assert.ok(game.includes("window.DFModernSprites.setEnabled(new URLSearchParams(location.search).get('knightPreview')==='1')"));
+ assert.ok(game.includes("new URLSearchParams(location.search).get('actorPreview')==='1'"));
  assert.ok(game.includes("modernShop=window.DFModernSprites.draw(g,{"));
  assert.ok(game.includes("status:c.stage===1?'waiting':'walking'"));
  assert.ok(game.includes("window.DFModernSprites.draw(g,drawActorState,t)"));
@@ -164,7 +167,7 @@ test('shop and dungeon movement face actual travel direction (never backpedal)',
  assert.equal(S.facing({cls:'Knight',hp:5,status:'walking',dx:-12}),-1);
  assert.equal(S.facing({cls:'Knight',hp:5,status:'walking',dx:12}),1);
  const game=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/game.js'),'utf8');
- assert.ok(game.includes('facing:c.stage===2?-1:1'),'shop departing Knights explicitly face left');
+ assert.ok(game.includes('facing:c.stage===2?-1:1'),'shop departing characters explicitly face left');
  const spriteArt=fs.readFileSync(path.join(__dirname,'../app/src/main/assets/modern-knight-art.js'),'utf8');
  assert.ok(spriteArt.includes('walking?7:0'),'walking frames deliberately lean forward');
 });
