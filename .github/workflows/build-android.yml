@@ -27,6 +27,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Bake offline high-resolution Knight PNG animation sheets
+        run: |
+          python3 -m pip install --quiet cairosvg
+          python3 tools/build_knight_atlas.py
+          test -s app/src/main/assets/sprites/actors_v2/knight/walk.png
+          test -s app/src/main/assets/sprites/actors_v2/knight/attack.png
       - name: Test merchant economy and visitor encounters
         run: |
           node tests/economy.test.js
