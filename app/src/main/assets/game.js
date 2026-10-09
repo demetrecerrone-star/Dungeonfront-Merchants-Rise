@@ -766,8 +766,14 @@ function drawDungeon(t){
   const x=a.x-cameraX;
   if(x<-80||x>880)continue;
   const clsIndex=classes.indexOf(a.cls);
-  g.save();g.translate(x,355);g.scale(2.1,2.1);
-  if(!(window.DFSprites&&window.DFSprites.draw(g,a,t)))drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
+  g.save();g.translate(x,355);
+  // V2 draws smooth high-resolution art only when explicitly enabled and
+  // a matching action sheet is ready. Default/offline behavior stays v1.
+  const modern=window.DFModernSprites&&window.DFModernSprites.draw(g,a,t);
+  if(!modern){
+   g.scale(2.1,2.1);
+   if(!(window.DFSprites&&window.DFSprites.draw(g,a,t)))drawActor(0,0,colors[Math.max(0,clsIndex)]||'#a0a59a',t,'customer',a.cls,a.status==='fighting'?1:0);
+  }
   g.restore();
   dungeonBox(x-21,267,42,6,'#322827');
   dungeonBox(x-20,268,40*Math.max(0,a.hp)/a.maxHp,4,'#9ac293');
