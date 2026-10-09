@@ -1,6 +1,6 @@
 # Dungeonfront: Merchant's Rise — Pixel-Art Production Blueprint
 
-**Status:** Batches A, C and D implemented: 18 hero, 46 monster/boss, and 8 combat-effect PNG sheets (72 total) with fallback-aware rendering. Dungeon event sprites, some hero signature poses, and Android device playtesting are still pending; **no APK has been released**.
+**Status:** Visual batches A, C, D and E are implemented: 18 hero, 46 monster/boss, 8 combat-effect, 10 animated event and 13 interface icon PNGs (**95 assets**) with fallback-aware rendering. Class signature poses, equipment overlays, and Android device playtesting are still pending; **no APK has been released**.
 **Target branch:** `work/v0.8-roster-combat-treasure`
 **Target client:** Android WebView, offline, landscape; dungeon canvas **800 × 440**.
 **Style:** original gritty medieval fantasy pixel art, high-contrast silhouettes, subdued materials, warm torches, readable at phone size.
@@ -203,7 +203,7 @@ The loader should accept missing action/class entries, skip absent image files, 
 
 ### Batch B — roster icons and visible gear
 
-- [ ] Show `ui/classes/<class>.png` beside class/name in roster and party inspection.
+- [x] Show class-specific 16px icons in the roster and contract board. Party inspection icons are still planned.
 - [ ] Add equipment overlay sprites, draw at correct hand anchors.
 - [ ] Check narrow phone layouts for clipping and touch-target size.
 - [ ] Do not change contract assignment, permanent death or staff XP data.
@@ -224,11 +224,11 @@ The loader should accept missing action/class entries, skip absent image files, 
 
 ### Batch E — events and final UI pass
 
-- [ ] Replace simple dungeon event squares with chest, trap, shrine, secret and trader sprites.
-- [ ] Show opened/discovered variants according to per-hero event state where applicable.
-- [ ] Check condition indicators for injury, fatigue, returning, and permanent death.
-- [ ] Ensure **no contract claim popup before the last survivor enters the start portal**.
-- [ ] Keep Floor 8's far end intentionally empty until more floors are developed.
+- [x] Replace simple dungeon event squares with animated treasure chests, traps, shrines, secret chambers, and wandering trader sprites; preserve procedural fallback.
+- [x] Use per-hero seen-event records for visual discovered states, and one-shot activation effects; do not replay treasure rewards.
+- [x] Add icons and condition seals for injury/fatigue, rank-colored contract statuses and extraction progress; preserve permanent-death counters.
+- [x] Keep the claim action and completion popup gated until every surviving hired adventurer has reached the start portal; automated regression covers this.
+- [x] Keep Floor 8's far end empty; leave floor-forward passages on floors 1–7 only.
 
 ## 8. Must-pass acceptance checks before making an APK
 
@@ -246,7 +246,7 @@ The loader should accept missing action/class entries, skip absent image files, 
 
 ## Immediate next concrete deliverable
 
-**Batch A complete:** 18 primary class PNG animation sheets and fallback-aware renderer are committed. [Preview the animations](SPRITE_PREVIEW.md). Next: visual inspection and one-device playtesting to tune proportions before monster/effect production.
+**Visual art passes complete:** [18 hero sheets](SPRITE_PREVIEW.md), [monster/boss and effects](MONSTER_SPRITE_PREVIEW.md), and [animated dungeon discoveries and interface icons](DUNGEON_EVENT_PREVIEW.md). Next: Android device playtesting, equipment overlay sprites, hero signature poses, and remaining UI polish.
 
 ## Visual upgrade implementation notes (Batches C/D)
 
@@ -255,3 +255,12 @@ The loader should accept missing action/class entries, skip absent image files, 
 - [Preview the new monsters, raid boss and combat effects](MONSTER_SPRITE_PREVIEW.md).
 - `node tests/sprites.test.js` checks all **72** actual PNG sheets for dimensions, transparency, and distinct animation frames; `node tests/visual-combat.test.js` checks boss specials, hits, monster death, heals and raid extraction.
 - Next unfinished art batch: **B/E** (class UI icons, event object sheets and visual UI cleanup), then physical Android playtesting and optional final APK on request.
+
+## Event & guild UI production notes (Batch E)
+
+- Original event animation and 16px class/condition/rarity icons are produced by `python3 tools/generate_event_art.py`, integrated through `DFSprites.drawEvent` and normal DOM icon images.
+- Each event has idle and activate sprites. The original per-hero `seenEvents` data controls whether a location looks explored; an activation pulse is purely visual.
+- The contract board shows the party's extraction progress, rank-colored missions, and explicit payout status while returning. The payment button is still not rendered until extraction finishes.
+- [View real animated encounter sheets and icons](DUNGEON_EVENT_PREVIEW.md).
+- `node tests/sprites.test.js` now verifies **95** shipped PNG files; `node tests/events-art.test.js` tests activation, event isolation and UI status wiring.
+- Phone layout review and Android hardware performance checks are still pending. The signed APK remains on hold.
