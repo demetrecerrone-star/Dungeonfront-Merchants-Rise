@@ -511,6 +511,21 @@ function drawDungeon(t){
    g.fillText('NEXT FLOOR →',x,234);
   }
  }
+ // Adventure discoveries are rendered in the active floor instance only.
+ for(const event of ds.dungeon.events||[]){
+  if(event.floor!==floor)continue;
+  const x=event.x-cameraX;
+  if(x<-40||x>840)continue;
+  const icons={chest:'▣',trap:'⚠',shrine:'✚',hidden:'✧',merchant:'◆'};
+  const hues={chest:'#b9924c',trap:'#c76d55',shrine:'#88bbad',hidden:'#ae88cb',merchant:'#c9a968'};
+  dungeonBox(x-15,316,30,38,'#1c2324');
+  dungeonBox(x-13,320,26,30,hues[event.type]||'#a98d62');
+  g.textAlign='center';g.font='bold 22px Georgia';g.fillStyle='#1d2425';
+  g.fillText(icons[event.type]||'?',x,341);
+  g.font='bold 9px Arial';g.fillStyle='#e3ce9d';
+  g.fillText(event.type.toUpperCase(),x,308);
+  dungeonHit.push({x,y:330,type:'event',ref:event});
+ }
  // Filter on the selected floor before painting and collecting touch targets.
  for(const m of ds.dungeon.monsters){
   if(m.floor!==floor||m.hp<=0)continue;
@@ -536,7 +551,11 @@ function drawDungeon(t){
   g.restore();
   dungeonBox(x-21,267,42,6,'#322827');
   dungeonBox(x-20,268,40*Math.max(0,a.hp)/a.maxHp,4,'#9ac293');
-  if((a.swing||0)>0){dungeonBox(x+16,307,27,4,'#f4d4a2');dungeonBox(x+33,298,5,25,'#ffffffaa')}
+  if((a.swing||0)>0){
+   if(a.special==='spell'){dungeonBox(x+17,289,18,18,'#9b83e6');dungeonBox(x+23,284,7,7,'#e8d7ff')}
+   else if(a.special==='arrow'){dungeonBox(x+18,306,32,3,'#caa665');dungeonBox(x+44,302,8,10,'#dde5be')}
+   else{dungeonBox(x+16,307,27,4,'#f4d4a2');dungeonBox(x+33,298,5,25,'#ffffffaa')}
+  }
   g.textAlign='center';g.fillStyle='#f2e0c2';g.font='bold 12px Arial';
   g.fillText(a.name,x,260);
   g.font='bold 10px Arial';
@@ -602,6 +621,14 @@ function inspectDungeon(x,y){
  if(!closest){$('npcCard').classList.add('hidden');return}
  const o=closest.ref;
  if(closest.type==='adventurer'){showAdventurer(o)}
+ else if(closest.type==='event'){
+  const names={chest:'Sealed Treasure Chest',trap:'Dungeon Trap',shrine:'Healing Shrine',hidden:'Hidden Chamber',merchant:'Wandering Trader'};
+  const tips={chest:'A chest that may contain rare treasure.',trap:'Dangerous pressure plates may injure an adventurer.',shrine:'A sacred rest point that restores health.',hidden:'A secret chamber with unusual loot.',merchant:'A traveler who can refresh supplies.'};
+  $('npcName').textContent=names[o.type]||'Dungeon Discovery';
+  $('npcMeta').textContent='FLOOR '+o.floor+' · EXPLORATION EVENT';
+  $('npcText').textContent=tips[o.type]||'A mysterious find.';
+  $('partyRoster').classList.add('hidden');$('npcCard').classList.remove('party-open');$('npcCard').classList.remove('hidden');
+ }
  else{
   const spec=D.monsterKinds[o.kind];
   $('npcName').textContent=spec.name;
