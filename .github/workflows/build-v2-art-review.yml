@@ -1,0 +1,56 @@
+name: Prepare Dungeonfront V2 character previews (NO APK)
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'work/v0.9-remaining-classes-v2'
+    paths:
+      - 'tools/generate_remaining_actor_art.js'
+      - 'tools/build_remaining_actor_atlases.py'
+      - 'tests/remaining-actors-v2.test.js'
+      - '.github/workflows/build-v2-art-review.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check prototype source / never activate preview art in APK
+        run: |
+          node --check tools/generate_remaining_actor_art.js
+          node tests/remaining-actors-v2.test.js
+          grep -q "approvedClasses=new Set(\['Knight'\])" app/src/main/assets/modern-sprites.js
+      - name: Install offline rasterization tools
+        run: python -m pip install --quiet cairosvg pillow
+      - name: Bake original Ranger / Mage / Cleric / Rogue / Mercenary prototype frames
+        run: python tools/build_remaining_actor_atlases.py
+      - name: Validate package is review-only
+        run: |
+          test -s art-previews/remaining-classes-v2/class-animation-preview.png
+          test -s art-previews/Dungeonfront-Remaining-Five-Class-Animation-Previews.zip
+          python - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('art-previews/remaining-classes-v2/manifest.json')
+          obj=json.loads(p.read_text())
+          assert obj['total_sheets']==30 and obj['total_frames']==295, obj
+          assert len(obj['classes'])==5 and 'Knight' not in obj['classes']
+          print('PASS 30 transparent sprite strips and 295 frames')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dungeonfront-Five-Class-V2-Art-Review
+          path: |
+            art-previews/remaining-classes-v2/**
+            art-previews/Dungeonfront-Remaining-Five-Class-Animation-Previews.zip
+          if-no-files-found: error
+          retention-days: 30
