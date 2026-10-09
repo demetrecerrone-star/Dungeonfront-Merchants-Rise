@@ -33,11 +33,12 @@ jobs:
           node tests/dungeon.test.js
           node tests/dungeon-ui.test.js
           node tests/shop-ui.test.js
+          node tests/raid.test.js
       - name: Verify original uploaded Dabski cinematic
         run: |
           test -f app/src/main/assets/dabski_intro.mp4
           echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
-      - name: Build v0.5.2 Android APK
+      - name: Build v0.6 Android APK
         id: build
         shell: bash
         env:
