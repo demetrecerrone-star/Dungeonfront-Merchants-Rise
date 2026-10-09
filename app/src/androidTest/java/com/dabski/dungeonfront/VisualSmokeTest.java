@@ -66,7 +66,7 @@ public final class VisualSmokeTest {
         final AtomicReference<String> output = new AtomicReference<>("null");
         final CountDownLatch latch = new CountDownLatch(1);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
-            webView.evaluateJavascript("(function(){return (" + js + ");})()", value -> {
+            webView.evaluateJavascript("(function(){return eval(" + org.json.JSONObject.quote(js) + ");})()", value -> {
                 output.set(value);latch.countDown();
             })
         );
