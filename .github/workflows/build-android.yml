@@ -36,11 +36,27 @@ jobs:
           node tests/raid.test.js
           node tests/encounters.test.js
           node tests/contracts.test.js
+          node tests/v08.test.js
+          node tests/sprites.test.js
+          node tests/visual-combat.test.js
+          node tests/events-art.test.js
+      - name: Verify gameplay JavaScript and visual sprite-generator syntax
+        run: |
+          node --check app/src/main/assets/game.js
+          node --check app/src/main/assets/dungeon.js
+          node --check app/src/main/assets/contracts.js
+          node --check app/src/main/assets/sprite-system.js
+          python3 -m py_compile tools/generate_monster_art.py tools/generate_event_art.py
+      - name: Verify Android package and release version
+        run: |
+          grep -q "applicationId 'com.dabski.dungeonfront'" app/build.gradle
+          grep -q 'versionCode 13' app/build.gradle
+          grep -q "versionName '0.8.0'" app/build.gradle
       - name: Verify original uploaded Dabski cinematic
         run: |
           test -f app/src/main/assets/dabski_intro.mp4
           echo "075832e834948055122d81d901a30c97b3c898667f20e0935c5c664cd7af756d  app/src/main/assets/dabski_intro.mp4" | sha256sum --check
-      - name: Build v0.7.0 Android APK
+      - name: Build v0.8.0 Android APK
         id: build
         shell: bash
         env:
@@ -54,8 +70,8 @@ jobs:
             echo "::warning::No persistent signing secrets configured. Building a test-signed debug APK. This APK cannot update a differently signed installation."
             gradle --no-daemon :app:assembleDebug
             echo "apk_path=app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_OUTPUT"
-            echo "apk_label=Dungeonfront-v0.7.0-debug-APK" >> "$GITHUB_OUTPUT"
-            echo "### v0.7.0 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
+            echo "apk_label=Dungeonfront-v0.8.0-debug-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.8.0 built using temporary debug signing; configure repository signing secrets for stable updates." >> "$GITHUB_STEP_SUMMARY"
           else
             if [[ -z "$KEYSTORE_B64" || -z "$STORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
               echo "::error::Incomplete signing configuration: set all four DUNGEONFRONT_* repository secrets."
@@ -69,26 +85,29 @@ jobs:
             keytool -list -keystore "$DUNGEONFRONT_KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null
             gradle --no-daemon :app:assembleRelease
             echo "apk_path=app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_OUTPUT"
-            echo "apk_label=Dungeonfront-v0.7.0-persistently-signed-APK" >> "$GITHUB_OUTPUT"
-            echo "### v0.7.0 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
+            echo "apk_label=Dungeonfront-v0.8.0-persistently-signed-APK" >> "$GITHUB_OUTPUT"
+            echo "### v0.8.0 built with the reusable Dungeonfront signing identity." >> "$GITHUB_STEP_SUMMARY"
           fi
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           "$APKSIGNER" verify --verbose "$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
+          APK="$( [[ -n "${DUNGEONFRONT_KEYSTORE_PATH:-}" ]] && echo app/build/outputs/apk/release/app-release.apk || echo app/build/outputs/apk/debug/app-debug.apk )"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.dabski.dungeonfront' versionCode='13' versionName='0.8.0'"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.apk_label }}
           path: ${{ steps.build.outputs.apk_path }}
           if-no-files-found: error
 
-      - name: Publish signed v0.7.0 direct APK download
-        if: github.ref == 'refs/heads/main' && steps.build.outputs.apk_label == 'Dungeonfront-v0.7.0-persistently-signed-APK'
+      - name: Publish signed v0.8.0 direct APK download
+        if: github.ref == 'refs/heads/main' && steps.build.outputs.apk_label == 'Dungeonfront-v0.8.0-persistently-signed-APK'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          cp "${{ steps.build.outputs.apk_path }}" "Dungeonfront-v0.7.0.apk"
-          gh release view v0.7.0 >/dev/null 2>&1 || gh release create v0.7.0 --title "Dungeonfront: Merchant's Rise v0.7.0" --notes "Contract Board, independent hired-party expeditions, auto-follow, completion rewards and loot-selling visitors. Signed release installs over v0.6.2 without clearing saves."
-          gh release upload v0.7.0 Dungeonfront-v0.7.0.apk --clobber
+          cp "${{ steps.build.outputs.apk_path }}" "Dungeonfront-v0.8.0.apk"
+          gh release view v0.8.0 >/dev/null 2>&1 || gh release create v0.8.0 --title "Dungeonfront: Merchant's Rise v0.8.0" --notes "v0.8 adds persistent five-hero equipment/roster management, class-based combat, fatigue/injuries, treasure/traps/shrines/hidden chambers/traders, original animated character and monster sprites, and improved contracts. Floor-entry exit portals, one-way onward stairs, boss extraction, and delayed payment claim are retained. Signed as an update to v0.7.0."
+          gh release upload v0.8.0 Dungeonfront-v0.8.0.apk --clobber
 
       - name: Package standalone Android APK signing tool for private, local signing
         run: |
