@@ -100,12 +100,13 @@ function enter(s,customer,gear){
  const d=ensure(s);
  if(d.adventurers.length>=maxAdventurers){
   // Drop the oldest transient customer before dismissing the established dungeon population.
-  const idx=d.adventurers.findIndex(a=>a.id>8&&a.name.startsWith('Traveler '));
+  const idx=d.adventurers.findIndex(a=>a.visitor===true);
   d.adventurers.splice(idx>=0?idx:0,1);
  }
  const a=actor(String(customer.name||'Traveler').slice(0,22),String(customer.cls||'Mercenary'),
   Math.min(40,Math.max(1,Math.floor(customer.level||1))),1,72,d.nextId++);
  a.gear=String(gear||'Supplies').slice(0,30);
+ a.visitor=true;
  const equipment=a.gear.toLowerCase();
  if(equipment.includes('blade')||equipment.includes('sword')){a.maxHp+=12;a.hp+=12}
  if(equipment.includes('potion')||equipment.includes('bandage')){a.maxHp+=7;a.hp+=7}
